@@ -4,14 +4,19 @@ NAME 		:= 	webserv
 OBJ_DIR		:=	./obj
 SRC_DIR 	:=	./src
 
-SRC 		:=	server/main.cpp \
+INC			:=	-I include 
+
+HEADERS		:=	$(wildcard include/*.hpp)
+
+SRC			:=	main.cpp \
 				server/server.cpp \
 
-OBJ			:=	$(SRC:%.cpp=$(OBJ_DIR)/%.o)
+OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
+SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
 
-CC			:= c++
-FLAGS 		:= -std=c++20 
-# -Wall -Werror -Wextra
+CC			:=	g++
+FLAGS 		:= -std=c++20 -Wall -Werror -Wextra
+
 ifdef DEBUG
 	FLAGS += -g
 endif
@@ -24,14 +29,16 @@ COMPILE		:= $(CC) $(FLAGS)
 ###############			RECIPES		###############
 all: $(NAME)
 
+
 $(OBJ_DIR):
 	mkdir -p $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CC) $(FLAGS) -c $< -o $@ 
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(OBJ_DIR)
+	@mkdir -p $(@D)
+	$(CC) $(FLAGS) $(INC) -c $< -o $@
 
 $(NAME): $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) -o $(NAME)
+	$(CC) $(FLAGS) $^ -o $(NAME)
 
 clean:
 	@rm -rf $(OBJ_DIR)

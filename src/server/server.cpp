@@ -124,7 +124,7 @@ std::string Server::buildResponse()
 
 void Server::sendResponse()
 {
-	long bytesSent;
+	long unsigned int bytesSent;
 	bytesSent = write(m_new_socket, m_serverMessage.c_str(), m_serverMessage.size());
 	if (bytesSent == m_serverMessage.size())
 	{
