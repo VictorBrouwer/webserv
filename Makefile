@@ -14,7 +14,7 @@ SRC			:=	main.cpp \
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
 
-CC			:=	g++
+CC			:=	c++
 FLAGS 		:= -std=c++20 -Wall -Werror -Wextra
 
 ifdef DEBUG
