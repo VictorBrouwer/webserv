@@ -74,7 +74,26 @@ void Server::startListen()
 	{
 		log("====== Waiting for a new connection ======\n\n\n");
 		acceptConnection(m_new_socket);
-
+		this->m_poll.AddPollFd(m_socket, POLLIN);
+		this->m_poll.AddPollFd(m_new_socket, POLLIN);
+		int num_events = poll(this->m_poll.getPollFDs().data(), this->m_poll.getPollFDs().size(), -1); // should clarify max wait time now it is set to wait forever(-1)
+		while (num_events > 0)
+		{
+			for (int i = 0; i < this->m_poll.getPollFDs().size() ; i++)
+			{
+				if (this->m_poll.getPollFDs()[i].revents & POLLIN)
+				{
+					if (i == 0)
+					{
+						acceptConnection(m_new_socket);
+						this->m_poll.AddPollFd(m_new_socket, POLLIN);
+						num_events--;
+					}
+					else
+						this->m_poll.HandleActiveClient(this->m_poll.getPollFDs()[i]);
+				}
+			}
+		}
 		char buffer[BUFFER_SIZE] = {0};
 		bytesReceived = read(m_new_socket, buffer, BUFFER_SIZE);
 		if (bytesReceived < 0)
@@ -132,5 +151,25 @@ void Server::sendResponse()
 	else
 	{
 		log("Error sending response to client");
+	}
+}
+
+void Poll::HandleActiveClient(struct pollfd curr)
+{
+	int bytesReceived;
+	char buffer[BUFFER_SIZE] = {0};
+	switch (curr.revents)
+	{
+	case POLLIN:
+		bytesReceived = read(curr.fd, buffer, BUFFER_SIZE);
+		if (bytesReceived < 0)
+		{
+			exitWithError("Failed to read bytes from client socket connection");
+		}
+		break;
+	case POLLOUT:
+	
+	default:
+		break;
 	}
 }

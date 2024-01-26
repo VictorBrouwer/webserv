@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <fstream>
+#include <poll.h>
+#include <poll.hpp>
 
 class Server
 {
@@ -27,12 +29,14 @@ private:
 	struct sockaddr_in m_socketAddress;
 	unsigned int m_socketAddress_len;
 	std::string m_serverMessage;
+	Poll	m_poll;
 
 	int startServer();
 	void closeServer();
 	void acceptConnection(int &new_socket);
 	std::string buildResponse();
 	void sendResponse();
+	void HandleActiveClient(struct pollfd curr);
 };
 
 #endif // SERVER_HPP
