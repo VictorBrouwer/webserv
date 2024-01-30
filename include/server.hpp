@@ -35,7 +35,7 @@ private:
 	void closeServer();
 	void acceptConnection(int &new_socket);
 	std::string buildResponse();
-	void sendResponse();
+	void sendResponse(int fd);
 	void HandleActiveClient(struct pollfd curr);
 };
 

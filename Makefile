@@ -10,6 +10,7 @@ HEADERS		:=	$(wildcard include/*.hpp)
 
 SRC			:=	main.cpp \
 				server/server.cpp \
+				poll.cpp \
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))

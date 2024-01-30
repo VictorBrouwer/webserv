@@ -7,6 +7,7 @@ void Poll::AddPollFd(int fd, short events)
 	NewPollFd.fd = fd;
 	NewPollFd.events = events;
 	m_poll_fds.push_back(NewPollFd);
+	// m_poll_fds.push_back(pollfd{fd, events, 0});
 }
 
 // checks if fd is in the vector, then add it to the end. 
