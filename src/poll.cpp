@@ -18,7 +18,7 @@ void Poll::RemovePollFd(int fd)
 									 m_poll_fds.end());
 }
 
-std::vector<pollfd> Poll::getPollFDs(void) const
+std::vector<pollfd>& Poll::getPollFDs(void)
 {
 	return (m_poll_fds);
 }

@@ -84,10 +84,10 @@ void Server::startListen()
 			std::cout << "fd = " << i << " revent = " << this->m_poll.getPollFDs()[i].revents << std::endl;
 			if (this->m_poll.getPollFDs()[i].revents & POLLIN)
 			{
-				std::cout << "is sleeping" << std::endl;
-				sleep(20000);
 				if (i == 0)
 				{
+					std::cout << "new incoming connection" << std::endl;
+					sleep(20000);
 					acceptConnection(m_new_socket);
 					this->m_poll.AddPollFd(m_new_socket, POLLIN);
 				}

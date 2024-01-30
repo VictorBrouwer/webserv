@@ -10,7 +10,7 @@ public:
 	void AddPollFd(int fd, short events);
 	void PollFds(void);
 	void RemovePollFd(int fd);
-	std::vector<pollfd> getPollFDs(void) const;
+	std::vector<pollfd>& getPollFDs(void);
 private:
 	std::vector<struct pollfd> m_poll_fds;
 };
