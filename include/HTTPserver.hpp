@@ -1,5 +1,5 @@
-#if !defined(SERVER_HPP)
-#define SERVER_HPP
+#if !defined(HTTP_SERVER_HPP)
+#define HTTP_SERVER_HPP
 
 #include <iostream>
 #include <sstream>
@@ -11,25 +11,31 @@
 #include <arpa/inet.h>
 #include <fstream>
 #include <poll.h>
-#include <poll.hpp>
+#include <unordered_map>
 
-class Server
+#include "Poll.hpp"
+#include "Client.hpp"
+
+class HTTPServer
 {
 public:
-	Server(std::string ip_address, int port);
-	~Server();
+	HTTPServer(std::string ip_address, int port);
+	~HTTPServer();
 	void startListen();
+	void startPolling();
 
 private:
 	std::string m_ip_address;
 	int m_port;
 	int m_socket;
 	int m_new_socket;
-	// long m_incomingMessage;
 	struct sockaddr_in m_socketAddress;
 	unsigned int m_socketAddress_len;
 	std::string m_serverMessage;
 	Poll	m_poll;
+
+	// std::unordered_map<int, Client> ClientMap;
+	// std::unordered_map<int, Client> ServerMap;
 
 	int startServer();
 	void closeServer();
@@ -39,4 +45,4 @@ private:
 	void HandleActiveClient(struct pollfd curr);
 };
 
-#endif // SERVER_HPP
+#endif // HTTP_SERVER_HPP

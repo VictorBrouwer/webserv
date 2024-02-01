@@ -9,7 +9,7 @@ INC			:=	-I include
 HEADERS		:=	$(wildcard include/*.hpp)
 
 SRC			:=	main.cpp \
-				server/server.cpp \
+				HTTPserver.cpp \
 				poll.cpp \
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))

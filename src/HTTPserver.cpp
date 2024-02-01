@@ -1,4 +1,4 @@
-#include"server.hpp"
+#include"HTTPserver.hpp"
 
 const int BUFFER_SIZE = 30720;
 
@@ -13,7 +13,7 @@ void exitWithError(const std::string &errorMessage)
 	exit(1);
 }
 
-Server::Server(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_socketAddress_len(sizeof(m_socketAddress))
+HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_socketAddress_len(sizeof(m_socketAddress))
 {
 	m_socketAddress.sin_family = AF_INET;
 	m_socketAddress.sin_port = htons(m_port);
@@ -28,12 +28,12 @@ Server::Server(std::string ip_address, int port) : m_ip_address(ip_address), m_p
 	}
 }
 
-Server::~Server()
+HTTPServer::~HTTPServer()
 {
 	closeServer();
 }
 
-int Server::startServer()
+int HTTPServer::startServer()
 {
 	m_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (m_socket < 0)
@@ -41,6 +41,10 @@ int Server::startServer()
 		exitWithError("Cannot create socket");
 		return 1;
 	}
+	int reuse = 1;
+	if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) {
+			close(m_socket);
+		}
 
 	if (bind(m_socket, (sockaddr *)&m_socketAddress, m_socketAddress_len) < 0)
 	{
@@ -51,14 +55,14 @@ int Server::startServer()
 	return 0;
 }
 
-void Server::closeServer()
+void HTTPServer::closeServer()
 {
 	close(m_socket);
 	close(m_new_socket);
 	exit(0);
 }
 
-void Server::startListen()
+void HTTPServer::startListen()
 {
 	if (listen(m_socket, 20) < 0)
 		exitWithError("Socket listen failed");
@@ -66,14 +70,15 @@ void Server::startListen()
 	std::ostringstream ss;
 	ss << "\n*** Listening on ADDRESS: " << inet_ntoa(m_socketAddress.sin_addr) << " PORT: " << ntohs(m_socketAddress.sin_port) << " ***\n\n";
 	log(ss.str());
+}
 
+void HTTPServer::startPolling()
+{
 	this->m_poll.AddPollFd(m_socket, POLLIN);
 	while (true)
 	{
-		log("====== Waiting for a new connection ======\n\n\n");
+		log("====== Waiting for a new event ======\n\n\n");
 		int num_events = poll(this->m_poll.getPollFDs().data(), this->m_poll.getPollFDs().size(), -1); // should clarify max wait time now it is set to wait forever(-1)
-		// acceptConnection(m_new_socket);
-		// this->m_poll.AddPollFd(m_new_socket, POLLIN);
 		if (num_events < 0)
 			exitWithError("poll failed");
 		if (num_events == 0)
@@ -87,26 +92,28 @@ void Server::startListen()
 				if (i == 0)
 				{
 					std::cout << "new incoming connection" << std::endl;
-					sleep(20000);
 					acceptConnection(m_new_socket);
 					this->m_poll.AddPollFd(m_new_socket, POLLIN);
 				}
 				else
+				{
+					std::cout << "client update" << std::endl;
 					this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
+				}
 			}
 		}
 
-		std::ostringstream ss;
-		ss << "------ Received Request from client ------\n\n";
-		log(ss.str());
+		// std::ostringstream ss;
+		// ss << "------ Received Request from client ------\n\n";
+		// log(ss.str());
 
-		// sendResponse();
+		// // sendResponse();
 
-		close(m_new_socket);
+		// close(m_new_socket);
 	}
 }
 
-void Server::acceptConnection(int &new_socket)
+void HTTPServer::acceptConnection(int &new_socket)
 {
 	new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, &m_socketAddress_len);
 	if (new_socket < 0)
@@ -119,7 +126,7 @@ void Server::acceptConnection(int &new_socket)
 		log("====== accepted a new connection ======\n");
 }
 
-std::string Server::buildResponse()
+std::string HTTPServer::buildResponse()
 {
 	// std::ifstream infile;
 	// infile.open("/home/vbrouwer/core/webserv/server/test.html", std::ios::in);
@@ -137,7 +144,7 @@ std::string Server::buildResponse()
 	return ss.str();
 }
 
-void Server::sendResponse(int fd)
+void HTTPServer::sendResponse(int fd)
 {
 	m_serverMessage = buildResponse();
 	long unsigned int bytesSent;
@@ -148,7 +155,7 @@ void Server::sendResponse(int fd)
 		log("Error sending response to client");
 }
 
-void Server::HandleActiveClient(struct pollfd curr)
+void HTTPServer::HandleActiveClient(struct pollfd curr)
 {
 	int bytesReceived;
 	char buffer[BUFFER_SIZE] = {0};
@@ -156,10 +163,10 @@ void Server::HandleActiveClient(struct pollfd curr)
 	{
 	case POLLIN:
 		log("read case");
-		bytesReceived = read(curr.fd, buffer, BUFFER_SIZE);
+		bytesReceived = recv(curr.fd, buffer, BUFFER_SIZE, 0);
 		if (bytesReceived < 0)
 			exitWithError("Failed to read bytes from client socket connection");
-		curr.events = POLLOUT; // after reading socket is ready for writing
+		log(buffer);
 		break;
 	case POLLOUT:
 		log("write case");
@@ -168,3 +175,8 @@ void Server::HandleActiveClient(struct pollfd curr)
 		break;
 	}
 }
+
+// void Server::parseRequest(struct pollfd curr, char *buffer, int bytesReceived)
+// {
+
+// }
