@@ -1,29 +1,17 @@
 #include"HTTPserver.hpp"
+#include"HelperFuncs.hpp"
 
-const int BUFFER_SIZE = 30720;
-
-void log(const std::string &message)
+HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
 {
-	std::cout << message << std::endl;
-}
-
-void exitWithError(const std::string &errorMessage)
-{
-	log("ERROR: " + errorMessage);
-	exit(1);
-}
-
-HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_socketAddress_len(sizeof(m_socketAddress))
-{
-	m_socketAddress.sin_family = AF_INET;
-	m_socketAddress.sin_port = htons(m_port);
-	m_socketAddress.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
-	// m_socketAddress.sin_addr.s_addr = inet_addr(m_ip_address.c_str());
+	m_listening_socketAddress.sin_family = AF_INET;
+	m_listening_socketAddress.sin_port = htons(m_port);
+	m_listening_socketAddress.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
+	// m_listening_socketAddress.sin_addr.s_addr = inet_addr(m_ip_address.c_str());
 
 	if (startServer() != 0)
 	{
 		std::ostringstream ss;
-		ss << "Failed to start server with PORT: " << ntohs(m_socketAddress.sin_port);
+		ss << "Failed to start server with PORT: " << ntohs(m_listening_socketAddress.sin_port);
 		log(ss.str());
 	}
 }
@@ -35,18 +23,18 @@ HTTPServer::~HTTPServer()
 
 int HTTPServer::startServer()
 {
-	m_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_socket < 0)
+	m_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_listening_socket < 0)
 	{
 		exitWithError("Cannot create socket");
 		return 1;
 	}
 	int reuse = 1;
-	if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) {
-			close(m_socket);
+	if (setsockopt(m_listening_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) {
+			close(m_listening_socket);
 		}
 
-	if (bind(m_socket, (sockaddr *)&m_socketAddress, m_socketAddress_len) < 0)
+	if (bind(m_listening_socket, (sockaddr *)&m_listening_socketAddress, m_listening_socketAddress_len) < 0)
 	{
 		exitWithError("Cannot connect socket to address");
 		return 1;
@@ -57,24 +45,26 @@ int HTTPServer::startServer()
 
 void HTTPServer::closeServer()
 {
-	close(m_socket);
-	close(m_new_socket);
+	close(m_listening_socket);
+	close(m_client_socket);
 	exit(0);
 }
 
 void HTTPServer::startListen()
 {
-	if (listen(m_socket, 20) < 0)
+	if (listen(m_listening_socket, 20) < 0)
 		exitWithError("Socket listen failed");
 
 	std::ostringstream ss;
-	ss << "\n*** Listening on ADDRESS: " << inet_ntoa(m_socketAddress.sin_addr) << " PORT: " << ntohs(m_socketAddress.sin_port) << " ***\n\n";
+	ss << "\n*** Listening on ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << " PORT: " << ntohs(m_listening_socketAddress.sin_port) << " ***\n\n";
 	log(ss.str());
 }
 
 void HTTPServer::startPolling()
 {
-	this->m_poll.AddPollFd(m_socket, POLLIN);
+	this->m_poll.AddPollFd(m_listening_socket, POLLIN);
+	std::shared_ptr<Server> server = std::make_shared<Server>(this->m_listening_socket);
+	this->m_serverMap.insert({this->m_listening_socket, server});
 	while (true)
 	{
 		log("====== Waiting for a new event ======\n\n\n");
@@ -86,44 +76,49 @@ void HTTPServer::startPolling()
 		std::cout << "number of events = " << num_events << std::endl;
 		for (size_t i = 0; i < this->m_poll.getPollFDs().size() ; i++)
 		{
+			if (this->m_poll.getPollFDs()[i].revents == 0)
+				continue;
 			std::cout << "fd = " << i << " revent = " << this->m_poll.getPollFDs()[i].revents << std::endl;
-			if (this->m_poll.getPollFDs()[i].revents & POLLIN)
-			{
-				if (i == 0)
-				{
-					std::cout << "new incoming connection" << std::endl;
-					acceptConnection(m_new_socket);
-					this->m_poll.AddPollFd(m_new_socket, POLLIN);
-				}
-				else
-				{
-					std::cout << "client update" << std::endl;
-					this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
-				}
-			}
+			if (this->m_serverMap.find(this->m_poll.getPollFDs()[i].fd) != this->m_serverMap.end())
+				acceptConnection();
+			if (this->m_clientMap.find(this->m_poll.getPollFDs()[i].fd) != this->m_clientMap.end())
+				this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
 		}
-
-		// std::ostringstream ss;
-		// ss << "------ Received Request from client ------\n\n";
-		// log(ss.str());
-
-		// // sendResponse();
-
-		// close(m_new_socket);
 	}
 }
 
-void HTTPServer::acceptConnection(int &new_socket)
+void HTTPServer::acceptConnection()
 {
-	new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, &m_socketAddress_len);
-	if (new_socket < 0)
+	m_client_socket = accept(m_listening_socket, (sockaddr *)&m_listening_socketAddress, &m_listening_socketAddress_len);
+	if (m_client_socket < 0)
 	{
 		std::ostringstream ss;
-		ss << "Server failed to accept incoming connection from ADDRESS: " << inet_ntoa(m_socketAddress.sin_addr) << "; PORT: " << ntohs(m_socketAddress.sin_port);
+		ss << "Server failed to accept incoming connection from ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << "; PORT: " << ntohs(m_listening_socketAddress.sin_port);
 		exitWithError(ss.str());
 	}
 	else
+	{
 		log("====== accepted a new connection ======\n");
+		auto c {std::make_shared<Client>(m_client_socket)};
+		this->m_clientMap.insert(std::make_pair(this->m_client_socket, c));
+		this->m_poll.AddPollFd(m_client_socket, POLLIN);
+	}
+}
+
+void HTTPServer::HandleActiveClient(pollfd poll_fd)
+{
+	std::cout << "client update" << std::endl;
+	switch (poll_fd.revents)
+	{
+	case POLLIN:
+		this->m_clientMap.at(poll_fd.fd)->parseRequest();
+		break;
+	case POLLOUT:
+		break;
+	default:
+		break;
+	}
+
 }
 
 std::string HTTPServer::buildResponse()
@@ -155,28 +150,3 @@ void HTTPServer::sendResponse(int fd)
 		log("Error sending response to client");
 }
 
-void HTTPServer::HandleActiveClient(struct pollfd curr)
-{
-	int bytesReceived;
-	char buffer[BUFFER_SIZE] = {0};
-	switch (curr.revents)
-	{
-	case POLLIN:
-		log("read case");
-		bytesReceived = recv(curr.fd, buffer, BUFFER_SIZE, 0);
-		if (bytesReceived < 0)
-			exitWithError("Failed to read bytes from client socket connection");
-		log(buffer);
-		break;
-	case POLLOUT:
-		log("write case");
-		this->sendResponse(curr.fd);
-	default:
-		break;
-	}
-}
-
-// void Server::parseRequest(struct pollfd curr, char *buffer, int bytesReceived)
-// {
-
-// }

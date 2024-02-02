@@ -12,9 +12,11 @@
 #include <fstream>
 #include <poll.h>
 #include <unordered_map>
+#include <memory>
 
 #include "Poll.hpp"
 #include "Client.hpp"
+#include "Server.hpp"
 
 class HTTPServer
 {
@@ -27,22 +29,22 @@ public:
 private:
 	std::string m_ip_address;
 	int m_port;
-	int m_socket;
-	int m_new_socket;
-	struct sockaddr_in m_socketAddress;
-	unsigned int m_socketAddress_len;
+	int m_listening_socket;
+	int m_client_socket;
+	struct sockaddr_in m_listening_socketAddress;
+	unsigned int m_listening_socketAddress_len;
 	std::string m_serverMessage;
 	Poll	m_poll;
 
-	// std::unordered_map<int, Client> ClientMap;
-	// std::unordered_map<int, Client> ServerMap;
+	std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
+	std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
 	int startServer();
 	void closeServer();
-	void acceptConnection(int &new_socket);
+	void acceptConnection();
+	void HandleActiveClient(pollfd poll_fd);
 	std::string buildResponse();
 	void sendResponse(int fd);
-	void HandleActiveClient(struct pollfd curr);
 };
 
 #endif // HTTP_SERVER_HPP

@@ -1,16 +1,21 @@
 #if !defined(CLIENT_HPP)
 #define CLIENT_HPP
 
+#include<iostream>
+#include <sys/socket.h>
+
 #include"Request.hpp"
 
 class Client
 {
 public:
-	Client(/* args */);
+	Client(int socket);
 	~Client();
+	void parseRequest();
+	void readSocket();
 private:
 	Request m_request;
-	void parseRequest(struct pollfd curr, char *buffer, int bytesReceived);
+	int		m_socket;
 };
 
 
