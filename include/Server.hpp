@@ -7,7 +7,7 @@ public:
 	Server(int socket);
 	~Server();
 private:
-	int	m_socket
+	int	m_socket;
 };
 
 

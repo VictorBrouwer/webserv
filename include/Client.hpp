@@ -11,7 +11,7 @@ class Client
 public:
 	Client(int socket);
 	~Client();
-	void parseRequest();
+	void receive();
 	void readSocket();
 private:
 	Request m_request;

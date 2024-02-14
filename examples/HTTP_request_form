@@ -1,0 +1,7 @@
+[METH] [REQUEST-URI] HTTP/[VER]
+[fieldname1]: [field-value1]
+[fieldname2]: [field-value2]
+
+[request body, if any]
+
+The METH (for request method) gives the request method used, of which there are several, and which all do different things. The above example used GET, but below some more are explained. The REQUEST-URI is the identifier of the document on the server, such as "/index.html" or whatever. VER is the HTTP version, like in the response. The header fields are also the same as in the server response. The request body is only used for requests that transfer data to the server, such as POST and PUT

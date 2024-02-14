@@ -1,5 +1,4 @@
 #include"HTTPserver.hpp"
-#include"HelperFuncs.hpp"
 
 HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
 {
@@ -68,20 +67,23 @@ void HTTPServer::startPolling()
 	while (true)
 	{
 		log("====== Waiting for a new event ======\n\n\n");
-		int num_events = poll(this->m_poll.getPollFDs().data(), this->m_poll.getPollFDs().size(), -1); // should clarify max wait time now it is set to wait forever(-1)
+		pollfd *poll_fds = this->m_poll.getPollFDs().data();
+		size_t	num_poll_fds = this->m_poll.getPollFDs().size();
+		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time now it is set to wait forever(-1)
 		if (num_events < 0)
 			exitWithError("poll failed");
 		if (num_events == 0)
 			exitWithError("poll timed out");
 		std::cout << "number of events = " << num_events << std::endl;
-		for (size_t i = 0; i < this->m_poll.getPollFDs().size() ; i++)
+		for (size_t i = 0; i < num_poll_fds; i++)
 		{
-			if (this->m_poll.getPollFDs()[i].revents == 0)
+			if (poll_fds[i].revents == 0)
 				continue;
-			std::cout << "fd = " << i << " revent = " << this->m_poll.getPollFDs()[i].revents << std::endl;
-			if (this->m_serverMap.find(this->m_poll.getPollFDs()[i].fd) != this->m_serverMap.end())
+			int Event_fd = poll_fds[i].fd;
+			std::cout << "fd = " << Event_fd << " revent = " << poll_fds[i].revents << std::endl;
+			if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
 				acceptConnection();
-			if (this->m_clientMap.find(this->m_poll.getPollFDs()[i].fd) != this->m_clientMap.end())
+			if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
 				this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
 		}
 	}
@@ -111,7 +113,7 @@ void HTTPServer::HandleActiveClient(pollfd poll_fd)
 	switch (poll_fd.revents)
 	{
 	case POLLIN:
-		this->m_clientMap.at(poll_fd.fd)->parseRequest();
+		this->m_clientMap.at(poll_fd.fd)->receive();
 		break;
 	case POLLOUT:
 		break;

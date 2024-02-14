@@ -17,6 +17,7 @@
 #include "Poll.hpp"
 #include "Client.hpp"
 #include "Server.hpp"
+#include "HelperFuncs.hpp"
 
 class HTTPServer
 {

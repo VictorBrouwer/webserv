@@ -12,10 +12,11 @@ Client::~Client()
 {
 }
 
-void	Client::parseRequest()
+void	Client::receive()
 {
-	
+    m_request.readFromClient(m_socket);
 }
+
 void	Client::readSocket()
 {
 	log("reading from socker");

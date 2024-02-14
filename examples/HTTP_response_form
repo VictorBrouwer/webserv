@@ -1,0 +1,11 @@
+HTTP/[VER] [CODE] [TEXT]
+Field1: Value1
+Field2: Value2
+
+...Document content here..
+
+
+The first line shows the HTTP version used, followed by a three-digit number (the HTTP status code) and a reason 
+phrase meant for humans. Usually the code is 200 (which basically means that all is well) and the phrase "OK". 
+The first line is followed by some lines called the header, which contains information about the document.
+The header ends with a blank line, followed by the document content. This is a typical header:

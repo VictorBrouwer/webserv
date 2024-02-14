@@ -11,6 +11,10 @@ HEADERS		:=	$(wildcard include/*.hpp)
 SRC			:=	main.cpp \
 				HTTPserver.cpp \
 				poll.cpp \
+				Client.cpp \
+				Server.cpp \
+				Request.cpp \
+				HelperFuncs.cpp \
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
