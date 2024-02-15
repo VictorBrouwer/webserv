@@ -1,0 +1,13 @@
+GET / HTTP/1.1
+Host: localhost:8080
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Cookie: _ga_BJ34XNRJCV=GS1.1.1706274626.2.0.1706274659.0.0.0; _ga=GA1.1.510728318.1706271835
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-
