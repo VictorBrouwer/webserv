@@ -9,12 +9,14 @@
 #include <poll.h>
 #include <unordered_map>
 #include <sys/socket.h>
+#include "ClientState.hpp"
 
 enum class HTTPMethod
 {
 	GET,
 	POST,
 	DELETE,
+	UNDEFINED,
 };
 
 class Request
@@ -24,7 +26,7 @@ public:
 	~Request();
 	void	parseHeaders();
 	void	setMethod();
-	void	readFromClient(int client_fd);
+	ClientState	readFromClient(int client_fd);
 
 private:
 	size_t 		m_bytes_read;
