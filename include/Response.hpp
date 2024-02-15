@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <poll.h>
-#include <unordered_map>
 #include <sys/socket.h>
 #include "ClientState.hpp"
 
@@ -22,6 +21,7 @@ public:
 	void	sendResponse();
 private:
     std::string m_total_respnse;
+	std::string m_path;
 };
 
 #endif // RESPONSE_HPP

@@ -1,7 +1,7 @@
 #include"Request.hpp"
 #include"HelperFuncs.hpp"
 
-Request::Request() : m_method(HTTPMethod::UNDEFINED), m_content_length(0)
+Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path("")
 {
 }
 
@@ -21,7 +21,25 @@ void Request::setMethod()
 			m_method = HTTPMethod::POST;
 		else if(method == "DELETE")
 			m_method = HTTPMethod::DELETE;
+		else
+			m_method = HTTPMethod::UNDEFINED;
 	}
+}
+
+std::string& Request::getPath()
+{
+	return m_path;
+}
+std::string Request::extractPath()
+{
+    size_t firstSpacePos = m_total_request.find(' ');
+    if (firstSpacePos != std::string::npos)
+	{
+        size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
+        if (secondSpacePos != std::string::npos)
+            return m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
+    }
+    return "";
 }
 
 void Request::parseHeaders()
@@ -29,6 +47,8 @@ void Request::parseHeaders()
     std::string line;
     size_t i = 0;
 
+	if (m_path == "")
+		m_path = this->extractPath();
     while ((i = m_total_request.find("\r\n", i)) != std::string::npos) {
         line = m_total_request.substr(0, i);
         if (line.empty()) // Empty line indicates end of headers
@@ -52,28 +72,30 @@ ClientState	Request::readFromClient(int client_fd)
 
 	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	m_total_request += std::string(buffer);
+	// log("\n====== incoming request  ======\n");
+	// std::cout << m_total_request << std::endl;
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
+	pos = m_total_request.find("\r\n\r\n");
 	if (m_content_length != 0)
 	{
-		if (m_total_request.size() - (pos + 2) >= m_content_length)
+		if (m_total_request.size() - (pos + 4) >= m_content_length)
 		{
-			m_body = m_total_request.substr(pos + 2);
+			m_body = m_total_request.substr(pos + 4);
 			return ClientState::READING_DONE;
 		}
 		else
 			return ClientState::LOADING;
 	}
-	pos = m_total_request.find("\r\n\r\n");
 	if (pos != std::string::npos)
 	{
 		this->parseHeaders();
 		if (m_headers.find("Content-length") != m_headers.end())
 		{
 			m_content_length = std::stoi(m_headers.at("Content-length"));
-			if (m_total_request.size() - (pos + 2) >= m_content_length)
+			if (m_total_request.size() - (pos + 4) >= m_content_length)
 			{
-				m_body = m_total_request.substr(pos + 2);
+				m_body = m_total_request.substr(pos + 4);
 				return ClientState::READING_DONE;
 			}
 			else
@@ -84,6 +106,4 @@ ClientState	Request::readFromClient(int client_fd)
 	}
 	else
 		return ClientState::LOADING;
-	// log("\n====== incoming request  ======\n");
-	// std::cout << m_total_request << std::endl;
 }

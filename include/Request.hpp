@@ -24,17 +24,18 @@ class Request
 public:
 	Request(/* args */);
 	~Request();
-	void	parseHeaders();
-	void	setMethod();
-	ClientState	readFromClient(int client_fd);
-
+	void			parseHeaders();
+	std::string		extractPath();
+	void			setMethod();
+	ClientState		readFromClient(int client_fd);
+	std::string&	getPath();
 private:
 	size_t 		m_bytes_read;
 	size_t 		m_content_length;
-	size_t 		m_content_bytes_read;
+	// size_t 		m_content_bytes_read;
 	HTTPMethod	m_method;
     std::string m_total_request;
-    // std::string m_header_end;
+    std::string m_path;
     std::unordered_map<std::string, std::string> m_headers;
     std::string m_body;
 };

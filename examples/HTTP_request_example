@@ -1,0 +1,4 @@
+Get /mysite/index.html HTTP/1.1\r\n
+Host: 10.101.101.10\r\n
+Accept: */*\r\n
+\r\n

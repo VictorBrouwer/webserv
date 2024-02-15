@@ -116,7 +116,7 @@ void HTTPServer::HandleActiveClient(pollfd poll_fd)
 		this->m_clientMap.at(poll_fd.fd)->receive();
 		break;
 	case POLLOUT:
-		this->m_clientMap.at(poll_fd.fd)->send();
+		// this->m_clientMap.at(poll_fd.fd)->send();
 		break;
 	default:
 		break;
