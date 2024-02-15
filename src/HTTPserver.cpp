@@ -56,7 +56,7 @@ void HTTPServer::startListen()
 
 	std::ostringstream ss;
 	ss << "\n*** Listening on ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << " PORT: " << ntohs(m_listening_socketAddress.sin_port) << " ***\n\n";
-	log(ss.str());
+	log(Color::White, ss.str());
 }
 
 void HTTPServer::startPolling()
@@ -66,7 +66,7 @@ void HTTPServer::startPolling()
 	this->m_serverMap.insert({this->m_listening_socket, server});
 	while (true)
 	{
-		log("====== Waiting for a new event ======\n\n\n");
+		log(Color::White ,"====== Waiting for a new event ======\n\n\n");
 		pollfd *poll_fds = this->m_poll.getPollFDs().data();
 		size_t	num_poll_fds = this->m_poll.getPollFDs().size();
 		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time now it is set to wait forever(-1)
@@ -86,6 +86,7 @@ void HTTPServer::startPolling()
 			if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
 				this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
 		}
+		updatePoll();
 	}
 }
 
@@ -100,7 +101,7 @@ void HTTPServer::acceptConnection()
 	}
 	else
 	{
-		log("====== accepted a new connection ======\n");
+		log(Color::White, "====== accepted a new connection ======\n");
 		auto c {std::make_shared<Client>(m_client_socket)};
 		this->m_clientMap.insert(std::make_pair(this->m_client_socket, c));
 		this->m_poll.AddPollFd(m_client_socket, POLLIN);
@@ -110,46 +111,30 @@ void HTTPServer::acceptConnection()
 void HTTPServer::HandleActiveClient(pollfd poll_fd)
 {
 	std::cout << "client update" << std::endl;
+	ClientState state = this->m_clientMap.at(poll_fd.fd)->getState();
 	switch (poll_fd.revents)
 	{
 	case POLLIN:
 		this->m_clientMap.at(poll_fd.fd)->receive();
 		break;
 	case POLLOUT:
-		// this->m_clientMap.at(poll_fd.fd)->send();
+		if (state == ClientState::READY_TO_SEND)
+			this->m_clientMap.at(poll_fd.fd)->sendResponse();
 		break;
 	default:
 		break;
 	}
-
 }
 
-std::string HTTPServer::buildResponse()
+void HTTPServer::updatePoll()
 {
-	// std::ifstream infile;
-	// infile.open("/home/vbrouwer/core/webserv/server/test.html", std::ios::in);
-	// std::string buffer, str;
-	// while (std::getline(infile, buffer))
-	// {
-	// 	str.append(buffer);
-	// }
-
-	std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p></body></html>";
-	std::ostringstream ss;
-	ss << "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: " << htmlFile.size() << "\n\n"
-		<< htmlFile;
-
-	return ss.str();
+	for (const auto& pair : m_clientMap)
+	{
+		int socket = pair.first;
+        std::shared_ptr<Client> client = pair.second;
+		if (client->getState() == ClientState::READY_TO_SEND)
+			m_poll.getPollFDs().at(socket).events = POLLOUT;
+		if (client->getState() == ClientState::SENDING_DONE)
+			m_poll.getPollFDs().at(socket).events = POLLIN;
+	}
 }
-
-void HTTPServer::sendResponse(int fd)
-{
-	m_serverMessage = buildResponse();
-	long unsigned int bytesSent;
-	bytesSent = write(fd, m_serverMessage.c_str(), m_serverMessage.size());
-	if (bytesSent == m_serverMessage.size())
-		log("------ Server Response sent to client ------\n\n");
-	else
-		log("Error sending response to client");
-}
-

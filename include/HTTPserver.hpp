@@ -44,8 +44,9 @@ private:
 	void closeServer();
 	void acceptConnection();
 	void HandleActiveClient(pollfd poll_fd);
-	std::string buildResponse();
-	void sendResponse(int fd);
+	void updatePoll();
+	// std::string buildResponse();
+	// void sendResponse(int fd);
 };
 
 #endif // HTTP_SERVER_HPP

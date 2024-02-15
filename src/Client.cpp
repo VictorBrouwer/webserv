@@ -12,6 +12,15 @@ Client::~Client()
 {
 }
 
+ClientState & Client::getState()
+{
+	return this->m_state;
+}
+
+void	Client::sendResponse()
+{
+}
+
 void	Client::receive()
 {
 	m_state = m_request.readFromClient(m_socket);
@@ -22,12 +31,9 @@ void	Client::receive()
 	switch (m_state)
 	{
 	case ClientState::LOADING:
-		
 		break;
 	case ClientState::READING_DONE:
-		this->createResponse(m_request);
 		break;
-	
 	default:
 		break;
 	}

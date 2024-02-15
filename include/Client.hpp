@@ -13,9 +13,10 @@ class Client
 public:
 	Client(int socket);
 	~Client();
+	ClientState & getState();
 	void receive();
-	void createResponse(Request &request);
-	// void send();
+	// void createResponse(Request &request);
+	void sendResponse();
 	void readSocket();
 private:
 	Request 		m_request;

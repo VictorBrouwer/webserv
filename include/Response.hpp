@@ -18,7 +18,6 @@ public:
 	void	addStatusLine(std::string &status_line);
 	void	addHeader(std::string &header);
 	void	addBody(std::string &body);
-	void	sendResponse();
 private:
     std::string m_total_respnse;
 	std::string m_path;
