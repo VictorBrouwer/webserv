@@ -26,10 +26,6 @@ void Request::setMethod()
 	}
 }
 
-std::string& Request::getPath()
-{
-	return m_path;
-}
 std::string Request::extractPath()
 {
     size_t firstSpacePos = m_total_request.find(' ');
@@ -106,4 +102,22 @@ ClientState	Request::readFromClient(int client_fd)
 	}
 	else
 		return ClientState::LOADING;
+}
+
+
+std::string	Request::Get_Body() 
+{
+	return m_body;
+}
+std::string Request::Get_Path() 
+{
+	return m_path;
+}
+HTTPMethod 	Request::Get_Method() 
+{
+	return m_method;
+}
+std::unordered_map<std::string, std::string> Request::Get_Headers() 
+{
+	return m_headers;
 }

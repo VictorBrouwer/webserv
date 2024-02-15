@@ -14,6 +14,7 @@ SRC			:=	main.cpp \
 				Client.cpp \
 				Server.cpp \
 				Request.cpp \
+				Response.cpp \
 				HelperFuncs.cpp \
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
