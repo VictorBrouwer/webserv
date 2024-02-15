@@ -1,0 +1,10 @@
+POST /api/resource HTTP/1.1
+Host: example.com
+Content-Type: application/json
+Authorization: Bearer <token>
+Content-Length: 54
+
+{
+  "name": "New Resource",
+  "description": "A description for the new resource."
+}
