@@ -32,6 +32,7 @@ public:
 	std::string	Get_Body();
 	std::string Get_Path();
 	HTTPMethod 	Get_Method();
+	std::string Get_Request();
 	std::unordered_map<std::string, std::string> Get_Headers();
 
 private:

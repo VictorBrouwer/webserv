@@ -33,7 +33,7 @@ std::string Request::extractPath()
 	{
         size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
         if (secondSpacePos != std::string::npos)
-            return m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
+            return "/home/jmeruma/Documents/personal/webserv" + m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
     }
     return "";
 }
@@ -104,20 +104,27 @@ ClientState	Request::readFromClient(int client_fd)
 		return ClientState::LOADING;
 }
 
-
 std::string	Request::Get_Body() 
 {
 	return m_body;
 }
+
 std::string Request::Get_Path() 
 {
 	return m_path;
 }
+
 HTTPMethod 	Request::Get_Method() 
 {
 	return m_method;
 }
+
 std::unordered_map<std::string, std::string> Request::Get_Headers() 
 {
 	return m_headers;
+}
+
+std::string Request::Get_Request()
+{
+	return m_total_request;
 }

@@ -9,7 +9,11 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <unordered_map>
-#include "Client.hpp"
+#include <fstream>
+#include <filesystem>
+#include "Request.hpp"
+#include "HelperFuncs.hpp"
+#include <map>
 
 enum class StatusCode
 {
@@ -41,10 +45,11 @@ class Response
 public:
 	Response(Request &client_request);
 	~Response();
-	void	createResponse(void);
+	void	createResponse();
 	void	addStatusLine(std::string &status_line);
-	void	addHeader(std::string &header);
-	void	addBody(std::string &body);
+	void	addContentType();
+	void	addHeader();
+	void	addBody();
 	void	sendResponse();
 
 	void	Get_Response();
@@ -53,10 +58,16 @@ public:
 
 private:
 
-    std::string m_total_respnse;
-	std::unordered_map<std::string, std::string> m_headers;
-	StatusCode m_status;
-	Request &m_client_request;
+	bool			DoesFileExists();
+	std::fstream 	OpenFile(std::ios_base::openmode) noexcept(false);
+	void			ReadFile(std::fstream &file) noexcept(false);
+
+	std::string										m_body;
+	StatusCode										m_status;
+	Request											&m_client_request;
+	std::unordered_map<std::string, std::string> 	m_headers;
+    std::string 									m_total_response;
+	unsigned int									m_content_length;
 };
 
 #endif // RESPONSE_HPP
