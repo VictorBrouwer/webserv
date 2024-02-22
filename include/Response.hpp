@@ -46,11 +46,8 @@ public:
 	Response(Request &client_request);
 	~Response();
 	void	createResponse();
-	void	addStatusLine(std::string &status_line);
-	void	addContentType();
 	void	addHeader();
-	void	addBody();
-	void	sendResponse();
+	const std::string &getResponse() const;
 
 	void	Get_Response();
 	void	Delete_Response();
@@ -62,12 +59,20 @@ private:
 	std::fstream 	OpenFile(std::ios_base::openmode) noexcept(false);
 	void			ReadFile(std::fstream &file) noexcept(false);
 
+	std::string		ExtensionExtractor(const std::string &path);
+
 	std::string										m_body;
 	StatusCode										m_status;
 	Request											&m_client_request;
 	std::unordered_map<std::string, std::string> 	m_headers;
+	/* The Content DataBases for ease of lookup */
+	std::unordered_map<int, std::string>			m_DB_status;
+	std::unordered_map<std::string, std::string>	m_DB_ContentType;
+
     std::string 									m_total_response;
 	unsigned int									m_content_length;
+
+	
 };
 
 #endif // RESPONSE_HPP
