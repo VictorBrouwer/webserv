@@ -19,12 +19,13 @@
 #include "Client.hpp"
 #include "Server.hpp"
 #include "HelperFuncs.hpp"
+#include "Configuration.hpp"
 
 class HTTPServer
 {
 public:
 	HTTPServer(std::string ip_address, int port);
-	HTTPServer(std::string config);
+	HTTPServer(const Configuration &config);
 	~HTTPServer();
 	void startListen();
 	void startPolling();

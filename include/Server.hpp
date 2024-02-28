@@ -1,10 +1,12 @@
 #if !defined(SERVER_HPP)
 #define SERVER_HPP
+#include "Directive.hpp"
 
 class Server
 {
 public:
 	Server(int socket);
+	Server(Directive server_directive);
 	~Server();
 private:
 	int	m_socket;

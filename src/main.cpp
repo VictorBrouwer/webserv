@@ -19,7 +19,7 @@ int main(int ac, char **av)
 	log("Starting webserv! 🌐");
 
 	if (ac == 1)
-		config_path = "./webserv.conf";
+		config_path = "./config/webserv.conf";
 	else
 		config_path = av[1];
 	log("Using config file: " + config_path);
@@ -27,6 +27,20 @@ int main(int ac, char **av)
 	std::ifstream config_file(config_path);
 	if (!config_file.is_open())
 		exitWithError("Could not open config file, exiting.");
+
+	HTTPServer    *http_server;
+	try
+	{
+		Configuration configuration(config_file);
+		http_server = new HTTPServer(configuration);
+		// 	HTTPServer->startListen();
+		// 	HTTPServer->startPolling();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		delete http_server;
+	}
 
 	return 0;
 }

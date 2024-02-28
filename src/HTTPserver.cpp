@@ -1,4 +1,5 @@
 #include"HTTPserver.hpp"
+#include "Configuration.hpp"
 
 HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
 {
@@ -13,6 +14,11 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 		ss << "Failed to start server with PORT: " << ntohs(m_listening_socketAddress.sin_port);
 		log(ss.str());
 	}
+}
+
+HTTPServer::HTTPServer(const Configuration &config)
+{
+
 }
 
 HTTPServer::~HTTPServer()
