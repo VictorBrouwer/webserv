@@ -152,4 +152,3 @@ void HTTPServer::sendResponse(int fd)
 	else
 		log("Error sending response to client");
 }
-
