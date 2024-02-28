@@ -108,7 +108,7 @@ void HTTPServer::acceptConnection()
 	}
 }
 
-void HTTPServer::HandleActiveClient(pollfd poll_fd)
+void HTTPServer::HandleActiveClient(pollfd poll_fd) // still needs work
 {
 	std::cout << "client update" << std::endl;
 	ClientState state = this->m_clientMap.at(poll_fd.fd)->getState();
