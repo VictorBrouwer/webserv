@@ -1,13 +1,13 @@
 #include "HelperFuncs.hpp"
 
 // Function definitions
-void log(const std::string &color, const std::string &message)
+void log(const std::string& message, const std::string& color)
 {
 	std::cout << color << message << std::endl;
 }
 
 void exitWithError(const std::string &errorMessage)
 {
-	log(Color::Red, "ERROR: " + errorMessage);
+	log("ERROR: " + errorMessage, Color::Red);
 	exit(1);
 }

@@ -26,10 +26,6 @@ void Request::setMethod()
 	}
 }
 
-std::string& Request::getPath()
-{
-	return m_path;
-}
 std::string Request::extractPath()
 {
     size_t firstSpacePos = m_total_request.find(' ');
@@ -72,8 +68,7 @@ ClientState	Request::readFromClient(int client_fd)
 
 	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	m_total_request += std::string(buffer);
-	// log("\n====== incoming request  ======\n");
-	// std::cout << m_total_request << std::endl;
+	log("\n====== incoming request  ======\n", Color::Cyan);
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
 	pos = m_total_request.find("\r\n\r\n");
@@ -106,4 +101,29 @@ ClientState	Request::readFromClient(int client_fd)
 	}
 	else
 		return ClientState::LOADING;
+}
+
+std::string	Request::Get_Body() 
+{
+	return m_body;
+}
+
+std::string Request::Get_Path() 
+{
+	return m_path;
+}
+
+HTTPMethod 	Request::Get_Method() 
+{
+	return m_method;
+}
+
+std::unordered_map<std::string, std::string> Request::Get_Headers() 
+{
+	return m_headers;
+}
+
+std::string Request::Get_Request()
+{
+	return m_total_request;
 }

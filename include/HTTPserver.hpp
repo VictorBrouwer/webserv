@@ -28,14 +28,14 @@ public:
 	void startPolling();
 
 private:
-	std::string m_ip_address;
-	int m_port;
-	int m_listening_socket;
-	int m_client_socket;
-	struct sockaddr_in m_listening_socketAddress;
-	unsigned int m_listening_socketAddress_len;
-	std::string m_serverMessage;
-	Poll	m_poll;
+	std::string 		m_ip_address;
+	int 				m_port;
+	int 				m_listening_socket;
+	int 				m_client_socket;
+	struct sockaddr_in 	m_listening_socketAddress;
+	unsigned int 		m_listening_socketAddress_len;
+	std::string 		m_serverMessage;
+	Poll				m_poll;
 
 	std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
 	std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
@@ -45,6 +45,7 @@ private:
 	void acceptConnection();
 	void HandleActiveClient(pollfd poll_fd);
 	void updatePoll();
+	void handleEvent(int Event_fd, int i, pollfd *poll_fds);
 	// std::string buildResponse();
 	// void sendResponse(int fd);
 };

@@ -18,7 +18,7 @@ namespace Color {
 } // namespace Color
 
 // Function declarations
-void log(const std::string &color, const std::string &message);
+void log(const std::string& message, const std::string& color = Color::White);
 void exitWithError(const std::string &errorMessage);
 
 #endif
