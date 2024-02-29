@@ -52,6 +52,7 @@ Response::Response(Request &client_request) : m_client_request(client_request), 
 			{"jpg", "image/jpg"},
 			{"png", "image/png"},
 			{"gif", "image/gif"},
+			{"ico",  "image/x-icon"},
 
 			{"mpeg", "audio/mpeg"},
 			{"ogg", "audio/ogg"},
