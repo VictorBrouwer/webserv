@@ -28,7 +28,13 @@ public:
 	std::string		extractPath();
 	void			setMethod();
 	ClientState		readFromClient(int client_fd);
-	std::string&	getPath();
+
+	std::string	Get_Body();
+	std::string Get_Path();
+	HTTPMethod 	Get_Method();
+	std::string Get_Request();
+	std::unordered_map<std::string, std::string> Get_Headers();
+
 private:
 	size_t 		m_bytes_read;
 	size_t 		m_content_length;

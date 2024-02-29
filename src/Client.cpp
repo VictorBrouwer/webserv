@@ -3,7 +3,7 @@
 
 // const int BUFFER_SIZE = 30720;
 
-Client::Client(int socket) : m_socket(socket)
+Client::Client(int socket) : m_socket(socket), m_response(this->m_request)
 {
 	std::cout << "Client created\n";
 }
@@ -33,6 +33,8 @@ void	Client::receive()
 	case ClientState::LOADING:
 		break;
 	case ClientState::READING_DONE:
+		m_response.createResponse();
+		write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
 		break;
 	default:
 		break;
