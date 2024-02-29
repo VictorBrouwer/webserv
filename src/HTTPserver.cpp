@@ -75,7 +75,8 @@ void HTTPServer::startPolling()
 		log("====== Waiting for a new event ======\n\n\n");
 		pollfd *poll_fds = this->m_poll.getPollFDs().data();
 		size_t	num_poll_fds = this->m_poll.getPollFDs().size();
-		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time now it is set to wait forever(-1)
+		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time. now it is set to wait forever(-1)
+		log("poll running", Color::Magenta);
 		if (num_events < 0)
 			exitWithError("poll failed");
 		if (num_events == 0)
