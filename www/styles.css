@@ -6,43 +6,38 @@ body {
     background-color: indigo;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Center items vertically */
-    align-items: center; /* Center items horizontally */
+    justify-content: center;
     min-height: 100vh;
 }
 
 h1 {
-    font-size: 5em;
-    margin: 5px 0; /* Reduced margin for closer spacing */
+    font-size: 2em;
+    margin-bottom: 20px;
     color: rgb(4, 4, 4);
 }
 
-.images {
+form {
     display: flex;
-    justify-content: center;
-    margin-bottom: 10px; /* Adjusted margin to bring images closer to the heading */
+    flex-direction: column;
+    align-items: center;
 }
 
-img {
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    margin: 5px; /* Reduced margin for closer spacing */
+#name {
+    padding: 10px;
+    border: 1px solid #ddd;
+    width: 200px;
+    margin-bottom: 10px;
 }
 
-.button {
+button {
     background-color: #0a19e4;
     border: none;
-    color: white;
-    padding: 10px 20px; /* Reduced padding for smaller button */
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 14px; /* Reduced font size for smaller button */
-    margin-top: 5px; /* Adjusted margin for closer spacing */
+    color: rgb(249, 245, 4);
+    padding: 10px 20px;
+    font-size: 14px;
     cursor: pointer;
 }
 
-.button:hover {
+button:hover {
     background-color: #4b45a0;
 }

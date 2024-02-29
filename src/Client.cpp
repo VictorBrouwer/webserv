@@ -17,9 +17,11 @@ ClientState & Client::getState()
 	return this->m_state;
 }
 
-// void	Client::sendResponse()
-// {
-// }
+void	Client::sendResponse()
+{
+	// write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
+	send(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size(), 0);
+}
 
 void	Client::receive()
 {
@@ -36,7 +38,7 @@ void	Client::receive()
 		break;
 	case ClientState::READING_DONE:
 		m_response.createResponse();
-		write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
+		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
 		break;
 	default:
 		break;

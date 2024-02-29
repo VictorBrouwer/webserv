@@ -135,7 +135,7 @@ void HTTPServer::HandleActiveClient(pollfd poll_fd) // still needs work
 		break;
 	case POLLOUT:
 		if (state == ClientState::READY_TO_SEND)
-			// this->m_clientMap.at(poll_fd.fd)->sendResponse();
+			this->m_clientMap.at(poll_fd.fd)->sendResponse();
 		break;
 	default:
 		break;

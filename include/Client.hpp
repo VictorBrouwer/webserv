@@ -17,7 +17,7 @@ public:
 	~Client();
 	ClientState & getState();
 	void receive();
-	// void send();
+	void sendResponse();
 	void readSocket();
 private:
 	int				m_socket;

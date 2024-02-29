@@ -101,7 +101,7 @@ void Response::Get_Response()
 		std::cerr << e.what() << '\n';
 	}
 	this->addHeader();
-
+	
 }
 
 std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
