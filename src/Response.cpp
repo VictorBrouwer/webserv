@@ -181,23 +181,6 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	return line;
 }
 
-void Response::Get_Response()
-{
-	std::fstream file;
-
-	try
-	{
-		file = this->OpenFile(READ_ONLY);
-		this->ReadFile(file);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-	}
-	this->addHeader();
-
-}
-
 const std::string &Response::getResponse() const
 {
 	return m_total_response;
