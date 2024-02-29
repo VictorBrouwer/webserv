@@ -45,9 +45,10 @@ class Response
 public:
 	Response(Request &client_request);
 	~Response();
-	void	createResponse();
-	void	addHeader();
-	const std::string &getResponse() const;
+
+	void				addHeader();
+	void				createResponse();
+	const std::string 	&getResponse() const;
 
 	void	Get_Response();
 	void	Delete_Response();

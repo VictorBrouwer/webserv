@@ -3,6 +3,11 @@
 #define READ_ONLY std::ios::in
 #define WRITE_ONLY std::ios::out
 
+Response::~Response()
+{
+
+}
+
 Response::Response(Request &client_request) : m_client_request(client_request), m_headers(client_request.Get_Headers()), \
 	m_DB_status(
 		{
@@ -62,12 +67,6 @@ Response::Response(Request &client_request) : m_client_request(client_request), 
 	m_content_length = 0;
 }
 
-Response::~Response()
-{
-
-}
-
-
 // Step 1 Recognise wich HTTP method request we got (done).
 // Step 2 Lookup PATH (does it exist, do you have premissions(Write, Read (Only Read with GET))) (done)
 // Step 3 Read the File (Keep the amount of characters read (Content-Length = character read)) 
@@ -87,20 +86,48 @@ void Response::createResponse()
 	}
 }
 
-bool Response::DoesFileExists()
+void Response::Get_Response() 
 {
-	log(m_client_request.Get_Path());
-	if (!std::filesystem::exists(m_client_request.Get_Path()))
+	std::fstream file;
+	
+	try
+	{
+		file = this->OpenFile(READ_ONLY);
+		this->ReadFile(file);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	this->addHeader();
+	
+}
+
+std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
+{
+	std::fstream file;
+
+	if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 	{
 		m_status = StatusCode::NotFound;
-		return false;
+		throw std::logic_error("File Not Found 404");
 	}
 
-	return true;
+	file.open(m_client_request.Get_Path(), mode);
+	if (!file.is_open())
+	{
+		m_status = StatusCode::Forbidden;
+		throw std::logic_error("Forbidden File 403");
+	}
+
+	return file;
 }
+
 // Make a map for the status values 200 -> OK
 // Header HTTP/[VER] [CODE] [TEXT]
 // Header Conent-Length [Length-Of-Body]
+// "\r\n"
+// Body [file contents]
 void	Response::addHeader()
 {
 	size_t pos;
@@ -120,23 +147,6 @@ void	Response::addHeader()
 	log(m_total_response);
 }
 
-std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
-{
-	std::fstream file;
-
-	if (!this->DoesFileExists())
-		throw std::logic_error("File Not Found 404");
-
-	file.open(m_client_request.Get_Path(), mode);
-	if (!file.is_open())
-	{
-		m_status = StatusCode::Forbidden;
-		throw std::logic_error("Forbidden File 403");
-	}
-
-	return file;
-}
-
 void Response::ReadFile(std::fstream &file) noexcept(false)
 {
 	std::string line;
@@ -154,6 +164,13 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
 	m_content_length = m_body.size();
 }
 
+bool Response::DoesFileExists()
+{
+	if (!std::filesystem::exists(m_client_request.Get_Path()))
+		return false;
+	return true;
+}
+
 std::string	Response::ExtensionExtractor(const std::string &path)
 {
 	std::string line;
@@ -164,22 +181,6 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	return line;
 }
 
-void Response::Get_Response() 
-{
-	std::fstream file;
-	
-	try
-	{
-		file = this->OpenFile(READ_ONLY);
-		this->ReadFile(file);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-	}
-	this->addHeader();
-	
-}
 
 const std::string &Response::getResponse() const
 {

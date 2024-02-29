@@ -26,7 +26,7 @@ void	Client::receive()
 		break;
 	case ClientState::READING_DONE:
 		m_response.createResponse();
-		write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size() - 2000);
+		write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
 		break;
 	
 	default:

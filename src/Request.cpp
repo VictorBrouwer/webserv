@@ -1,6 +1,8 @@
 #include"Request.hpp"
 #include"HelperFuncs.hpp"
 
+#define BUFFER_SIZE 1096
+
 Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path("")
 {
 }
@@ -29,6 +31,7 @@ void Request::setMethod()
 std::string Request::extractPath()
 {
     size_t firstSpacePos = m_total_request.find(' ');
+
     if (firstSpacePos != std::string::npos)
 	{
         size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
@@ -45,10 +48,13 @@ void Request::parseHeaders()
 
 	if (m_path == "")
 		m_path = this->extractPath();
-    while ((i = m_total_request.find("\r\n", i)) != std::string::npos) {
+
+    while ((i = m_total_request.find("\r\n", i)) != std::string::npos)
+	{
         line = m_total_request.substr(0, i);
         if (line.empty()) // Empty line indicates end of headers
             break;
+
         size_t pos = line.find(':');
         if (pos != std::string::npos)
 		{
@@ -56,22 +62,27 @@ void Request::parseHeaders()
             std::string value = line.substr(pos + 2);
             m_headers.emplace(key, value);
         }
+
         i += 2; // Move past the "\r\n" delimiter
     }
 }
 
 ClientState	Request::readFromClient(int client_fd)
 {
-	size_t BUFFER_SIZE = 1096;
-	char buffer[BUFFER_SIZE];
 	size_t pos;
+	char buffer[BUFFER_SIZE];
 
 	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	m_total_request += std::string(buffer);
+
+
 	// log("\n====== incoming request  ======\n");
 	// std::cout << m_total_request << std::endl;
+
+
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
+
 	pos = m_total_request.find("\r\n\r\n");
 	if (m_content_length != 0)
 	{
@@ -83,6 +94,7 @@ ClientState	Request::readFromClient(int client_fd)
 		else
 			return ClientState::LOADING;
 	}
+
 	if (pos != std::string::npos)
 	{
 		this->parseHeaders();
