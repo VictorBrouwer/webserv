@@ -8,7 +8,7 @@ Response::~Response()
 
 }
 
-Response::Response(Request &client_request) : m_client_request(client_request), m_headers(client_request.Get_Headers()), \
+Response::Response(Request &client_request) : m_client_request(client_request), \
 	m_DB_status(
 		{
 			{000, "Null"},
