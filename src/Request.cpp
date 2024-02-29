@@ -36,7 +36,7 @@ std::string Request::extractPath()
 	{
         size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
         if (secondSpacePos != std::string::npos)
-            return "/home/jmeruma/Documents/personal/webserv" + m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
+            return "/home/vbrouwer/core/webserv" + m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
     }
     return "";
 }

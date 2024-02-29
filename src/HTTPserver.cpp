@@ -128,7 +128,7 @@ void HTTPServer::HandleActiveClient(pollfd poll_fd) // still needs work
 		break;
 	case POLLOUT:
 		if (state == ClientState::READY_TO_SEND)
-			this->m_clientMap.at(poll_fd.fd)->sendResponse();
+			// this->m_clientMap.at(poll_fd.fd)->sendResponse();
 		break;
 	default:
 		break;
@@ -154,21 +154,3 @@ void HTTPServer::updatePoll()
 	}
 }
 
-// void HTTPServer::updatePoll() {
-// 	log("updating poll\n");
-// 	// for (std::map<int, std::shared_ptr<Client>>::iterator it = m_clientMap.begin(); it != m_clientMap.end(); ++it)
-// 	for (std::unordered_map<int, std::shared_ptr<Client>>::iterator it = m_clientMap.begin(); it != m_clientMap.end(); it++)
-// 	{
-//     int socket = it->first;
-//     std::shared_ptr<Client> client = it->second;
-//     if (client->getState() == ClientState::LOADING)
-// 		m_poll.getPollFDs().at(socket).events = POLLIN;
-//     else if (client->getState() == ClientState::READING_DONE)
-// 		m_poll.getPollFDs().at(socket).events = POLLIN; // Handle finished reading or transition to a different state
-// 	else if (client->getState() == ClientState::READY_TO_SEND)
-// 		m_poll.getPollFDs().at(socket).events = POLLOUT;
-// 	else if (client->getState() == ClientState::SENDING_DONE)
-// 		m_poll.getPollFDs().at(socket).events = POLLIN;
-// 	}
-// 	log("poll updated\n");
-// }

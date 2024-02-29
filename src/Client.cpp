@@ -17,13 +17,14 @@ ClientState & Client::getState()
 	return this->m_state;
 }
 
-void	Client::sendResponse()
-{
-}
+// void	Client::sendResponse()
+// {
+// }
 
 void	Client::receive()
 {
 	m_state = m_request.readFromClient(m_socket);
+	log(m_request.Get_Request(), Color::Yellow);
 	// m_state is either loading or reading_done
 	// if client state is loading, the poll event should remain POLLIN
 	// if client statis done_reading, a response should be created and then 
@@ -34,6 +35,8 @@ void	Client::receive()
 	case ClientState::LOADING:
 		break;
 	case ClientState::READING_DONE:
+		m_response.createResponse();
+		write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
 		break;
 	default:
 		break;
