@@ -1,3 +1,6 @@
 .vscode/
 webserv
 obj/
+a.out
+*.o
+*.a

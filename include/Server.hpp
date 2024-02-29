@@ -6,12 +6,10 @@ class Server
 {
 public:
 	Server(int socket);
-	Server(Directive server_directive);
+	Server(const Directive &server_directive);
 	~Server();
 private:
 	int	m_socket;
 };
-
-
 
 #endif // SERVER_HPP

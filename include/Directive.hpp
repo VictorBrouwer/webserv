@@ -6,12 +6,12 @@
 
 class Directive {
 	public:
-		Directive(std::stringstream content);
+		Directive(std::vector<std::string>::iterator &iterator,
+				  const std::vector<std::string> &lines);
 		~Directive();
 
 	private:
-		std::string              m_key;
-		std::string              m_value;
-		std::vector<std::string> m_options;
-		std::vector<Directive>   m_directives;
+		std::string              _key;
+		std::vector<std::string> _arguments;
+		std::vector<Directive>   _block;
 };

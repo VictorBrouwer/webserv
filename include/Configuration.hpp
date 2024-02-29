@@ -7,9 +7,9 @@
 
 class Configuration {
 	public:
-		Configuration(std::ifstream config_file);
+		Configuration(std::ifstream &config_file);
 		~Configuration();
 
 	private:
-		std::vector<Directive> m_directives;
+		std::vector<Directive> _directives;
 };

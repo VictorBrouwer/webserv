@@ -1,7 +1,8 @@
-#include"HTTPserver.hpp"
+#include"HTTPServer.hpp"
 #include "HelperFuncs.hpp"
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 // int main()
 // {
@@ -28,19 +29,19 @@ int main(int ac, char **av)
 	if (!config_file.is_open())
 		exitWithError("Could not open config file, exiting.");
 
-	HTTPServer    *http_server;
+	int return_value = 0;
 	try
 	{
-		Configuration configuration(config_file);
-		http_server = new HTTPServer(configuration);
+		std::unique_ptr<Configuration> config(new Configuration(config_file) );
+		// std::unique_ptr<HTTPServer>    http_server(new HTTPServer(*config) );
 		// 	HTTPServer->startListen();
 		// 	HTTPServer->startPolling();
 	}
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
-		delete http_server;
+		return_value = 1;
 	}
 
-	return 0;
+	return return_value;
 }
