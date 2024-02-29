@@ -22,14 +22,14 @@ Response::Response(Request &client_request) : m_client_request(client_request), 
 			{304, "NotModified"},
 
 			{400, "BadRequest"},
-			{401, "UnAuthorized"},
+			{401, "Unauthorized"},
 			{403, "Forbidden"},
 			{404, "NotFound"},
 			{405, "MethodNotAllowed"},
 			{408, "RequestTimeout"},
-			{411, "LenghtRequired"},
-			{413, "PayloadToLarge"},
-			{414, "URIToLong"},
+			{411, "LengthRequired"},
+			{413, "PayloadTooLarge"},
+			{414, "URITooLong"},
 			{415, "InternalServerError"},
 
 			{500, "UnsupportedMediaType"},
@@ -69,7 +69,7 @@ Response::Response(Request &client_request) : m_client_request(client_request), 
 
 // Step 1 Recognise wich HTTP method request we got (done).
 // Step 2 Lookup PATH (does it exist, do you have premissions(Write, Read (Only Read with GET))) (done)
-// Step 3 Read the File (Keep the amount of characters read (Content-Length = character read)) 
+// Step 3 Read the File (Keep the amount of characters read (Content-Length = character read))
 // Step 4 Create Header If no status code has been set set status to 200 (OK)
 // Step 5 Make a function that fills additional information (Set this to template)
 // Step 6 Copy the requested information in the (Body)
@@ -86,10 +86,10 @@ void Response::createResponse()
 	}
 }
 
-void Response::Get_Response() 
+void Response::Get_Response()
 {
 	std::fstream file;
-	
+
 	try
 	{
 		file = this->OpenFile(READ_ONLY);
@@ -100,7 +100,7 @@ void Response::Get_Response()
 		std::cerr << e.what() << '\n';
 	}
 	this->addHeader();
-	
+
 }
 
 std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
@@ -181,6 +181,22 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	return line;
 }
 
+void Response::Get_Response()
+{
+	std::fstream file;
+
+	try
+	{
+		file = this->OpenFile(READ_ONLY);
+		this->ReadFile(file);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	this->addHeader();
+
+}
 
 const std::string &Response::getResponse() const
 {

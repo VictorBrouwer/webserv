@@ -25,14 +25,14 @@ enum class StatusCode
 	Found = 302,
 	NotModified = 304,
 	BadRequest = 400,
-	UnAuthorized = 401,
+	Unauthorized = 401,
 	Forbidden = 403,
 	NotFound = 404,
 	MethodNotAllowed = 405,
 	RequestTimeout = 408,
-	LenghtRequired = 411,
-	PayloadToLarge = 413,
-	URIToLong = 414,
+	LengthRequired = 411,
+	PayloadTooLarge = 413,
+	URITooLong = 414,
 	UnsupportedMediaType = 415,
 	InternalServerError = 500,
 	NotImplemented = 501,
@@ -73,7 +73,7 @@ private:
     std::string 									m_total_response;
 	unsigned int									m_content_length;
 
-	
+
 };
 
 #endif // RESPONSE_HPP

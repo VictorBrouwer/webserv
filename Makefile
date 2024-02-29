@@ -4,24 +4,26 @@ NAME 		:= 	webserv
 OBJ_DIR		:=	./obj
 SRC_DIR 	:=	./src
 
-INC			:=	-I include 
+INC			:=	-I include
 
 HEADERS		:=	$(wildcard include/*.hpp)
 
 SRC			:=	main.cpp \
 				HTTPserver.cpp \
-				poll.cpp \
+				Poll.cpp \
 				Client.cpp \
 				Server.cpp \
 				Request.cpp \
 				Response.cpp \
 				HelperFuncs.cpp \
+				Configuration.cpp \
+				Directive.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
 
 CC			:=	c++
-FLAGS 		:= -std=c++20 -Wall -Werror -Wextra
+FLAGS 		:= -std=c++2a -Wall -Werror -Wextra
 
 ifdef DEBUG
 	FLAGS += -g
