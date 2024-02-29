@@ -56,7 +56,7 @@ void HTTPServer::startListen()
 
 	std::ostringstream ss;
 	ss << "\n*** Listening on ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << " PORT: " << ntohs(m_listening_socketAddress.sin_port) << " ***\n\n";
-	log(Color::White, ss.str());
+	log(ss.str());
 }
 
 void HTTPServer::startPolling()
@@ -66,7 +66,7 @@ void HTTPServer::startPolling()
 	this->m_serverMap.insert({this->m_listening_socket, server});
 	while (true)
 	{
-		log(Color::White ,"====== Waiting for a new event ======\n\n\n");
+		log("====== Waiting for a new event ======\n\n\n");
 		pollfd *poll_fds = this->m_poll.getPollFDs().data();
 		size_t	num_poll_fds = this->m_poll.getPollFDs().size();
 		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time now it is set to wait forever(-1)
@@ -77,17 +77,26 @@ void HTTPServer::startPolling()
 		std::cout << "number of events = " << num_events << std::endl;
 		for (size_t i = 0; i < num_poll_fds; i++)
 		{
-			if (poll_fds[i].revents == 0)
-				continue;
 			int Event_fd = poll_fds[i].fd;
-			std::cout << "fd = " << Event_fd << " revent = " << poll_fds[i].revents << std::endl;
-			if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
-				acceptConnection();
-			if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
-				this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
+			if (poll_fds[i].revents != 0)
+			{
+				handleEvent(Event_fd, i, poll_fds);
+				num_events--;
+			}
+			if (num_events <= 0)
+				break;
 		}
 		updatePoll();
 	}
+}
+
+void HTTPServer::handleEvent(int Event_fd, int i, pollfd *poll_fds)
+{
+	std::cout << "fd = " << Event_fd << " revent = " << poll_fds[i].revents << std::endl;
+	if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
+		acceptConnection();
+	if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
+		this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
 }
 
 void HTTPServer::acceptConnection()
@@ -101,14 +110,14 @@ void HTTPServer::acceptConnection()
 	}
 	else
 	{
-		log(Color::White, "====== accepted a new connection ======\n");
+		log("====== accepted a new connection ======\n");
 		auto c {std::make_shared<Client>(m_client_socket)};
 		this->m_clientMap.insert(std::make_pair(this->m_client_socket, c));
 		this->m_poll.AddPollFd(m_client_socket, POLLIN);
 	}
 }
 
-void HTTPServer::HandleActiveClient(pollfd poll_fd)
+void HTTPServer::HandleActiveClient(pollfd poll_fd) // still needs work
 {
 	std::cout << "client update" << std::endl;
 	ClientState state = this->m_clientMap.at(poll_fd.fd)->getState();
@@ -131,10 +140,35 @@ void HTTPServer::updatePoll()
 	for (const auto& pair : m_clientMap)
 	{
 		int socket = pair.first;
-        std::shared_ptr<Client> client = pair.second;
+		std::shared_ptr<Client> client = pair.second;
+		if (client->getState() == ClientState::LOADING)
+			m_poll.setEvents(socket, POLLIN);
+		if (client->getState() == ClientState::READING_DONE) // unsure if this is correct. Should you still accept incoming requests at this point?
+			m_poll.setEvents(socket, POLLIN);
 		if (client->getState() == ClientState::READY_TO_SEND)
-			m_poll.getPollFDs().at(socket).events = POLLOUT;
+			m_poll.setEvents(socket, POLLOUT);
 		if (client->getState() == ClientState::SENDING_DONE)
-			m_poll.getPollFDs().at(socket).events = POLLIN;
+			m_poll.setEvents(socket, POLLIN);
+		else
+			continue;
 	}
 }
+
+// void HTTPServer::updatePoll() {
+// 	log("updating poll\n");
+// 	// for (std::map<int, std::shared_ptr<Client>>::iterator it = m_clientMap.begin(); it != m_clientMap.end(); ++it)
+// 	for (std::unordered_map<int, std::shared_ptr<Client>>::iterator it = m_clientMap.begin(); it != m_clientMap.end(); it++)
+// 	{
+//     int socket = it->first;
+//     std::shared_ptr<Client> client = it->second;
+//     if (client->getState() == ClientState::LOADING)
+// 		m_poll.getPollFDs().at(socket).events = POLLIN;
+//     else if (client->getState() == ClientState::READING_DONE)
+// 		m_poll.getPollFDs().at(socket).events = POLLIN; // Handle finished reading or transition to a different state
+// 	else if (client->getState() == ClientState::READY_TO_SEND)
+// 		m_poll.getPollFDs().at(socket).events = POLLOUT;
+// 	else if (client->getState() == ClientState::SENDING_DONE)
+// 		m_poll.getPollFDs().at(socket).events = POLLIN;
+// 	}
+// 	log("poll updated\n");
+// }

@@ -3,9 +3,9 @@
 
 enum class ClientState
 {
-	READY_TO_SEND,
-	READING_DONE,
 	LOADING,
+	READING_DONE,
+	READY_TO_SEND,
 	SENDING_DONE,
 };
 

@@ -22,3 +22,12 @@ std::vector<pollfd>& Poll::getPollFDs(void)
 {
 	return (m_poll_fds);
 }
+
+void Poll::setEvents(int fd, short events)
+{
+	auto it = std::find_if(m_poll_fds.begin(), m_poll_fds.end(),
+						   [fd](const pollfd &poll_fd)
+						   { return (poll_fd.fd == fd); });
+	if (it != m_poll_fds.end())
+		it->events = events;
+}
