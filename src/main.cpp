@@ -33,7 +33,7 @@ int main(int ac, char **av)
 	try
 	{
 		std::unique_ptr<Configuration> config( new Configuration(config_file) );
-		// std::unique_ptr<HTTPServer>    http_server(new HTTPServer(*config) );
+		std::unique_ptr<HTTPServer>    http_server( new HTTPServer(*config) );
 		// 	HTTPServer->startListen();
 		// 	HTTPServer->startPolling();
 	}
