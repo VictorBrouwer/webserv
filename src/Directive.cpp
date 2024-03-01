@@ -12,7 +12,7 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 {
 	while (i != lines.end())
 	{
-		if ((*i)[i->find_first_not_of(WHITESPACE)] == '#' || i->empty()) {
+		if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
 			// Skip empty lines and comments
 			log("Skipping comment or empty line.");
 			++i;
@@ -51,7 +51,7 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 			// throw a syntax error.
 			while (i != lines.end() && (*i)[i->find_first_not_of(WHITESPACE)] != '}')
 			{
-				if ((*i)[i->find_first_not_of(WHITESPACE)] =='#' || i->empty()) {
+				if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
 					log("Skipping comment or empty line.");
 					++i;
 				} else {

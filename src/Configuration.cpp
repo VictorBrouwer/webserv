@@ -16,13 +16,21 @@ Configuration::Configuration(std::ifstream &config_file) {
 	if (config_lines.empty())
 		throw std::invalid_argument("No lines read from config file");
 
+	// Remove comments from our string vector
+	std::vector<std::string>::iterator i = config_lines.begin();
+	while (i != config_lines.end())
+	{
+		if ((*i).find('#') != std::string::npos)
+			(*i).erase((*i).find('#'));
+		++i;
+	}
 
 	// Pass the iterator to consecutive constructors. Because it is a
 	// reference, the underlying iterator moves along and picks up where
 	// we left off when we "unscope" from one directive back to the parent.
-	std::vector<std::string>::iterator i = config_lines.begin();
+	i = config_lines.begin();
 	while (i != config_lines.end()) {
-		if ((*i)[i->find_first_not_of(WHITESPACE)] == '#' || i->empty()) {
+		if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
 			log("Skipping comment or empty line.");
 			++i;
 		}
