@@ -8,8 +8,9 @@
 #include <iostream>
 
 Directive::Directive(std::vector<std::string>::iterator &i,
-					 const std::vector<std::string> &lines)
+					 std::vector<std::string> &lines)
 {
+	this->_line = std::distance(lines.begin(), i);
 	while (i != lines.end())
 	{
 		if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
