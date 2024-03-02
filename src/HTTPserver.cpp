@@ -18,7 +18,7 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 
 HTTPServer::HTTPServer(const Configuration &config)
 {
-
+	(void) config;
 }
 
 HTTPServer::~HTTPServer()
