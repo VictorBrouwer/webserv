@@ -1,5 +1,6 @@
 #include "Directive.hpp"
 #include "HelperFuncs.hpp"
+#include "Configuration.hpp"
 #include "constants.hpp"
 #include <string>
 #include <sstream>
@@ -45,11 +46,12 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 			while (stream >> word)
 				this->_arguments.push_back(word);
 
-			++i;
 			// Subloop for nested directives. Skip empty lines and comments
 			// again, create directives for other things, stop when encountering
 			// the closing bracket. If we hit the end of the vector before then,
 			// throw a syntax error.
+			std::vector<std::string>::iterator block_start(i);
+			++i;
 			while (i != lines.end() && (*i)[i->find_first_not_of(WHITESPACE)] != '}')
 			{
 				if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
@@ -60,16 +62,32 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 				}
 			}
 			if (i == lines.end()) {
-				throw std::invalid_argument("Directive block not properly closed");
+				throw Configuration::Exception(E_BLOCK_NOT_CLOSED, std::distance(lines.begin(), i) + 1, *block_start);
 			}
 			log("Directive block ends.");
 			++i;
 			return;
 		} else {
 			// Something unexpected, we throw out
-			throw std::invalid_argument("Incorrectly formatted config line");
+			throw Configuration::Exception(E_INCORRECT_FORMAT, std::distance(lines.begin(), i) + 1, *i);
 		}
 	}
 }
 
 Directive::~Directive( void ) { }
+
+const std::string& Directive::getKey( void ) const {
+	return this->_key;
+}
+
+int Directive::getLine( void ) const {
+	return this->_line;
+}
+
+const std::vector<std::string>& Directive::getArguments( void ) const {
+	return this->_arguments;
+}
+
+const std::vector<Directive>& Directive::getBlock( void ) const {
+	return this->_block;
+}

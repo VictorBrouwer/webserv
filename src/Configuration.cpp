@@ -1,8 +1,10 @@
 #include "Configuration.hpp"
 #include "HelperFuncs.hpp"
+#include "Directive.hpp"
 #include "constants.hpp"
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 Configuration::Configuration(std::ifstream &config_file) {
 	std::string		         line;
@@ -14,7 +16,7 @@ Configuration::Configuration(std::ifstream &config_file) {
 	log("Done reading after " + std::to_string(config_lines.size()) + " lines.");
 
 	if (config_lines.empty())
-		throw std::invalid_argument("No lines read from config file");
+		throw Configuration::Exception("No lines read from config file", 1);
 
 	// Remove comments from our string vector
 	std::vector<std::string>::iterator i = config_lines.begin();
@@ -51,4 +53,16 @@ std::vector<Directive>::iterator Configuration::getDirectoryIterator( void ) {
 
 std::vector<Directive>::iterator Configuration::getDirectoryEnd( void ) {
 	return this->_directives.end();
+}
+
+// Validates the configuration, throwing a
+// Directive::Exception if an error is raised.
+bool Configuration::validate( void ) {
+	std::vector<Directive>::iterator i   = this->getDirectoryIterator();
+	std::vector<Directive>::iterator end = this->getDirectoryEnd();
+
+	log("Checking for http directive");
+	if (std::none_of(i, end, [](Directive d) { return d.getKey() == "http"; }))
+		throw Directive::Exception(E_MISSING_DIRECTIVE, 0, "html");
+	return true;
 }

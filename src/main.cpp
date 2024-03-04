@@ -1,5 +1,7 @@
 #include"HTTPServer.hpp"
 #include "HelperFuncs.hpp"
+#include "Directive.hpp"
+#include "constants.hpp"
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -30,17 +32,17 @@ int main(int ac, char **av)
 		exitWithError("Could not open config file, exiting.");
 
 	int return_value = 0;
-	try
-	{
+	try {
 		std::unique_ptr<Configuration> config( new Configuration(config_file) );
-		std::unique_ptr<HTTPServer>    http_server( new HTTPServer(*config) );
+		config->validate();
+		log("Config is all good!", L_Info);
+		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config) );
 		// 	HTTPServer->startListen();
 		// 	HTTPServer->startPolling();
 	}
-	catch(const std::exception& e)
-	{
+	catch(const std::exception& e) {
 		log(e.what(), L_Error);
-		// std::cerr << e.what() << '\n';
+		log("Cannot recover, exiting.", L_Error);
 		return_value = 1;
 	}
 
