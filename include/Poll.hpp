@@ -11,6 +11,8 @@ public:
 	void PollFds(void);
 	void RemovePollFd(int fd);
 	void setEvents(int fd, short events);
+	void unsetEvent(int fd, short event);
+	void unsetEvents(int fd);
 	std::vector<pollfd>& getPollFDs(void);
 private:
 	std::vector<struct pollfd> m_poll_fds;

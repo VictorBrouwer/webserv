@@ -31,3 +31,32 @@ void Poll::setEvents(int fd, short events)
 	if (it != m_poll_fds.end())
 		it->events = events;
 }
+
+void Poll::unsetEvent(int fd, short event)
+{
+	auto it = std::find_if(m_poll_fds.begin(), m_poll_fds.end(),
+						   [fd](const pollfd &poll_fd)
+						   { return (poll_fd.fd == fd); });
+	if (it != m_poll_fds.end())
+	{
+    	it->events = 0;
+    	it->revents = 0;
+	}
+	if (it != m_poll_fds.end())
+	{
+    	it->events &= ~event;
+    	it->revents &= ~event;
+	}
+}
+
+void Poll::unsetEvents(int fd)
+{
+	auto it = std::find_if(m_poll_fds.begin(), m_poll_fds.end(),
+						   [fd](const pollfd &poll_fd)
+						   { return (poll_fd.fd == fd); });
+	if (it != m_poll_fds.end())
+	{
+    	it->events = 0;
+    	it->revents = 0;
+	}
+}
