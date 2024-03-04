@@ -9,6 +9,7 @@ This is the webserv of jmeruma, vbrouwer and cschuijt, a project in the 42 commo
 ### Config files
 Our config parser stays close to what configurations in nginx look like and does not require a different format. However, it comes with a set of limitations to keep things manageable:
 * One directive per line please, and no multi-line directives.
+* No merging directives or multiple `html` blocks. Duplicates will raise an error.
 * Blocks should be opened on the same line as their parent directive, and closed on a separate line.
 * Trailing comments are okay.
 * Directives on the root level that are not `http` are ignored.
@@ -31,3 +32,4 @@ The following directives and arguments (from the [ngx core module](https://nginx
 |__`limit_except`__|`METHOD`, `...`|`location`|Granular filtering like in the ngx_http_access module is not required by the subject. Every directive like this will act as if `deny all;` is set under it.|
 |__`return`__|`code [text]`|`server`, `location`|The text is the response body. This way, it is possible to redirect on a location: `return 301 https://differentsite.com;`|
 |__`index`__|`file`, `...`|`http`, `server`, `location`|Files to try if the request is for a directory.|
+|__`log_level`__|`debug`, `info`, `warn` or `error`|Root|Custom directive to control our logger. Defaults to `info`.|

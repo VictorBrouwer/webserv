@@ -16,9 +16,17 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 	}
 }
 
-HTTPServer::HTTPServer(const Configuration &config)
+HTTPServer::HTTPServer(Configuration &config)
 {
-	(void) config;
+	log("Constructing HTTPServer.", L_Info);
+	std::vector<Directive>::iterator i   = config.getDirectoryIterator();
+	std::vector<Directive>::iterator end = config.getDirectoryEnd();
+
+	while (i != end)
+	{
+
+		++i;
+	}
 }
 
 HTTPServer::~HTTPServer()

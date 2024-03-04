@@ -17,8 +17,16 @@ namespace Color {
     const std::string White = "\033[37m";
 } // namespace Color
 
+enum LogLevel {
+    L_Debug,
+    L_Info,
+    L_Warning,
+    L_Error
+};
+
 // Function declarations
-void log(const std::string& message, const std::string& color = Color::White);
+void log(const std::string& message, const std::string& color) noexcept;
+void log(const std::string &message, const LogLevel level = L_Debug) noexcept;
 void exitWithError(const std::string &errorMessage);
 
 #endif

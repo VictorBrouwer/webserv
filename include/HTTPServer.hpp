@@ -25,7 +25,7 @@ class HTTPServer
 {
 public:
 	HTTPServer(std::string ip_address, int port);
-	HTTPServer(const Configuration &config);
+	HTTPServer(Configuration &config);
 	~HTTPServer();
 	void startListen();
 	void startPolling();

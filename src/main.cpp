@@ -17,13 +17,13 @@ int main(int ac, char **av)
 {
 	std::string config_path;
 
-	log("Starting webserv! 🌐");
+	log("Starting webserv! 🌐", L_Info);
 
 	if (ac == 1)
 		config_path = "./config/webserv.conf";
 	else
 		config_path = av[1];
-	log("Using config file: " + config_path);
+	log("Using config file: " + config_path, L_Info);
 
 	std::ifstream config_file(config_path);
 	if (!config_file.is_open())
@@ -39,7 +39,8 @@ int main(int ac, char **av)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
+		log(e.what(), L_Error);
+		// std::cerr << e.what() << '\n';
 		return_value = 1;
 	}
 

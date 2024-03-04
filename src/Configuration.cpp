@@ -41,4 +41,14 @@ Configuration::Configuration(std::ifstream &config_file) {
 	}
 }
 
-Configuration::~Configuration( void ) { }
+Configuration::~Configuration( void ) {
+
+}
+
+std::vector<Directive>::iterator Configuration::getDirectoryIterator( void ) {
+	return this->_directives.begin();
+}
+
+std::vector<Directive>::iterator Configuration::getDirectoryEnd( void ) {
+	return this->_directives.end();
+}
