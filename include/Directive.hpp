@@ -7,7 +7,7 @@
 class Directive {
 	public:
 		Directive(std::vector<std::string>::iterator &iterator,
-				  std::vector<std::string> &lines);
+				  std::vector<std::string> &lines, Directive *parent = nullptr);
 		~Directive();
 
 		const std::string&              getKey( void ) const;
@@ -20,6 +20,7 @@ class Directive {
 		int                      _line;
 		std::vector<std::string> _arguments;
 		std::vector<Directive>   _block;
+		Directive*               _parent;
 
 	// Directive exceptions are thrown when validating the configuration,
 	// if a directive is not recognized, duplicated, has incorrect arguments or

@@ -62,7 +62,7 @@ bool Configuration::validate( void ) {
 	std::vector<Directive>::iterator end = this->getDirectoryEnd();
 
 	log("Checking for http directive");
-	if (std::none_of(i, end, [](Directive d) { return d.getKey() == "http"; }))
-		throw Directive::Exception(E_MISSING_DIRECTIVE, 0, "html");
+	if (std::none_of(i, end, [](const Directive &d) { return d.getKey() == "http"; }))
+		throw Directive::Exception(E_MISSING_DIRECTIVE, 0, "http");
 	return true;
 }

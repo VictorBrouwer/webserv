@@ -9,9 +9,10 @@
 #include <iostream>
 
 Directive::Directive(std::vector<std::string>::iterator &i,
-					 std::vector<std::string> &lines)
+					 std::vector<std::string> &lines, Directive *parent = nullptr)
 {
-	this->_line = std::distance(lines.begin(), i);
+	this->_line   = std::distance(lines.begin(), i);
+	this->_parent = parent;
 	while (i != lines.end())
 	{
 		if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
