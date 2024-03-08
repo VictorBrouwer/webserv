@@ -10,7 +10,7 @@ void Poll::AddPollFd(int fd, short events)
 	// m_poll_fds.push_back(pollfd{fd, events, 0});
 }
 
-// checks if fd is in the vector, then add it to the end. 
+// checks if fd is in the vector, then removes it
 void Poll::RemovePollFd(int fd)
 {
 	m_poll_fds.erase(std::remove_if(m_poll_fds.begin(), m_poll_fds.end(), 
@@ -59,4 +59,16 @@ void Poll::unsetEvents(int fd)
     	it->events = 0;
     	it->revents = 0;
 	}
+}
+
+void Poll::checkErrors(short revents) const
+{
+	if (revents & POLLHUP)
+		throw PollException("Poll wasn't closed properly");
+	if (revents & POLLNVAL)
+		throw PollException("Invalid file descriptor");
+	if (revents & POLLERR)
+		throw PollException("Error occurred on file descriptor");
+	if (revents & POLLPRI)
+		throw PollException("Exceptional condition on file descriptor");
 }

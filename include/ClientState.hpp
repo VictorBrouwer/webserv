@@ -7,6 +7,7 @@ enum class ClientState
 	READING_DONE,
 	READY_TO_SEND,
 	SENDING_DONE,
+	ERROR,
 };
 
 #endif

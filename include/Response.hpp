@@ -49,6 +49,7 @@ public:
 	void				addHeader();
 	void				createResponse();
 	const std::string 	&getResponse() const;
+	void				clearResponse();
 
 	void	Get_Response();
 	void	Delete_Response();

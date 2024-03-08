@@ -19,8 +19,15 @@ ClientState & Client::getState()
 
 void	Client::sendResponse()
 {
+	log(std::string("sending response: " + m_response.getResponse()), Color::Green);
 	// write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
-	send(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size(), 0);
+	if (send(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size(), 0) > 0)
+	{
+		
+		m_state = ClientState::SENDING_DONE;
+	}
+	else
+		m_state = ClientState::ERROR;
 }
 
 void	Client::receive()

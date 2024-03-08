@@ -8,6 +8,11 @@ Response::~Response()
 
 }
 
+void	Response::clearResponse()
+{
+	m_body.clear();
+}
+
 Response::Response(Request &client_request) : m_client_request(client_request), \
 	m_DB_status(
 		{
@@ -145,7 +150,7 @@ void	Response::addHeader()
 	m_total_response.append("\r\n");
 	m_total_response.append(m_body);
 
-	log(m_total_response);
+	// log(m_total_response);
 }
 
 void Response::ReadFile(std::fstream &file) noexcept(false)

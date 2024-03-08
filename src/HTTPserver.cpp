@@ -112,6 +112,18 @@ std::string formatRevents(const struct pollfd& poll_fd) {
 void HTTPServer::handleEvent(int Event_fd, int i, pollfd *poll_fds)
 {
 	log(std::string("fd = " + std::to_string(Event_fd) + formatRevents(poll_fds[i])), Color::Blue);
+	try
+	{
+		this->m_poll.checkErrors(poll_fds[i].revents);
+	}
+	catch(const std::exception& e)
+	{
+		std::string error_message = std::string(e.what()) + " at fd: " + std::to_string(Event_fd);
+		log(error_message, Color::Red);
+		this->m_poll.RemovePollFd(Event_fd);
+		this->m_clientMap.erase(Event_fd);
+		exitWithError("ERROR");
+	}
 	if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
 		acceptConnection();
 	if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
@@ -151,7 +163,14 @@ void HTTPServer::HandleActiveClient(int i) // still needs work
 		if (state == ClientState::READY_TO_SEND)
 		{
 			active_client->sendResponse();
-			this->m_poll.unsetEvents(poll_fd.fd);
+			if (active_client->getState() == ClientState::READING_DONE)
+				this->m_poll.setEvents(poll_fd.fd, POLLIN);
+			if (active_client->getState() == ClientState::ERROR)
+			{
+				this->m_poll.RemovePollFd(poll_fd.fd);
+				this->m_clientMap.erase(poll_fd.fd);
+			}
+			// this->m_poll.unsetEvents(poll_fd.fd);
 			// exitWithError(std::string("fd of client is: " + std::to_string(poll_fd.fd)));
 		}
 		break;
