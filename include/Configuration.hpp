@@ -8,7 +8,7 @@
 
 class Configuration {
 	public:
-		Configuration(std::ifstream &config_file, Logger& logger);
+		Configuration(std::ifstream &config_file, const Logger& logger);
 		~Configuration();
 
 		std::vector<Directive>::iterator getDirectoryIterator( void );

@@ -19,8 +19,7 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 {
 
-	this->l = logger;
-	this->l.setDefaultContext("HTTPServer");
+	this->l = Logger("HTTPServer", logger.getLogLevel());
 
 	try {
 		l.log("Constructing HTTPServer.", L_Info);

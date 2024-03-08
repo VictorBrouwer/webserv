@@ -7,12 +7,11 @@
 #include <string>
 #include <algorithm>
 
-Configuration::Configuration(std::ifstream &config_file, Logger& logger) {
+Configuration::Configuration(std::ifstream &config_file, const Logger& logger) {
 	std::string		         line;
 	std::vector<std::string> config_lines;
 
-	this->_logger = logger;
-	this->_logger.setDefaultContext("config");
+	this->_logger = Logger("config", logger.getLogLevel());
 
 	try {
 		_logger.log("Reading config file.", L_Info);

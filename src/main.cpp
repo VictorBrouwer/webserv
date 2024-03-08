@@ -52,7 +52,9 @@ int main(int ac, char **av)
 		// 	HTTPServer->startPolling();
 	}
 	catch(const std::exception& e) {
-		l.log("Unrecoverable exception raised, exiting.", L_Error);
+		l.log(std::string("Uncaught or unrecoverable exception thrown: ") + e.what(), L_Error);
+		l.log("Cannot continue, exiting.", L_Error);
+
 		return_value = 1;
 	}
 
