@@ -4,6 +4,7 @@
 
 #include<string>
 #include<iostream>
+#include "Logger.hpp"
 
 namespace Color {
     const std::string Reset = "\033[0m";
@@ -16,13 +17,6 @@ namespace Color {
     const std::string Cyan = "\033[36m";
     const std::string White = "\033[37m";
 } // namespace Color
-
-enum LogLevel {
-    L_Debug,
-    L_Info,
-    L_Warning,
-    L_Error
-};
 
 // Function declarations
 void log(const std::string& message, const std::string& color) noexcept;

@@ -1,46 +1,31 @@
 #include "HelperFuncs.hpp"
+#include "Logger.hpp"
 #include <iostream>
 #include <iomanip>
 #include <ctime>
 
-// Function definitions
+
+// Deprecated, please use the Logger class instead
 void log(const std::string& message, const std::string& color) noexcept
 {
+	Logger l;
+
 	// std::cout << color << message << std::endl;
 	if (color == Color::Red)
-		log(message, L_Error);
+		l.log(message, L_Error);
 	else if (color == Color::Yellow)
-		log(message, L_Warning);
+		l.log(message, L_Warning);
 	else
-		log(message);
+		l.log(message);
 }
 
+// Deprecated, please use the Logger class instead
 void log(const std::string& message, const LogLevel level) noexcept {
-	time_t	time = std::time(nullptr);
-	tm		tm   = *std::localtime(&time);
-	std::cout << std::put_time(&tm, "[%H:%M:%S]");
-
-	switch (level)
-	{
-	case L_Debug:
-		std::cout << Color::Reset << "[DEBUG]";
-		break;
-	case L_Info:
-		std::cout << Color::Cyan << "[INFO ]";
-		break;
-	case L_Warning:
-		std::cout << Color::Yellow << "[WARN ]";
-		break;
-	case L_Error:
-		std::cout << Color::Red << "[ERROR]";
-		break;
-	default:
-		break;
-	}
-
-	std::cout << " " << message << Color::Reset << std::endl;
+	Logger l;
+	l.log(message, level);
 }
 
+// Deprecated, please use the Logger class instead
 void exitWithError(const std::string &errorMessage)
 {
 	log("ERROR: " + errorMessage, Color::Red);

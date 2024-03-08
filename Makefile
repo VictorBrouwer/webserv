@@ -18,7 +18,8 @@ SRC			:=	main.cpp \
 				HelperFuncs.cpp \
 				Configuration.cpp \
 				Directive.cpp \
-				Location.cpp
+				Location.cpp \
+				Logger.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))

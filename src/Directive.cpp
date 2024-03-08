@@ -9,7 +9,7 @@
 #include <iostream>
 
 Directive::Directive(std::vector<std::string>::iterator &i,
-					 std::vector<std::string> &lines, Directive *parent = nullptr)
+					 std::vector<std::string> &lines, Directive *parent)
 {
 	this->_line   = std::distance(lines.begin(), i);
 	this->_parent = parent;

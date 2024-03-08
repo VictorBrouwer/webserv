@@ -20,10 +20,10 @@ class Configuration {
 
 	public:
 
-		// Configuration exceptions are thrown during parsing, when a syntax
-		// error prevents us from continuing.
+		// Configuration exceptions are parsing errors, invalid syntax or
+		// directives that will not allow us to continue.
 		class Exception : public std::exception {
-			protected:
+			private:
 				const std::string _message;
 
 			public:
@@ -33,6 +33,12 @@ class Configuration {
 
 				Exception(const std::string& reason, int line) :
 				_message("Config error on line " + std::to_string(line) + " : " + reason) { }
+
+				Exception(const std::string& reason) :
+				_message("Config error : " + reason) { }
+
+				Exception(const std::string& reason, const std::string& context) :
+				_message("Config error : " + reason + " ( " + context + " )") { }
 
 				virtual const char* what() const throw() {
 					return _message.c_str();
