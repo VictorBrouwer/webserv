@@ -19,6 +19,9 @@
 int main(int ac, char **av)
 {
 	std::string config_path;
+	// Before we've parsed the config, we don't know what the log level
+	// should be. This is the setting for the level until then.
+	// Change me to L_Debug for debug messages from the config parser
 	Logger      l("main", L_Info);
 
 	l.log("Starting webserv! 🌐", L_Info);
@@ -37,16 +40,19 @@ int main(int ac, char **av)
 
 	int return_value = 0;
 	try {
-		std::unique_ptr<Configuration> config( new Configuration(config_file) );
-		config->validate();
-		l.log("Config is all good!", L_Info);
-		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config) );
+		std::unique_ptr<Configuration> config( new Configuration(config_file, l) );
+		l.log("Config parsed successfully.", L_Info);
+		if (std::any_of(config->getDirectoryIterator(), config->getDirectoryEnd(), [](const Directive& d) { return d.getKey() == "log_level";} )) {
+			l.setLogLevel(*(std::find_if(config->getDirectoryIterator(), config->getDirectoryEnd(), [](const Directive& d) { return d.getKey() == "log_level"; } )));
+		} else {
+			l.log("No log level set, defaulting to info.", L_Info);
+		}
+		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config, l) );
 		// 	HTTPServer->startListen();
 		// 	HTTPServer->startPolling();
 	}
 	catch(const std::exception& e) {
-		l.log(e.what(), L_Error);
-		l.log("Cannot recover, exiting.", L_Error);
+		l.log("Unrecoverable exception raised, exiting.", L_Error);
 		return_value = 1;
 	}
 

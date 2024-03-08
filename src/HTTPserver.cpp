@@ -16,16 +16,27 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 	}
 }
 
-HTTPServer::HTTPServer(Configuration &config)
+HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 {
-	log("Constructing HTTPServer.", L_Info);
-	std::vector<Directive>::iterator i   = config.getDirectoryIterator();
-	std::vector<Directive>::iterator end = config.getDirectoryEnd();
 
-	while (i != end)
-	{
+	this->l = logger;
+	this->l.setDefaultContext("HTTPServer");
 
-		++i;
+	try {
+		l.log("Constructing HTTPServer.", L_Info);
+		std::vector<Directive>::iterator i   = config.getDirectoryIterator();
+		std::vector<Directive>::iterator end = config.getDirectoryEnd();
+
+		while (i != end)
+		{
+			++i;
+		}
+
+		throw std::invalid_argument("constructor not implemented yet");
+	}
+	catch(const std::exception& e) {
+		l.log(e.what(), L_Error);
+		throw;
 	}
 }
 

@@ -1,6 +1,7 @@
 #include "Directive.hpp"
 #include "HelperFuncs.hpp"
 #include "Configuration.hpp"
+#include "Logger.hpp"
 #include "constants.hpp"
 #include <string>
 #include <sstream>
@@ -9,7 +10,8 @@
 #include <iostream>
 
 Directive::Directive(std::vector<std::string>::iterator &i,
-					 std::vector<std::string> &lines, Directive *parent)
+					 std::vector<std::string> &lines,
+					 const Logger& l, Directive *parent)
 {
 	this->_line   = std::distance(lines.begin(), i);
 	this->_parent = parent;
@@ -17,11 +19,11 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 	{
 		if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
 			// Skip empty lines and comments
-			log("Skipping comment or empty line.");
+			l.log("Skipping comment or empty line.");
 			++i;
 		} else if ((*i)[i->find_last_not_of(WHITESPACE)] == ';') {
 			// Single line directive, construct by splitting
-			log("Creating blockless directive.");
+			l.log("Creating blockless directive.");
 			std::string line(*i);
 			line.pop_back();
 
@@ -36,7 +38,7 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 			return;
 		} else if ((*i)[i->find_last_not_of(WHITESPACE)] == '{') {
 			// Multi line directive, construct by splitting and iterating over the block
-			log("Creating directive with block.");
+			l.log("Creating directive with block.");
 			std::string line(*i);
 			line.pop_back();
 
@@ -56,16 +58,16 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 			while (i != lines.end() && (*i)[i->find_first_not_of(WHITESPACE)] != '}')
 			{
 				if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
-					log("Skipping comment or empty line.");
+					l.log("Skipping comment or empty line.");
 					++i;
 				} else {
-					this->_block.push_back(Directive(i, lines));
+					this->_block.push_back(Directive(i, lines, l, this));
 				}
 			}
 			if (i == lines.end()) {
 				throw Configuration::Exception(E_BLOCK_NOT_CLOSED, std::distance(lines.begin(), i) + 1, *block_start);
 			}
-			log("Directive block ends.");
+			l.log("Directive block ends.");
 			++i;
 			return;
 		} else {

@@ -20,12 +20,13 @@
 #include "Server.hpp"
 #include "HelperFuncs.hpp"
 #include "Configuration.hpp"
+#include "Logger.hpp"
 
 class HTTPServer
 {
 public:
 	HTTPServer(std::string ip_address, int port);
-	HTTPServer(Configuration &config);
+	HTTPServer(Configuration &config, const Logger& l);
 	~HTTPServer();
 	void startListen();
 	void startPolling();
@@ -43,8 +44,10 @@ private:
 	std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
 	std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
-	std::vector<Client> m_clientVector;
-	std::vector<Server> m_serverVector;
+	std::vector<Client> clientVector;
+	std::vector<Server> serverVector;
+
+	Logger              l;
 
 	int startServer();
 	void closeServer();

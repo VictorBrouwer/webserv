@@ -4,10 +4,13 @@
 #include <iostream>
 #include <fstream>
 
+class Logger;
+
 class Directive {
 	public:
 		Directive(std::vector<std::string>::iterator &iterator,
-				  std::vector<std::string> &lines, Directive *parent = nullptr);
+				  std::vector<std::string> &lines,
+				  const Logger& logger, Directive *parent = nullptr);
 		~Directive();
 
 		const std::string&              getKey( void ) const;

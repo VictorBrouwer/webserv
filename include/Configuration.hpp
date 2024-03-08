@@ -1,5 +1,6 @@
 #pragma once
 #include "Directive.hpp"
+#include "Logger.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,7 +8,7 @@
 
 class Configuration {
 	public:
-		Configuration(std::ifstream &config_file);
+		Configuration(std::ifstream &config_file, Logger& logger);
 		~Configuration();
 
 		std::vector<Directive>::iterator getDirectoryIterator( void );
@@ -17,6 +18,7 @@ class Configuration {
 
 	private:
 		std::vector<Directive> _directives;
+		Logger                 _logger;
 
 	public:
 

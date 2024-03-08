@@ -32,4 +32,4 @@ The following directives and arguments (from the [ngx core module](https://nginx
 |__`limit_except`__|`METHOD`, `...`|`location`|Granular filtering like in the ngx_http_access module is not required by the subject. Every directive like this will act as if `deny all;` is set under it.|
 |__`return`__|`code [text]`|`server`, `location`|The text is the response body. This way, it is possible to redirect on a location: `return 301 https://differentsite.com;`|
 |__`index`__|`file`, `...`|`http`, `server`, `location`|Files to try if the request is for a directory.|
-|__`log_level`__|`debug`, `info`, `warn` or `error`|Root|Custom directive to control our logger. Defaults to `info`.|
+|__`log_level`__|`debug`, `info`, `warning` or `error`|Root|Custom directive to control our logger. Defaults to `info`.|

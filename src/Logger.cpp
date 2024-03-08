@@ -2,6 +2,9 @@
 #include "HelperFuncs.hpp"
 #include <iostream>
 #include <iomanip>
+#include <vector>
+#include <map>
+#include <algorithm>
 #include <ctime>
 
 // Constructors
@@ -47,8 +50,26 @@ const std::string& Logger::getDefaultContext() const {
 
 // Setters
 
-void Logger::setLogLevel(LogLevel level) {
+void Logger::setLogLevel(const LogLevel level) {
 	this->log_level = level;
+}
+
+void Logger::setLogLevel(const Directive& directive) {
+	std::map<std::string, LogLevel> level_map = {
+		{"debug",   L_Debug},
+		{"info",    L_Info},
+		{"warning", L_Warning},
+		{"error",   L_Error}
+	};
+
+	std::vector<std::string> args = directive.getArguments();
+	if (level_map.find(args[0]) != level_map.end()) {
+		this->log("Setting log level to " + args[0], L_Info);
+		this->log_level = level_map[args[0]];
+	} else {
+		this->log_level = L_Info;
+		this->log("Unrecognized log level, defaulting to info", L_Warning);
+	}
 }
 
 void Logger::setDefaultContext(const std::string& context) {

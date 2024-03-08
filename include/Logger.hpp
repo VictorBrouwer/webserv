@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include <map>
+#include "Directive.hpp"
 
 enum LogLevel {
     L_Debug,
@@ -25,7 +27,8 @@ class Logger {
 		LogLevel getLogLevel( void ) const;
 		const std::string& getDefaultContext() const;
 
-		void setLogLevel(LogLevel level);
+		void setLogLevel(const LogLevel level);
+		void setLogLevel(const Directive& directive);
 		void setDefaultContext(const std::string& context);
 
 		void log(const std::string &message, const LogLevel level = L_Debug) const noexcept;
