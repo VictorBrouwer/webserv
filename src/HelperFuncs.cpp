@@ -31,3 +31,18 @@ void exitWithError(const std::string &errorMessage)
 	log("ERROR: " + errorMessage, Color::Red);
 	exit(1);
 }
+
+// Converts a vector of strings to "[s1,s2,s3]"
+std::string vector_to_string(const std::vector<std::string>& vector) {
+	std::string result = "[";
+
+	std::for_each(vector.begin(), vector.end(), [&](const std::string& s) {
+		result += s;
+		result += ",";
+	});
+
+	result.pop_back();
+	result += "]";
+
+	return result;
+}

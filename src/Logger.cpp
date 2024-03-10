@@ -50,7 +50,7 @@ const std::string& Logger::getDefaultContext() const {
 
 // Setters
 
-void Logger::setLogLevel(const LogLevel level) {
+void Logger::setLogLevel(LogLevel level) {
 	this->log_level = level;
 }
 
@@ -87,16 +87,16 @@ void Logger::log(const std::string& message, const std::string& context, const L
 
 	switch (level) {
 	case L_Debug:
-		std::cout << Color::Reset << "[DEBUG]";
+		std::cout << Color::Reset << "[DBG]";
 		break;
 	case L_Info:
-		std::cout << Color::Cyan << "[INFO ]";
+		std::cout << Color::Cyan << "[INF]";
 		break;
 	case L_Warning:
-		std::cout << Color::Yellow << "[WARN ]";
+		std::cout << Color::Yellow << "[WRN]";
 		break;
 	case L_Error:
-		std::cout << Color::Red << "[ERROR]";
+		std::cout << Color::Red << "[ERR]";
 		break;
 	}
 

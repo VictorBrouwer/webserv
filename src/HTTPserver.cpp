@@ -23,8 +23,8 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 
 	try {
 		l.log("Constructing HTTPServer.", L_Info);
-		std::vector<Directive>::iterator i   = config.getDirectiveIterator();
-		std::vector<Directive>::iterator end = config.getDirectiveEnd();
+		std::vector<Directive>::const_iterator i   = config.getDirectiveIterator();
+		std::vector<Directive>::const_iterator end = config.getDirectiveEnd();
 
 		while (i != end)
 		{

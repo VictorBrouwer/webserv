@@ -45,6 +45,12 @@ Configuration::Configuration(std::ifstream &config_file, const Logger& logger) {
 				this->directives.push_back(Directive(i, config_lines, l));
 			}
 		}
+
+		l.log("Setting parents of directives.");
+		std::for_each(
+			this->getDirectiveMutableIterator(), this->getDirectiveMutableEnd(),
+			[](Directive& d) { d.setParents(nullptr); }
+		);
 	}
 	catch(const Configuration::Exception& e) {
 		l.log(e.what(), L_Error);
@@ -57,34 +63,43 @@ Configuration::~Configuration( void ) {
 
 }
 
-std::vector<Directive>::iterator Configuration::getDirectiveIterator( void ) {
+std::vector<Directive>::const_iterator Configuration::getDirectiveIterator( void ) const {
 	return this->directives.begin();
 }
 
-std::vector<Directive>::iterator Configuration::getDirectiveEnd( void ) {
+std::vector<Directive>::const_iterator Configuration::getDirectiveEnd( void ) const {
+	return this->directives.end();
+}
+
+std::vector<Directive>::iterator Configuration::getDirectiveMutableIterator( void ) {
+	return this->directives.begin();
+}
+
+std::vector<Directive>::iterator Configuration::getDirectiveMutableEnd( void ) {
 	return this->directives.end();
 }
 
 // Validates the configuration, throwing a
 // Configuration::Exception if an error is raised.
-void Configuration::validate( void ) {
+void Configuration::validate(const Logger& logger) {
+	l.setLogLevel(logger.getLogLevel());
 	l.log("Validating config.", L_Info);
 	try {
-		std::vector<Directive>::iterator start = this->getDirectiveIterator();
-		std::vector<Directive>::iterator end   = this->getDirectiveEnd();
+		std::vector<Directive>::const_iterator start = this->getDirectiveIterator();
+		std::vector<Directive>::const_iterator end   = this->getDirectiveEnd();
 
 		l.log("Checking for http directive");
 		if (std::find_if(start, end, [](const Directive& d) { return d.getKey() == "http"; }) == end)
 			throw Configuration::Exception(E_MISSING_DIRECTIVE, "http");
 
 		l.log("Validating directives");
-		std::vector<Directive>::iterator i = start;
+		std::vector<Directive>::const_iterator i = start;
 		while (i != end) {
 			i->validate(l, start, i);
 			++i;
 		}
 
-		return;
+		l.log("Config is all good!", L_Info);
 	}
 	catch(const std::exception& e) {
 		l.log(std::string("Config validation failed: ") + e.what(), L_Error);

@@ -47,7 +47,7 @@ int main(int ac, char **av)
 		} else {
 			l.log("No log level set, defaulting to info.", L_Info);
 		}
-		config->validate();
+		config->validate(l);
 		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config, l) );
 		// 	HTTPServer->startListen();
 		// 	HTTPServer->startPolling();

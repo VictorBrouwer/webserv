@@ -27,7 +27,7 @@ class Logger {
 		LogLevel getLogLevel( void ) const;
 		const std::string& getDefaultContext() const;
 
-		void setLogLevel(const LogLevel level);
+		void setLogLevel(LogLevel level);
 		void setLogLevel(const Directive& directive);
 		void setDefaultContext(const std::string& context);
 

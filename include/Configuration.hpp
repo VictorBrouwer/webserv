@@ -12,10 +12,13 @@ class Configuration {
 		Configuration(std::ifstream &config_file, const Logger& logger);
 		~Configuration();
 
-		std::vector<Directive>::iterator getDirectiveIterator( void );
-		std::vector<Directive>::iterator getDirectiveEnd( void );
+		std::vector<Directive>::const_iterator getDirectiveIterator( void ) const;
+		std::vector<Directive>::const_iterator getDirectiveEnd( void ) const;
 
-		void validate( void );
+		std::vector<Directive>::iterator getDirectiveMutableIterator( void );
+		std::vector<Directive>::iterator getDirectiveMutableEnd( void );
+
+		void validate(const Logger& logger);
 
 	private:
 		std::vector<Directive> directives;
@@ -54,7 +57,7 @@ class Configuration {
 		// of directives, so if a directive string is not in this map, it is
 		// not recognized by us and should throw an error.
 		static const inline std::map<std::string, std::vector<std::string>> allowed_directives = {
-			{"",                     {"html", "log_level"}},
+			{"",                     {"http", "log_level"}},
 			{"autoindex",            {}},
 			{"client_max_body_size", {}},
 			{"error_page",           {}},
@@ -87,14 +90,6 @@ class Configuration {
 			"root"
 		};
 
-		// Map of directive strings with a vector describing its allowed arguments
-		// If a directive is not in this map, it allows arbitrary arguments
-		static const inline std::map<std::string, std::vector<std::string>> allowed_arguments = {
-			{"autoindex",    {"on", "off"},                        },
-			{"limit_except", {"GET", "POST", "DELETE"},            },
-			{"log_level",    {"debug", "info", "warning", "error"} },
-		};
-
 		// Map of directive strings with an integer if the directive has a
 		// minimum number of arguments.
 		static const inline std::map<std::string, int> argument_min = {
@@ -121,6 +116,14 @@ class Configuration {
 			{"return",               2},
 			{"root",                 1},
 			{"server",               0}
+		};
+
+		// Map of directive strings with a vector describing its allowed arguments
+		// If a directive is not in this map, it allows arbitrary arguments
+		static const inline std::map<std::string, std::vector<std::string>> allowed_arguments = {
+			{"autoindex",    {"on", "off"},                        },
+			{"limit_except", {"GET", "POST", "DELETE"},            },
+			{"log_level",    {"debug", "info", "warning", "error"} },
 		};
 
 		// Map of directive strings with a member function pointer for a
