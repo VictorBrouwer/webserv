@@ -35,6 +35,13 @@ class Logger {
 		void log(const std::string &message, const std::string& context,
 				 const LogLevel level = L_Debug) const noexcept;
 
+		static const inline std::map<std::string, LogLevel> level_map = {
+			{"debug",   L_Debug},
+			{"info",    L_Info},
+			{"warning", L_Warning},
+			{"error",   L_Error}
+		};
+
 	private:
 		std::string default_context = "Default";
 		LogLevel    log_level       = L_Debug;
