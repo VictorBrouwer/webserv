@@ -165,7 +165,7 @@ void Directive::validate(const Logger& l, const std::vector<Directive>::const_it
 	if (Configuration::argument_max.find(this->key) != Configuration::argument_max.end()) {
 		int size     = this->arguments.size();
 		int max_size = Configuration::argument_max.find(this->key)->second;
-		if (size < max_size) {
+		if (size > max_size) {
 			throw Configuration::Exception("Directive needs at most " +
 				std::to_string(max_size) + " arguments, but had " +
 				std::to_string(size), this->line, this->key);
