@@ -13,8 +13,8 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 					 std::vector<std::string> &lines,
 					 const Logger& l, Directive *parent)
 {
-	this->_line   = std::distance(lines.begin(), i);
-	this->_parent = parent;
+	this->line   = std::distance(lines.begin(), i);
+	this->parent = parent;
 	while (i != lines.end())
 	{
 		if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
@@ -28,11 +28,11 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 			line.pop_back();
 
 			std::istringstream stream(line);
-			stream >> this->_key;
+			stream >> this->key;
 
 			std::string word;
 			while (stream >> word)
-				this->_arguments.push_back(word);
+				this->arguments.push_back(word);
 
 			++i;
 			return;
@@ -43,11 +43,11 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 			line.pop_back();
 
 			std::istringstream stream(line);
-			stream >> this->_key;
+			stream >> this->key;
 
 			std::string word;
 			while (stream >> word)
-				this->_arguments.push_back(word);
+				this->arguments.push_back(word);
 
 			// Subloop for nested directives. Skip empty lines and comments
 			// again, create directives for other things, stop when encountering
@@ -61,7 +61,7 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 					l.log("Skipping comment or empty line.");
 					++i;
 				} else {
-					this->_block.push_back(Directive(i, lines, l, this));
+					this->block.push_back(Directive(i, lines, l, this));
 				}
 			}
 			if (i == lines.end()) {
@@ -80,17 +80,17 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 Directive::~Directive( void ) { }
 
 const std::string& Directive::getKey( void ) const {
-	return this->_key;
+	return this->key;
 }
 
 int Directive::getLine( void ) const {
-	return this->_line;
+	return this->line;
 }
 
 const std::vector<std::string>& Directive::getArguments( void ) const {
-	return this->_arguments;
+	return this->arguments;
 }
 
 const std::vector<Directive>& Directive::getBlock( void ) const {
-	return this->_block;
+	return this->block;
 }

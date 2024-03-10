@@ -41,12 +41,13 @@ int main(int ac, char **av)
 	int return_value = 0;
 	try {
 		std::unique_ptr<Configuration> config( new Configuration(config_file, l) );
-		l.log("Config parsed successfully.", L_Info);
-		if (std::any_of(config->getDirectoryIterator(), config->getDirectoryEnd(), [](const Directive& d) { return d.getKey() == "log_level";} )) {
-			l.setLogLevel(*(std::find_if(config->getDirectoryIterator(), config->getDirectoryEnd(), [](const Directive& d) { return d.getKey() == "log_level"; } )));
+		l.log("Config loaded successfully.", L_Info);
+		if (std::any_of(config->getDirectiveIterator(), config->getDirectiveEnd(), [](const Directive& d) { return d.getKey() == "log_level";} )) {
+			l.setLogLevel(*(std::find_if(config->getDirectiveIterator(), config->getDirectiveEnd(), [](const Directive& d) { return d.getKey() == "log_level"; } )));
 		} else {
 			l.log("No log level set, defaulting to info.", L_Info);
 		}
+		config->validate();
 		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config, l) );
 		// 	HTTPServer->startListen();
 		// 	HTTPServer->startPolling();

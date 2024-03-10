@@ -20,16 +20,16 @@ Our config parser stays close to what configurations in nginx look like and does
 The following directives and arguments (from the [ngx core module](https://nginx.org/en/docs/http/ngx_http_core_module.html) and [ngx http autoindex module](https://nginx.org/en/docs/http/ngx_http_autoindex_module.html)) are implemented:
 | Directive   |Arguments|Context|Notes  |
 |-------------|---------|-------|-------|
+|__`autoindex`__|`on` or `off`|`http`, `server`, `location`||
+|__`client_max_body_size`__|`size`|`http`, `server`, `location`||
+|__`error_page`__|`code`, `uri`|`http`, `server`, `location`||
 |__`http`__| - |Root||
-|__`server`__| - |`http`||
-|__`server_name`__|`name`, `...`|`server`|Supports wildcards. Can pass `.example.com` to create both `example.com` and `*.example.com` names.|
+|__`index`__|`file`, `...`|`http`, `server`, `location`|Files to try if the request is for a directory.|
+|__`limit_except`__|`METHOD`, `...`|`location`|Granular filtering like in the ngx_http_access module is not required by the subject. Every directive like this will act as if `deny all;` is set under it.|
 |__`listen`__|`address[:port]`, `port`, `...`, `[default_server]`|`server`|Supports wildcards.|
 |__`location`__ | `[=]`, `uri`|`server`, `location`|Wildcards are implemented, regex is not.|
-|__`root`__|`path`|`http`, `server`, `location`|
-|__`error_page`__|`code`, `uri`|`http`, `server`, `location`||
-|__`client_max_body_size`__|`size`|`http`, `server`, `location`||
-|__`autoindex`__|`on` or `off`|`http`, `server`, `location`||
-|__`limit_except`__|`METHOD`, `...`|`location`|Granular filtering like in the ngx_http_access module is not required by the subject. Every directive like this will act as if `deny all;` is set under it.|
-|__`return`__|`code [text]`|`server`, `location`|The text is the response body. This way, it is possible to redirect on a location: `return 301 https://differentsite.com;`|
-|__`index`__|`file`, `...`|`http`, `server`, `location`|Files to try if the request is for a directory.|
 |__`log_level`__|`debug`, `info`, `warning` or `error`|Root|Custom directive to control our logger. Defaults to `info`.|
+|__`return`__|`code [text]`|`server`, `location`|The text is the response body. This way, it is possible to redirect on a location: `return 301 https://differentsite.com;`|
+|__`root`__|`path`|`http`, `server`, `location`|
+|__`server`__| - |`http`||
+|__`server_name`__|`name`, `...`|`server`|Supports wildcards. Can pass `.example.com` to create both `example.com` and `*.example.com` names.|
