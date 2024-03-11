@@ -14,13 +14,13 @@ Configuration::Configuration(std::ifstream &config_file, const Logger& logger) {
 	this->l = Logger("config", logger.getLogLevel());
 
 	try {
-		l.log("Reading config file.", L_Info);
+		l.log("Reading config file.");
 		while ( std::getline(config_file, line) )
 			config_lines.push_back(line);
-		l.log("Done reading after " + std::to_string(config_lines.size()) + " lines.", L_Info);
+		l.log("Done reading after " + std::to_string(config_lines.size()) + " lines.");
 
 		if (config_lines.empty())
-			throw Configuration::Exception("No lines read from config file", 1);
+			throw Configuration::Exception("No lines read from config file");
 
 		// Remove comments from our string vector
 		std::vector<std::string>::iterator i = config_lines.begin();
