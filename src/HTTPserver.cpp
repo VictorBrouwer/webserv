@@ -1,5 +1,6 @@
 #include"HTTPServer.hpp"
 #include "Configuration.hpp"
+#include "Directive.hpp"
 
 HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
 {
@@ -27,15 +28,31 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 		l.log("Checking for http directive");
 		const Directive& http_directive = config.getHttpDirective();
 
-		std::vector<Directive>::const_iterator start = http_directive.getSubdirectivesIterator();
+		std::vector<Directive>::const_iterator i     = http_directive.getSubdirectivesIterator();
+		std::vector<Directive>::const_iterator start = i;
 		std::vector<Directive>::const_iterator end   = http_directive.getSubdirectivesEnd();
-		std::vector<Directive>::const_iterator i     = start;
 
-		while (i != end) {
-			// Fill in the right parts of the class from each directive,
-			// skipping over servers for the time being.
-			++i;
+		i = std::find(start, end, "autoindex");
+		if (i != end) {
+			this->autoindex_enabled = (i->getArguments()[0] == "on");
 		}
+
+		i = std::find(start, end, "client_max_body_size");
+		if (i != end) {
+			this->client_max_body_size = size_to_int(i->getArguments()[0]);
+		}
+
+		i = std::find(start, end, "index");
+		if (i != end) {
+			this->index = i->getArguments();
+		}
+
+		i = std::find(start, end, "root");
+		if (i != end) {
+			this->root_path = i->getArguments()[0];
+		}
+
+		// TODO Iterate over all error_page directives, setting up the map
 
 		i = start;
 		while (i != end) {

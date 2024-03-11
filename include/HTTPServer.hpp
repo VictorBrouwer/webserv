@@ -44,15 +44,17 @@ private:
 	std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
 	std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
-	std::vector<Client> clientVector;
-	std::vector<Server> serverVector;
-
 	// Configuration member variables
+
 	bool                       autoindex_enabled    = false;
 	size_t                     client_max_body_size = 1048576; // 1m
 	std::map<int, std::string> error_pages;
 	std::vector<std::string>   index = { "index.html" };
 	std::string                root_path = "/var/www";
+
+	// Servers
+
+	std::vector<Server> servers;
 
 	Logger l;
 
