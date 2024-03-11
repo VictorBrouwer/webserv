@@ -42,8 +42,8 @@ int main(int ac, char **av)
 	try {
 		std::unique_ptr<Configuration> config( new Configuration(config_file, l) );
 		l.log("Config loaded successfully.", L_Info);
-		if (std::any_of(config->getDirectiveIterator(), config->getDirectiveEnd(), [](const Directive& d) { return d.getKey() == "log_level";} )) {
-			l.setLogLevel(*(std::find_if(config->getDirectiveIterator(), config->getDirectiveEnd(), [](const Directive& d) { return d.getKey() == "log_level"; } )));
+		if (std::find(config->getDirectiveIterator(), config->getDirectiveEnd(), "log_level") != config->getDirectiveEnd()) {
+			l.setLogLevel(*(std::find(config->getDirectiveIterator(), config->getDirectiveEnd(), "log_level")));
 		} else {
 			l.log("No log level set, defaulting to info.", L_Info);
 		}

@@ -28,6 +28,8 @@ class Directive {
 		std::vector<Directive>::iterator getSubdirectivesMutableIterator( void );
 		std::vector<Directive>::iterator getSubdirectivesMutableEnd( void );
 
+		bool operator==(const std::string& str) const;
+
 		void setParents(Directive* parent);
 
 		void validate(const Logger& l,

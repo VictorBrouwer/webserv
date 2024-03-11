@@ -113,6 +113,10 @@ std::vector<Directive>::iterator Directive::getSubdirectivesMutableEnd( void ) {
 	return this->subdirectives.end();
 }
 
+bool Directive::operator==(const std::string& str) const {
+	return this->getKey() == str;
+}
+
 void Directive::setParents(Directive* parent) {
 	this->parent = parent;
 	Directive* current = this;
@@ -144,7 +148,7 @@ void Directive::validate(const Logger& l, const std::vector<Directive>::const_it
 	if (std::find(Configuration::unique_in_context.begin(), Configuration::unique_in_context.end(), this->key)
 					!= Configuration::unique_in_context.end()) {
 		const std::string& key = this->key;
-		if (std::find_if(context_start, context_current, [&](const Directive& d) { return d.getKey() == key; }) != context_current)
+		if (std::find(context_start, context_current, key) != context_current)
 			throw Configuration::Exception(E_DUPLICATE_DIRECTIVE, this->line, this->key);
 	}
 
