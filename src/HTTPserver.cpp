@@ -23,11 +23,23 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 
 	try {
 		l.log("Constructing HTTPServer.", L_Info);
-		std::vector<Directive>::const_iterator i   = config.getDirectiveIterator();
-		std::vector<Directive>::const_iterator end = config.getDirectiveEnd();
 
-		while (i != end)
-		{
+		l.log("Checking for http directive");
+		const Directive& http_directive = config.getHttpDirective();
+
+		std::vector<Directive>::const_iterator start = http_directive.getSubdirectivesIterator();
+		std::vector<Directive>::const_iterator end   = http_directive.getSubdirectivesEnd();
+		std::vector<Directive>::const_iterator i     = start;
+
+		while (i != end) {
+			// Fill in the right parts of the class from each directive,
+			// skipping over servers for the time being.
+			++i;
+		}
+
+		i = start;
+		while (i != end) {
+			// Iterate over the servers, setting them up one by one.
 			++i;
 		}
 
@@ -35,7 +47,7 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 	}
 	catch(const std::exception& e) {
 		l.log(e.what(), L_Error);
-		throw;
+		throw; // Rethrow to catch in main
 	}
 }
 

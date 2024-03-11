@@ -59,8 +59,13 @@ Configuration::Configuration(std::ifstream &config_file, const Logger& logger) {
 	}
 }
 
-Configuration::~Configuration( void ) {
+Configuration::~Configuration( void ) { }
 
+const Directive& Configuration::getHttpDirective( void ) const {
+	auto it = std::find(this->getDirectiveIterator(), this->getDirectiveEnd(), "http");
+	if (it == this->getDirectiveEnd())
+		throw Configuration::Exception("No http directive in config, nothing to do here.");
+	return *it;
 }
 
 std::vector<Directive>::const_iterator Configuration::getDirectiveIterator( void ) const {
@@ -87,10 +92,6 @@ void Configuration::validate(const Logger& logger) {
 	try {
 		std::vector<Directive>::const_iterator start = this->getDirectiveIterator();
 		std::vector<Directive>::const_iterator end   = this->getDirectiveEnd();
-
-		l.log("Checking for http directive");
-		if (std::find_if(start, end, [](const Directive& d) { return d.getKey() == "http"; }) == end)
-			throw Configuration::Exception(E_MISSING_DIRECTIVE, "http");
 
 		l.log("Validating directives");
 		std::vector<Directive>::const_iterator i = start;

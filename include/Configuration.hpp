@@ -12,6 +12,8 @@ class Configuration {
 		Configuration(std::ifstream &config_file, const Logger& logger);
 		~Configuration();
 
+		const Directive& getHttpDirective( void ) const;
+
 		std::vector<Directive>::const_iterator getDirectiveIterator( void ) const;
 		std::vector<Directive>::const_iterator getDirectiveEnd( void ) const;
 
@@ -22,7 +24,7 @@ class Configuration {
 
 	private:
 		std::vector<Directive> directives;
-		Logger                 l;
+		Logger l;
 
 	// Additional stuff we need in the configuration
 	public:
