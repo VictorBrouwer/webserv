@@ -23,6 +23,9 @@ class Directive {
 		const std::vector<std::string>&        getArguments( void ) const;
 		const std::vector<Directive>&          getSubdirectives( void ) const;
 
+		std::vector<std::string>::const_iterator getArgumentsIterator( void ) const;
+		std::vector<std::string>::const_iterator getArgumentsEnd( void ) const;
+
 		std::vector<Directive>::const_iterator getSubdirectivesIterator( void ) const;
 		std::vector<Directive>::const_iterator getSubdirectivesEnd( void ) const;
 

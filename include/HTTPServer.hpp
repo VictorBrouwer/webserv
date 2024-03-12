@@ -20,49 +20,41 @@
 #include "HelperFuncs.hpp"
 #include "Configuration.hpp"
 #include "Logger.hpp"
+#include "Configurable.hpp"
 
-class HTTPServer
-{
-public:
-	HTTPServer(std::string ip_address, int port);
-	HTTPServer(Configuration &config, const Logger& l);
-	~HTTPServer();
-	void startListen();
-	void startPolling();
+class HTTPServer : public Configurable {
+	public:
+		HTTPServer(std::string ip_address, int port);
+		HTTPServer(Configuration &config, const Logger& l);
+		~HTTPServer();
+		void startListen();
+		void startPolling();
 
-private:
-	std::string        m_ip_address;
-	int                m_port;
-	int                m_listening_socket;
-	int                m_client_socket;
-	struct sockaddr_in m_listening_socketAddress;
-	unsigned int       m_listening_socketAddress_len;
-	std::string        m_serverMessage;
-	Poll	           m_poll;
+	private:
+		std::string        m_ip_address;
+		int                m_port;
+		int                m_listening_socket;
+		int                m_client_socket;
+		struct sockaddr_in m_listening_socketAddress;
+		unsigned int       m_listening_socketAddress_len;
+		std::string        m_serverMessage;
+		Poll	           m_poll;
 
-	std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
-	std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
+		std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
+		std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
-	// Configuration member variables
+		// Servers
 
-	bool                                 autoindex_enabled    = false;
-	size_t                               client_max_body_size = 1048576; // 1m
-	std::unordered_map<int, std::string> error_pages;
-	std::vector<std::string>             index = { "index.html" };
-	std::string                          root_path = "/var/www";
+		std::vector<Server> servers;
 
-	// Servers
+		Logger l;
 
-	std::vector<Server> servers;
-
-	Logger l;
-
-	int startServer();
-	void closeServer();
-	void acceptConnection();
-	void HandleActiveClient(pollfd poll_fd);
-	void updatePoll();
-	void handleEvent(int Event_fd, int i, pollfd *poll_fds);
-	// std::string buildResponse();
-	// void sendResponse(int fd);
+		int startServer();
+		void closeServer();
+		void acceptConnection();
+		void HandleActiveClient(pollfd poll_fd);
+		void updatePoll();
+		void handleEvent(int Event_fd, int i, pollfd *poll_fds);
+		// std::string buildResponse();
+		// void sendResponse(int fd);
 };

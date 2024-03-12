@@ -89,6 +89,14 @@ const std::vector<Directive>& Directive::getSubdirectives( void ) const {
 	return this->subdirectives;
 }
 
+std::vector<std::string>::const_iterator Directive::getArgumentsIterator( void ) const {
+	return this->arguments.begin();
+}
+
+std::vector<std::string>::const_iterator Directive::getArgumentsEnd( void ) const {
+	return this->arguments.end();
+}
+
 std::vector<Directive>::const_iterator Directive::getSubdirectivesIterator( void ) const {
 	return this->subdirectives.begin();
 }

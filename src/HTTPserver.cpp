@@ -17,9 +17,8 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 	}
 }
 
-HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
+HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : Configurable()
 {
-
 	this->l = Logger("HTTPServer", logger.getLogLevel());
 
 	try {
@@ -28,40 +27,11 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 		l.log("Checking for http directive");
 		const Directive& http_directive = config.getHttpDirective();
 
-		std::vector<Directive>::const_iterator start = http_directive.getSubdirectivesIterator();
-		std::vector<Directive>::const_iterator end   = http_directive.getSubdirectivesEnd();
-		std::vector<Directive>::const_iterator it    = start;
+		this->applyDirectives(http_directive.getSubdirectives(), l);
 
-		l.log("Applying global config options");
+		std::vector<Directive>::const_iterator it  = http_directive.getSubdirectivesIterator();
+		std::vector<Directive>::const_iterator end = http_directive.getSubdirectivesEnd();
 
-		it = std::find(start, end, "autoindex");
-		if (it != end) {
-			this->autoindex_enabled = (it->getArguments()[0] == "on");
-		}
-
-		it = std::find(start, end, "client_max_body_size");
-		if (it != end) {
-			this->client_max_body_size = size_to_int(it->getArguments()[0]);
-		}
-
-		it = std::find(start, end, "index");
-		if (it != end) {
-			this->index = it->getArguments();
-		}
-
-		it = std::find(start, end, "root");
-		if (it != end) {
-			this->root_path = it->getArguments()[0];
-		}
-
-		it = start;
-		while (it != end) {
-			// if (*it == "error_page")
-				// this->setErrorPage(*it);
-			++it;
-		}
-
-		it = start;
 		while (it != end) {
 			// Iterate over the servers, setting them up one by one.
 			++it;
