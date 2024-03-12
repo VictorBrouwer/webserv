@@ -28,39 +28,46 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger)
 		l.log("Checking for http directive");
 		const Directive& http_directive = config.getHttpDirective();
 
-		std::vector<Directive>::const_iterator i     = http_directive.getSubdirectivesIterator();
-		std::vector<Directive>::const_iterator start = i;
+		std::vector<Directive>::const_iterator start = http_directive.getSubdirectivesIterator();
 		std::vector<Directive>::const_iterator end   = http_directive.getSubdirectivesEnd();
+		std::vector<Directive>::const_iterator it    = start;
 
-		i = std::find(start, end, "autoindex");
-		if (i != end) {
-			this->autoindex_enabled = (i->getArguments()[0] == "on");
+		l.log("Applying global config options");
+
+		it = std::find(start, end, "autoindex");
+		if (it != end) {
+			this->autoindex_enabled = (it->getArguments()[0] == "on");
 		}
 
-		i = std::find(start, end, "client_max_body_size");
-		if (i != end) {
-			this->client_max_body_size = size_to_int(i->getArguments()[0]);
+		it = std::find(start, end, "client_max_body_size");
+		if (it != end) {
+			this->client_max_body_size = size_to_int(it->getArguments()[0]);
 		}
 
-		i = std::find(start, end, "index");
-		if (i != end) {
-			this->index = i->getArguments();
+		it = std::find(start, end, "index");
+		if (it != end) {
+			this->index = it->getArguments();
 		}
 
-		i = std::find(start, end, "root");
-		if (i != end) {
-			this->root_path = i->getArguments()[0];
+		it = std::find(start, end, "root");
+		if (it != end) {
+			this->root_path = it->getArguments()[0];
 		}
 
-		// TODO Iterate over all error_page directives, setting up the map
+		it = start;
+		while (it != end) {
+			// if (*it == "error_page")
+				// this->setErrorPage(*it);
+			++it;
+		}
 
-		i = start;
-		while (i != end) {
+		it = start;
+		while (it != end) {
 			// Iterate over the servers, setting them up one by one.
-			++i;
+			++it;
 		}
 
-		throw std::invalid_argument("constructor not implemented yet");
+		return;
 	}
 	catch(const std::exception& e) {
 		l.log(e.what(), L_Error);

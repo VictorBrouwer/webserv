@@ -3,9 +3,6 @@
 #include "Directive.hpp"
 #include "constants.hpp"
 #include "Logger.hpp"
-#include <iostream>
-#include <string>
-#include <algorithm>
 
 Configuration::Configuration(std::ifstream &config_file, const Logger& logger) {
 	std::string		         line;

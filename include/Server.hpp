@@ -1,5 +1,5 @@
-#if !defined(SERVER_HPP)
-#define SERVER_HPP
+#pragma once
+
 #include "Directive.hpp"
 #include "Location.hpp"
 
@@ -17,5 +17,3 @@ private:
 
 	std::vector<Location> _locations;
 };
-
-#endif // SERVER_HPP

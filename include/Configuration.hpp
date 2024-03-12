@@ -1,11 +1,14 @@
 #pragma once
-#include "Directive.hpp"
-#include "Logger.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
+
+#include "Directive.hpp"
+#include "Logger.hpp"
 
 class Configuration {
 	public:

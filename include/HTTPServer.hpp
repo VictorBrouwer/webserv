@@ -1,5 +1,4 @@
-#if !defined(HTTP_SERVER_HPP)
-#define HTTP_SERVER_HPP
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -67,5 +66,3 @@ private:
 	// std::string buildResponse();
 	// void sendResponse(int fd);
 };
-
-#endif // HTTP_SERVER_HPP

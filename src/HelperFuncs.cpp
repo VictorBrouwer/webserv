@@ -1,9 +1,9 @@
-#include "HelperFuncs.hpp"
-#include "Logger.hpp"
 #include <iostream>
 #include <iomanip>
 #include <ctime>
 
+#include "HelperFuncs.hpp"
+#include "Logger.hpp"
 
 // Deprecated, please use the Logger class instead
 void log(const std::string& message, const std::string& color) noexcept

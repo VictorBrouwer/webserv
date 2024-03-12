@@ -1,5 +1,4 @@
-#if !defined(REQUEST_HPP)
-#define REQUEST_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -45,5 +44,3 @@ private:
     std::unordered_map<std::string, std::string> m_headers;
     std::string m_body;
 };
-
-#endif // REQUEST_HPP

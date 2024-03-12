@@ -3,13 +3,6 @@
 #include "Configuration.hpp"
 #include "Logger.hpp"
 #include "constants.hpp"
-#include <sstream>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <iterator>
-#include <iostream>
-#include <string>
 
 Directive::Directive(std::vector<std::string>::iterator &i,
 					 std::vector<std::string> &lines,

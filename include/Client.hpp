@@ -1,5 +1,4 @@
-#if !defined(CLIENT_HPP)
-#define CLIENT_HPP
+#pragma once
 
 #include<iostream>
 #include <sys/socket.h>
@@ -25,6 +24,3 @@ private:
 	Response 		m_response;
 	ClientState		m_state;
 };
-
-
-#endif // CLIENT_HPP

@@ -1,5 +1,4 @@
-#if !defined(POLL_HPP)
-#define POLL_HPP
+#pragma once
 
 #include <poll.h>
 #include <vector>
@@ -15,6 +14,3 @@ public:
 private:
 	std::vector<struct pollfd> m_poll_fds;
 };
-
-
-#endif // POLL_HPP

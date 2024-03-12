@@ -1,9 +1,8 @@
-// HelperFunctions.h
-#ifndef HELPER_FUNCTIONS_H
-#define HELPER_FUNCTIONS_H
+#pragma once
 
 #include<string>
 #include<iostream>
+
 #include "Logger.hpp"
 
 namespace Color {
@@ -25,5 +24,3 @@ void exitWithError(const std::string &errorMessage);
 
 std::string vector_to_string(const std::vector<std::string>& vector);
 size_t      size_to_int(const std::string& str);
-
-#endif

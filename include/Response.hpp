@@ -1,5 +1,4 @@
-#if !defined(RESPONSE_HPP)
-#define RESPONSE_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -75,5 +74,3 @@ private:
 
 
 };
-
-#endif // RESPONSE_HPP
