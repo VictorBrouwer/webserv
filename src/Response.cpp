@@ -8,61 +8,7 @@ Response::~Response()
 
 }
 
-Response::Response(Request &client_request) : m_client_request(client_request), \
-	m_DB_status(
-		{
-			{000, "Null"},
-
-			{200, "OK"},
-			{201, "Created"},
-			{202, "Accepted"},
-			{204, "NoContent"},
-
-			{302, "Found"},
-			{304, "NotModified"},
-
-			{400, "BadRequest"},
-			{401, "Unauthorized"},
-			{403, "Forbidden"},
-			{404, "NotFound"},
-			{405, "MethodNotAllowed"},
-			{408, "RequestTimeout"},
-			{411, "LengthRequired"},
-			{413, "PayloadTooLarge"},
-			{414, "URITooLong"},
-			{415, "InternalServerError"},
-
-			{500, "UnsupportedMediaType"},
-			{501, "NotImplemented"},
-			{502, "BadGateway"},
-			{503, "ServiceUnavailable"},
-			{504, "GatewayTimeout"}
-		}
-	),
-// Here You can add additional file_types
-	m_DB_ContentType(
-		{
-			{"html", "text/html"},
-			{"txt", "text/plain"},
-
-			{"xml", "application/xml"},
-			{"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
-
-			{"jpeg", "image/jpeg"},
-			{"jpg", "image/jpg"},
-			{"png", "image/png"},
-			{"gif", "image/gif"},
-			{"ico",  "image/x-icon"},
-
-			{"mpeg", "audio/mpeg"},
-			{"ogg", "audio/ogg"},
-
-			{"mp4", "video/mp4"},
-			{"webm", "video/webm"},
-
-			{"form-data", "multipart/form-data"},
-		}
-	)
+Response::Response(Request &client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
 	m_content_length = 0;
