@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 class Configuration {
 	public:
@@ -58,7 +58,7 @@ class Configuration {
 		// it. Empty string means root directive. This is also an exhaustive list
 		// of directives, so if a directive string is not in this map, it is
 		// not recognized by us and should throw an error.
-		static const inline std::map<std::string, std::vector<std::string>> allowed_directives = {
+		static const inline std::unordered_map<std::string, std::vector<std::string>> allowed_directives = {
 			{"",                     {"http", "log_level"}},
 			{"autoindex",            {}},
 			{"client_max_body_size", {}},
@@ -94,7 +94,7 @@ class Configuration {
 
 		// Map of directive strings with an integer if the directive has a
 		// minimum number of arguments.
-		static const inline std::map<std::string, int> argument_min = {
+		static const inline std::unordered_map<std::string, int> argument_min = {
 			{"autoindex",            1},
 			{"client_max_body_size", 1},
 			{"error_page",           2},
@@ -110,7 +110,7 @@ class Configuration {
 
 		// Map of directive strings with an integer if the directive has a
 		// maximum number of arguments.
-		static const inline std::map<std::string, int> argument_max = {
+		static const inline std::unordered_map<std::string, int> argument_max = {
 			{"autoindex",            1},
 			{"client_max_body_size", 1},
 			{"http",                 0},
@@ -122,7 +122,7 @@ class Configuration {
 
 		// Map of directive strings with a vector describing its allowed arguments
 		// If a directive is not in this map, it allows arbitrary arguments
-		static const inline std::map<std::string, std::vector<std::string>> allowed_arguments = {
+		static const inline std::unordered_map<std::string, std::vector<std::string>> allowed_arguments = {
 			{"autoindex",    {"on", "off"},                        },
 			{"limit_except", {"GET", "POST", "DELETE"},            },
 			{"log_level",    {"debug", "info", "warning", "error"} },
@@ -137,7 +137,7 @@ class Configuration {
 		// returns nothing. This function is expected to throw a
 		// Configuration::Exception if its arguments are invalid.
 		typedef void (Directive::*validator)( const Logger& ) const;
-		static const inline std::map<std::string, validator> arg_validators = {
+		static const inline std::unordered_map<std::string, validator> arg_validators = {
 			{"client_max_body_size", &Directive::client_max_body_size_validator },
 			{"error_page",           &Directive::error_page_validator },
 			{"return",               &Directive::return_validator },

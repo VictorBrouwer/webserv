@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include "Directive.hpp"
 
 enum LogLevel {
@@ -35,7 +35,7 @@ class Logger {
 		void log(const std::string &message, const std::string& context,
 				 const LogLevel level = L_Debug) const noexcept;
 
-		static const inline std::map<std::string, LogLevel> level_map = {
+		static const inline std::unordered_map<std::string, LogLevel> level_map = {
 			{"debug",   L_Debug},
 			{"info",    L_Info},
 			{"warning", L_Warning},

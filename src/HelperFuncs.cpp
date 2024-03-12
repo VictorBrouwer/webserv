@@ -49,5 +49,6 @@ std::string vector_to_string(const std::vector<std::string>& vector) {
 
 size_t size_to_int(const std::string& str) {
 	log("size_to_int not implemented yet", L_Warning);
+	(void) str;
 	return 0;
 }

@@ -16,7 +16,6 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 					 const Logger& l)
 {
 	this->line   = std::distance(lines.begin(), i) + 1;
-	this->parent = parent;
 	while (i != lines.end())
 	{
 		if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {

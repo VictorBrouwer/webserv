@@ -4,3 +4,4 @@ obj/
 a.out
 *.o
 *.a
+valgrind-out.txt
