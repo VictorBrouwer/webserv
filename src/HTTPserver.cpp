@@ -35,16 +35,13 @@ int HTTPServer::startServer()
 		return 1;
 	}
 	int reuse = 1;
-	if (setsockopt(m_listening_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) {
-			close(m_listening_socket);
-		}
-
+	if (setsockopt(m_listening_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+		close(m_listening_socket);
 	if (bind(m_listening_socket, (sockaddr *)&m_listening_socketAddress, m_listening_socketAddress_len) < 0)
 	{
 		exitWithError("Cannot connect socket to address");
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -75,7 +72,8 @@ void HTTPServer::startPolling()
 		log("====== Waiting for a new event ======\n\n\n");
 		pollfd *poll_fds = this->m_poll.getPollFDs().data();
 		size_t	num_poll_fds = this->m_poll.getPollFDs().size();
-		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time now it is set to wait forever(-1)
+		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time. now it is set to wait forever(-1)
+		log("poll running", Color::Magenta);
 		if (num_events < 0)
 			exitWithError("poll failed");
 		if (num_events == 0)
@@ -96,13 +94,40 @@ void HTTPServer::startPolling()
 	}
 }
 
+std::string formatRevents(const struct pollfd& poll_fd) {
+    std::string result = ", revents:";
+    result += (poll_fd.revents & POLLIN) ? " POLLIN" : "";
+    result += (poll_fd.revents & POLLOUT) ? " POLLOUT" : "";
+    result += (poll_fd.revents & POLLHUP) ? " POLLHUP" : "";
+    result += (poll_fd.revents & POLLNVAL) ? " POLLNVAL" : "";
+    result += (poll_fd.revents & POLLPRI) ? " POLLPRI" : "";
+    result += (poll_fd.revents & POLLRDBAND) ? " POLLRDBAND" : "";
+    result += (poll_fd.revents & POLLRDNORM) ? " POLLRDNORM" : "";
+    result += (poll_fd.revents & POLLWRBAND) ? " POLLWRBAND" : "";
+    result += (poll_fd.revents & POLLWRNORM) ? " POLLWRNORM" : "";
+    result += (poll_fd.revents & POLLERR) ? " POLLERR" : "";
+    return result;
+}
+
 void HTTPServer::handleEvent(int Event_fd, int i, pollfd *poll_fds)
 {
-	std::cout << "fd = " << Event_fd << " revent = " << poll_fds[i].revents << std::endl;
+	log(std::string("fd = " + std::to_string(Event_fd) + formatRevents(poll_fds[i])), Color::Blue);
+	try
+	{
+		this->m_poll.checkErrors(poll_fds[i].revents);
+	}
+	catch(const std::exception& e)
+	{
+		std::string error_message = std::string(e.what()) + " at fd: " + std::to_string(Event_fd);
+		log(error_message, Color::Red);
+		this->m_poll.RemovePollFd(Event_fd);
+		this->m_clientMap.erase(Event_fd);
+		exitWithError("ERROR");
+	}
 	if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
 		acceptConnection();
 	if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
-		this->HandleActiveClient(this->m_poll.getPollFDs()[i]);
+		this->HandleActiveClient(i);
 }
 
 void HTTPServer::acceptConnection()
@@ -123,18 +148,31 @@ void HTTPServer::acceptConnection()
 	}
 }
 
-void HTTPServer::HandleActiveClient(pollfd poll_fd) // still needs work
+void HTTPServer::HandleActiveClient(int i) // still needs work
 {
+	pollfd poll_fd = this->m_poll.getPollFDs()[i];
 	std::cout << "client update" << std::endl;
 	ClientState state = this->m_clientMap.at(poll_fd.fd)->getState();
+	std::shared_ptr<Client> active_client = this->m_clientMap.at(poll_fd.fd);
 	switch (poll_fd.revents)
 	{
 	case POLLIN:
-		this->m_clientMap.at(poll_fd.fd)->receive();
+		active_client->receive();
 		break;
 	case POLLOUT:
 		if (state == ClientState::READY_TO_SEND)
-			// this->m_clientMap.at(poll_fd.fd)->sendResponse();
+		{
+			active_client->sendResponse();
+			if (active_client->getState() == ClientState::READING_DONE)
+				this->m_poll.setEvents(poll_fd.fd, POLLIN);
+			if (active_client->getState() == ClientState::ERROR)
+			{
+				this->m_poll.RemovePollFd(poll_fd.fd);
+				this->m_clientMap.erase(poll_fd.fd);
+			}
+			// this->m_poll.unsetEvents(poll_fd.fd);
+			// exitWithError(std::string("fd of client is: " + std::to_string(poll_fd.fd)));
+		}
 		break;
 	default:
 		break;
