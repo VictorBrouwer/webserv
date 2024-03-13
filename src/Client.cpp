@@ -3,8 +3,10 @@
 
 // const int BUFFER_SIZE = 30720;
 
-Client::Client(int socket) : m_socket(socket), m_response(this->m_request)
+Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>())
 {
+	Response response(this->m_request);
+	m_response = std::make_shared<Response>(response);
 	std::cout << "Client created\n";
 }
 
@@ -19,11 +21,12 @@ ClientState & Client::getState()
 
 void	Client::sendResponse()
 {
-	log(std::string("sending response: " + m_response.getResponse()), Color::Green);
 	// write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
-	if (send(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size(), 0) > 0)
+	log(std::string("sending response: " + m_response->getResponse()), Color::Green);
+	if (send(this->m_socket, m_response->getResponse().c_str(), m_response->getResponse().size(), 0) > 0)
 	{
-		
+		this->m_request.reset(new Request());
+		this->m_response.reset(new Response(m_request));
 		m_state = ClientState::SENDING_DONE;
 	}
 	else
@@ -32,8 +35,8 @@ void	Client::sendResponse()
 
 void	Client::receive()
 {
-	m_state = m_request.readFromClient(m_socket);
-	log(m_request.Get_Request(), Color::Yellow);
+	m_state = m_request->readFromClient(m_socket);
+	log(m_request->Get_Request(), Color::Yellow);
 	// m_state is either loading or reading_done
 	// if client state is loading, the poll event should remain POLLIN
 	// if client statis done_reading, a response should be created and then 
@@ -44,7 +47,7 @@ void	Client::receive()
 	case ClientState::LOADING:
 		break;
 	case ClientState::READING_DONE:
-		m_response.createResponse();
+		m_response->createResponse();
 		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
 		break;
 	default:

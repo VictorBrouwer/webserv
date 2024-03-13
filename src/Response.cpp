@@ -8,12 +8,12 @@ Response::~Response()
 
 }
 
-void	Response::clearResponse()
-{
-	m_body.clear();
-}
+// void	Response::clearResponse()
+// {
+// 	m_body.clear();
+// }
 
-Response::Response(Request &client_request) : m_client_request(client_request), \
+Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request), \
 	m_DB_status(
 		{
 			{000, "Null"},
@@ -81,7 +81,7 @@ Response::Response(Request &client_request) : m_client_request(client_request), 
 // Step 6 Copy the requested information in the (Body)
 void Response::createResponse()
 {
-	switch (m_client_request.Get_Method())
+	switch (m_client_request->Get_Method())
 	{
 	case HTTPMethod::GET:
 		this->Get_Response();
@@ -119,7 +119,7 @@ std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
 		throw std::logic_error("File Not Found 404");
 	}
 
-	file.open(m_client_request.Get_Path(), mode);
+	file.open(m_client_request->Get_Path(), mode);
 	if (!file.is_open())
 	{
 		m_status = StatusCode::Forbidden;
@@ -139,14 +139,14 @@ void	Response::addHeader()
 	size_t pos;
 	std::string request;
 
-	request = m_client_request.Get_Request();
+	request = m_client_request->Get_Request();
 	pos = request.find("HTTP");
 	m_total_response.append(request.substr(pos, request.find("\r\n") - pos) + " ");
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
 	m_total_response.append("Content-length: " + std::to_string(m_content_length) + "\r\n");
-	m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request.Get_Path())) + "\r\n");
+	m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
 	m_total_response.append("\r\n");
 	m_total_response.append(m_body);
 
@@ -172,7 +172,7 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
 
 bool Response::DoesFileExists()
 {
-	if (!std::filesystem::exists(m_client_request.Get_Path()))
+	if (!std::filesystem::exists(m_client_request->Get_Path()))
 		return false;
 	return true;
 }
