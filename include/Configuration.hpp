@@ -92,6 +92,7 @@ class Configuration {
 			"client_max_body_size",
 			"http",
 			"index",
+			"limit_except",
 			"log_level",
 			"return",
 			"root"

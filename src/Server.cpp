@@ -20,28 +20,37 @@ Server::Server(const Directive &server_directive, ConfigShared* config, const Lo
 	// Options for ConfigShared
 	this->applySharedDirectives(server_directive.getSubdirectives(), l);
 
-	// Specific options for server: server_name, return, listen
-	l.log("Applying server-specific config options");
-
 	auto start = server_directive.getSubdirectivesIterator();
 	auto end   = server_directive.getSubdirectivesEnd();
 	auto it    = start;
+
+	// Options for ConfigReturn
+	it = std::find(start, end, "return");
+	if (it != end) {
+		this->applyReturnDirective(*it);
+	}
+
+	// Options specifically for servers: location, server_name and listen
+	l.log("Applying server-specific config options");
 
 	it = std::find(start, end, "server_name");
 	if (it != end) {
 		this->applyServerNameDirective(*it);
 	}
 
-	it = std::find(start, end, "return");
-	if (it != end) {
-		this->applyReturnDirective(*it);
-	}
-
-	// Listen directive
 	it = start;
 	while (it != end) {
 		if (*it == "listen")
 			this->applyListenDirective(*it);
+		++it;
+	}
+
+	l.log("Setting up locations for server", L_Info);
+	it = start;
+	while (it != end) {
+		if (*it == "location") {
+			this->locations.push_back(Location(*it, (ConfigShared*) this, l));
+		}
 		++it;
 	}
 }
