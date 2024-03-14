@@ -17,23 +17,23 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 	}
 }
 
-HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : Configurable()
+HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShared(), l("HTTPServer", logger.getLogLevel())
 {
-	this->l = Logger("HTTPServer", logger.getLogLevel());
-
 	try {
 		l.log("Constructing HTTPServer.", L_Info);
 
 		l.log("Checking for http directive");
 		const Directive& http_directive = config.getHttpDirective();
 
-		this->applyDirectives(http_directive.getSubdirectives(), l);
+		this->applySharedDirectives(http_directive.getSubdirectives(), l);
 
 		std::vector<Directive>::const_iterator it  = http_directive.getSubdirectivesIterator();
 		std::vector<Directive>::const_iterator end = http_directive.getSubdirectivesEnd();
 
+		l.log("Setting up virtual servers.", L_Info);
 		while (it != end) {
-			// Iterate over the servers, setting them up one by one.
+			if (*it == "server")
+				this->servers.push_back(Server(*it, (ConfigShared*) this, l));
 			++it;
 		}
 

@@ -113,6 +113,18 @@ std::vector<Directive>::iterator Directive::getSubdirectivesMutableEnd( void ) {
 	return this->subdirectives.end();
 }
 
+// Throws std::invalid_argument if there is no server_name directive under
+// this one.
+const std::string& Directive::getPrimaryServerName( void ) const {
+	auto start = this->getSubdirectivesIterator();
+	auto end   = this->getSubdirectivesEnd();
+
+	auto it    = std::find(start, end, "server_name");
+	if (it == end)
+		throw std::invalid_argument("No server_name directive under this one");
+	return it->getArguments()[0];
+}
+
 bool Directive::operator==(const std::string& str) const {
 	return this->getKey() == str;
 }
@@ -148,8 +160,13 @@ void Directive::validate(const Logger& l, const std::vector<Directive>::const_it
 	if (std::find(Configuration::unique_in_context.begin(), Configuration::unique_in_context.end(), this->key)
 					!= Configuration::unique_in_context.end()) {
 		const std::string& key = this->key;
-		if (std::find(context_start, context_current, key) != context_current)
-			throw Configuration::Exception(E_DUPLICATE_DIRECTIVE, this->line, this->key);
+		if (std::find(context_start, context_current, key) != context_current) {
+			// throw Configuration::Exception(E_DUPLICATE_DIRECTIVE, this->line, this->key);
+			l.log("Directive \"" + this->key + "\" on line " +
+				std::to_string(this->line) + " already exists in this context and will be ignored.",
+				L_Warning
+			);
+		}
 	}
 
 	// Check if this directive has a minimum number of arguments and if so,
@@ -186,8 +203,8 @@ void Directive::validate(const Logger& l, const std::vector<Directive>::const_it
 		);
 		if (it != this->arguments.end()) {
 			throw Configuration::Exception(
-				"Argument \"" + *it + "\" is invalid for directive, allowed arguments are: " +
-				vector_to_string(allowed), this->line, this->key
+				"Argument \"" + *it + "\" is invalid for directive \"" + this->key +
+				"\", allowed arguments are: " + vector_to_string(allowed), this->line
 			);
 		}
 	}

@@ -32,6 +32,8 @@ class Directive {
 		std::vector<Directive>::iterator getSubdirectivesMutableIterator( void );
 		std::vector<Directive>::iterator getSubdirectivesMutableEnd( void );
 
+		const std::string& getPrimaryServerName( void ) const;
+
 		bool operator==(const std::string& str) const;
 
 		void setParents(Directive* parent);

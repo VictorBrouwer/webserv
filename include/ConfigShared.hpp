@@ -6,9 +6,10 @@
 
 #include "Directive.hpp"
 
-class Configurable {
+// Configuration options shared between
+class ConfigShared {
 	public:
-		virtual ~Configurable( void ) { };
+		virtual ~ConfigShared( void ) { };
 
 		bool   getAutoindexEnabled( void ) const;
 		size_t getClientMaxBodySize( void ) const;
@@ -20,10 +21,10 @@ class Configurable {
 		const std::string& getErrorPageForCode(int code) const;
 
 	protected:
-		Configurable() { };
-		Configurable(const Configurable& src);
+		ConfigShared() { };
+		ConfigShared(ConfigShared* src);
 
-		void applyDirectives(const std::vector<Directive>& directives, const Logger& l);
+		void applySharedDirectives(const std::vector<Directive>& directives, const Logger& l);
 
 		// Configuration member variables
 

@@ -58,7 +58,9 @@ class Configuration {
 		};
 
 		// Map of directive strings with a vector of allowed subdirectives under
-		// it. Empty string means root directive. This is also an exhaustive list
+		// it. Empty string means root directive.
+		//
+		// This is also an exhaustive list
 		// of directives, so if a directive string is not in this map, it is
 		// not recognized by us and should throw an error.
 		static const inline std::unordered_map<std::string, std::vector<std::string>> allowed_directives = {

@@ -20,9 +20,9 @@
 #include "HelperFuncs.hpp"
 #include "Configuration.hpp"
 #include "Logger.hpp"
-#include "Configurable.hpp"
+#include "ConfigShared.hpp"
 
-class HTTPServer : public Configurable {
+class HTTPServer : public ConfigShared {
 	public:
 		HTTPServer(std::string ip_address, int port);
 		HTTPServer(Configuration &config, const Logger& l);
