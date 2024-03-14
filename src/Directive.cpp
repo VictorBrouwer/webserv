@@ -230,13 +230,13 @@ void Directive::validate(const Logger& l, const std::vector<Directive>::const_it
 // Directive-specific validators
 
 void Directive::client_max_body_size_validator(const Logger& l) const {
-	l.log("Custom directive checker is not implemented yet!", L_Warning);
+	l.log("Custom directive checker \"client_max_body_size\" is not implemented yet!", L_Warning);
 }
 
 void Directive::error_page_validator(const Logger& l) const {
-	l.log("Custom directive checker is not implemented yet!", L_Warning);
+	l.log("Custom directive checker \"error_page\" is not implemented yet!", L_Warning);
 }
 
 void Directive::return_validator(const Logger& l) const {
-	l.log("Custom directive checker is not implemented yet!", L_Warning);
+	l.log("Custom directive checker \"return\" is not implemented yet!", L_Warning);
 }

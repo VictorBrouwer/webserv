@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include"HTTPServer.hpp"
 #include "Configuration.hpp"
 #include "Directive.hpp"
@@ -48,6 +50,41 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 HTTPServer::~HTTPServer()
 {
 	closeServer();
+}
+
+// Assembles the map
+void HTTPServer::setupSockets( void ) {
+	std::map<int, std::vector<std::string>> sockets_requested;
+
+	auto start = this->getServerMutableIterator();
+	auto end   = this->getServerMutableIterator();
+	auto it    = start;
+
+	// Collect all listen directives in our map, sorted by port
+	while (it != end) {
+		auto listens = it->getListens();
+		std::for_each(
+			listens.begin(), listens.end(),
+			[&](const std::pair<std::string, int>& p) {
+				sockets_requested[p.second].push_back(p.first);
+			}
+		);
+		++it;
+	}
+
+	// Check which sockets need to be opened for each port
+	// If we have 0.0.0.0 or *, open that, else open each unique one individually
+	std::for_each(
+		sockets_requested.begin(), sockets_requested.end(),
+		[&](const std::pair<const int, std::vector<std::string>>& p) {
+			if (std::any_of(p.second.begin(), p.second.end(), "*") ||
+				std::any_of(p.second.begin(), p.second.end(), "0.0.0.0")) {
+
+			} else {
+
+			}
+		}
+	);
 }
 
 int HTTPServer::startServer()

@@ -55,6 +55,10 @@ Server::Server(const Directive &server_directive, ConfigShared* config, const Lo
 	}
 }
 
+const std::vector<std::pair<std::string, int>>& Server::getListens( void ) const {
+	return this->listens;
+}
+
 Server::~Server() { }
 
 void Server::applyServerNameDirective(const Directive& directive) {

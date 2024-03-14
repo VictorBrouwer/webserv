@@ -11,6 +11,9 @@ class Server : public ConfigShared, public ConfigReturn {
 		Server(int socket);
 		Server(const Directive &server_directive, ConfigShared* config,
 				const Logger& logger);
+
+		const std::vector<std::pair<std::string, int>>& getListens( void ) const;
+
 		~Server();
 
 	private:
@@ -19,6 +22,8 @@ class Server : public ConfigShared, public ConfigReturn {
 		std::vector<std::string>                 server_names;
 		std::vector<Location>                    locations;
 		std::vector<std::pair<std::string, int>> listens;
+
+		std::vector<int> sockets;
 
 		Logger l;
 

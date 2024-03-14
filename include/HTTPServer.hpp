@@ -26,7 +26,12 @@ class HTTPServer : public ConfigShared {
 	public:
 		HTTPServer(std::string ip_address, int port);
 		HTTPServer(Configuration &config, const Logger& l);
+
 		~HTTPServer();
+
+		std::vector<Server>::iterator getServerMutableIterator( void );
+		std::vector<Server>::iterator getServerMutableEnd( void );
+
 		void startListen();
 		void startPolling();
 
@@ -43,11 +48,9 @@ class HTTPServer : public ConfigShared {
 		std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
 		std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
-		std::vector<Client> m_clientVector;
-		std::vector<Server> m_serverVector;
-
 		Logger l;
 		std::vector<Server> servers;
+		std::map<int, std::pair<std::string, int>> socket_map;
 
 		int startServer();
 		void closeServer();
@@ -58,4 +61,6 @@ class HTTPServer : public ConfigShared {
 		void handleEvent(int Event_fd, int i, pollfd *poll_fds);
 		// std::string buildResponse();
 		// void sendResponse(int fd);
+
+		void setupSockets( void );
 };
