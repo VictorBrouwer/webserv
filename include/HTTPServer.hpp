@@ -43,16 +43,17 @@ class HTTPServer : public ConfigShared {
 		std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
 		std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
-		// Servers
-
-		std::vector<Server> servers;
+		std::vector<Client> m_clientVector;
+		std::vector<Server> m_serverVector;
 
 		Logger l;
+		std::vector<Server> servers;
 
 		int startServer();
 		void closeServer();
 		void acceptConnection();
-		void HandleActiveClient(pollfd poll_fd);
+		void HandleActiveClient(int i);
+		// void HandleActiveClient(pollfd poll_fd);
 		void updatePoll();
 		void handleEvent(int Event_fd, int i, pollfd *poll_fds);
 		// std::string buildResponse();
