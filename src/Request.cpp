@@ -1,9 +1,10 @@
 #include"Request.hpp"
 #include"HelperFuncs.hpp"
+#include"constants.hpp"
 
 #define BUFFER_SIZE 1096
 
-Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path("")
+Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path(""), m_keep_alive(false)
 {
 }
 
@@ -30,41 +31,46 @@ void Request::setMethod()
 
 std::string Request::extractPath()
 {
-    size_t firstSpacePos = m_total_request.find(' ');
+	size_t firstSpacePos = m_total_request.find(' ');
 
-    if (firstSpacePos != std::string::npos)
+	if (firstSpacePos != std::string::npos)
 	{
-        size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
-        if (secondSpacePos != std::string::npos)
-            return "/home/vbrouwer/core/webserv" + m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
-    }
-    return "";
+		size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
+		if (secondSpacePos != std::string::npos)
+			return "/home/vbrouwer/core/webserv" + m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
+	}
+	return "";
 }
 
 void Request::parseHeaders()
 {
-    std::string line;
-    size_t i = 0;
 
 	if (m_path == "")
 		m_path = this->extractPath();
-
-    while ((i = m_total_request.find("\r\n", i)) != std::string::npos)
+	size_t start_headers = m_total_request.find(CRLF) + 2;
+	size_t end_headers = m_total_request.find(CRLFCRLF);
+	std::string headers_section = m_total_request.substr(start_headers, (end_headers-start_headers));
+    std::string line, key, value;
+    size_t i = 0, j = 0;
+    while ((i = headers_section.find("\r\n", i)) != std::string::npos)
 	{
-        line = m_total_request.substr(0, i);
+        line = headers_section.substr(j, (i-j));
         if (line.empty()) // Empty line indicates end of headers
             break;
-
         size_t pos = line.find(':');
         if (pos != std::string::npos)
 		{
-            std::string key = line.substr(0, pos);
-            std::string value = line.substr(pos + 2);
+            key = line.substr(0, pos);
+            value = line.substr(pos + 2);
             m_headers.emplace(key, value);
         }
-
+		else
+			throw std::logic_error("invalid header format");
         i += 2; // Move past the "\r\n" delimiter
+		j = i;
     }
+	for (const auto& pair : m_headers)
+		log(std::string(pair.first + " : " + pair.second), Color::Magenta);
 }
 
 ClientState	Request::readFromClient(int client_fd)
@@ -73,8 +79,9 @@ ClientState	Request::readFromClient(int client_fd)
 	char buffer[BUFFER_SIZE];
 
 	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
-	m_total_request += std::string(buffer);
-
+	std::string str(buffer);
+	str.resize(m_bytes_read);
+	m_total_request += str;
 
 	// log("\n====== incoming request  ======\n");
 	// std::cout << m_total_request << std::endl;
@@ -98,6 +105,11 @@ ClientState	Request::readFromClient(int client_fd)
 	if (pos != std::string::npos)
 	{
 		this->parseHeaders();
+		if (m_headers.find("Connection") != m_headers.end())
+		{
+			if (m_headers.at("Connection") == "keep-alive")
+				m_keep_alive = true;
+		}
 		if (m_headers.find("Content-length") != m_headers.end())
 		{
 			m_content_length = std::stoi(m_headers.at("Content-length"));
@@ -116,27 +128,32 @@ ClientState	Request::readFromClient(int client_fd)
 		return ClientState::LOADING;
 }
 
-std::string	Request::Get_Body() 
+const std::string&	Request::Get_Body()
 {
 	return m_body;
 }
 
-std::string Request::Get_Path() 
+const std::string& Request::Get_Path() 
 {
 	return m_path;
 }
 
-HTTPMethod 	Request::Get_Method() 
+const HTTPMethod& 	Request::Get_Method() 
 {
 	return m_method;
 }
 
-std::unordered_map<std::string, std::string> Request::Get_Headers() 
+const std::unordered_map<std::string, std::string>& Request::Get_Headers() 
 {
 	return m_headers;
 }
 
-std::string Request::Get_Request()
+const std::string& Request::Get_Request()
 {
 	return m_total_request;
+}
+
+const bool&	Request::Get_Keep_Alive()
+{
+	return m_keep_alive;
 }

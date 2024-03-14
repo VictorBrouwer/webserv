@@ -3,7 +3,7 @@
 
 // const int BUFFER_SIZE = 30720;
 
-Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>())
+Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>()), m_total_bytes_sent(0)
 {
 	Response response(this->m_request);
 	m_response = std::make_shared<Response>(response);
@@ -21,16 +21,31 @@ ClientState & Client::getState()
 
 void	Client::sendResponse()
 {
+	size_t bytes_sent;
+
 	// write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
 	log(std::string("sending response: " + m_response->getResponse()), Color::Green);
-	if (send(this->m_socket, m_response->getResponse().c_str(), m_response->getResponse().size(), 0) > 0)
+	bytes_sent = send(this->m_socket, m_response->getResponse().c_str(), m_response->getResponse().size(), 0);
+	if (bytes_sent < 0)
 	{
-		this->m_request.reset(new Request());
-		this->m_response.reset(new Response(m_request));
-		m_state = ClientState::SENDING_DONE;
-	}
-	else
 		m_state = ClientState::ERROR;
+		return;
+	}
+	m_total_bytes_sent += bytes_sent;
+	if (m_total_bytes_sent == this->m_response->getResponse().length())
+	{
+		if(m_request->Get_Keep_Alive() == true)
+		{
+			m_request.reset(new Request);
+			m_response.reset(new Response(m_request));
+			m_state = ClientState::KEEP_ALIVE;
+			m_total_bytes_sent = 0;
+		}
+		else
+			m_state = ClientState::REMOVE_CONNECTION;
+	}
+	else if (m_total_bytes_sent < this->m_response->getResponse().length())
+		m_state = ClientState::SENDING;
 }
 
 void	Client::receive()

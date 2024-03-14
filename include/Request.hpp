@@ -29,11 +29,12 @@ public:
 	void			setMethod();
 	ClientState		readFromClient(int client_fd);
 
-	std::string	Get_Body();
-	std::string Get_Path();
-	HTTPMethod 	Get_Method();
-	std::string Get_Request();
-	std::unordered_map<std::string, std::string> Get_Headers();
+	const std::string&	Get_Body();
+	const std::string& 	Get_Path();
+	const HTTPMethod& 	Get_Method();
+	const std::string& 	Get_Request();
+	const bool& 			Get_Keep_Alive();
+	const std::unordered_map<std::string, std::string>& Get_Headers();
 
 private:
 	size_t 		m_bytes_read;
@@ -44,6 +45,7 @@ private:
     std::string m_path;
     std::unordered_map<std::string, std::string> m_headers;
     std::string m_body;
+	bool		m_keep_alive;
 };
 
 #endif // REQUEST_HPP

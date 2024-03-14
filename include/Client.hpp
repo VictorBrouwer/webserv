@@ -25,6 +25,7 @@ private:
 	std::shared_ptr<Request> 	m_request;
 	std::shared_ptr<Response>	m_response;
 	ClientState					m_state;
+	size_t						m_total_bytes_sent;
 };
 
 

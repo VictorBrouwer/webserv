@@ -90,7 +90,6 @@ void HTTPServer::startPolling()
 			if (num_events <= 0)
 				break;
 		}
-		updatePoll();
 	}
 }
 
@@ -158,42 +157,51 @@ void HTTPServer::HandleActiveClient(int i) // still needs work
 	{
 	case POLLIN:
 		active_client->receive();
+		state = active_client->getState();
 		break;
 	case POLLOUT:
 		if (state == ClientState::READY_TO_SEND)
 		{
 			active_client->sendResponse();
-			if (active_client->getState() == ClientState::READING_DONE)
-				this->m_poll.setEvents(poll_fd.fd, POLLIN);
-			if (active_client->getState() == ClientState::ERROR)
-			{
-				this->m_poll.RemovePollFd(poll_fd.fd);
-				this->m_clientMap.erase(poll_fd.fd);
-			}
-			// this->m_poll.unsetEvents(poll_fd.fd);
-			// exitWithError(std::string("fd of client is: " + std::to_string(poll_fd.fd)));
+			state = active_client->getState();
 		}
 		break;
 	default:
 		break;
 	}
+	this->updatePoll(state, poll_fd);
 }
 
-void HTTPServer::updatePoll()
+void HTTPServer::updatePoll(ClientState state, pollfd poll_fd)
 {
-	for (const auto& pair : m_clientMap)
+	switch (state)
 	{
-		int socket = pair.first;
-		std::shared_ptr<Client> client = pair.second;
-		if (client->getState() == ClientState::LOADING)
-			m_poll.setEvents(socket, POLLIN);
-		if (client->getState() == ClientState::READING_DONE) // unsure if this is correct. Should you still accept incoming requests at this point?
-			m_poll.setEvents(socket, POLLIN);
-		if (client->getState() == ClientState::READY_TO_SEND)
-			m_poll.setEvents(socket, POLLOUT);
-		if (client->getState() == ClientState::SENDING_DONE)
-			m_poll.setEvents(socket, POLLIN);
-		else
-			continue;
+	case ClientState::ERROR:
+		this->m_poll.RemovePollFd(poll_fd.fd);
+		this->m_clientMap.erase(poll_fd.fd);
+		break;
+	case ClientState::LOADING:
+		this->m_poll.setEvents(poll_fd.fd, POLLIN);
+		break;
+	case ClientState::READING_DONE: // unsure if this is possible. Also, should you still accept incoming requests at this point?
+		this->m_poll.setEvents(poll_fd.fd, POLLIN);
+		break;
+	case ClientState::READY_TO_SEND:
+		this->m_poll.setEvents(poll_fd.fd, POLLOUT);
+		break;
+	case ClientState::SENDING:
+		this->m_poll.setEvents(poll_fd.fd, POLLOUT);
+		break;
+	case ClientState::KEEP_ALIVE:
+		this->m_poll.unsetEvents(poll_fd.fd);
+		this->m_poll.setEvents(poll_fd.fd, POLLIN);
+		break;
+	case ClientState::REMOVE_CONNECTION:
+		this->m_poll.RemovePollFd(poll_fd.fd);
+		this->m_clientMap.erase(poll_fd.fd);
+		log(std::string("removed client with fd: " + std::to_string(poll_fd.fd)), Color::Blue);
+		break;
+	default:
+		break;
 	}
 }
