@@ -19,12 +19,12 @@ public:
 
     cgi(Request &client_request);
     ~cgi();
+    int     ExecuteScript();
 
 private:
 
     void    GetMethodParse();
     void    ParseHeader(const std::string &header, const std::string &enviroment_name);
-    int     ExecuteScript();
 
     char    **AllocateArgumentVector();
     char    **AllocateEnviroment();

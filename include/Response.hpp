@@ -61,12 +61,12 @@ private:
 	void			ReadFile(std::fstream &file) noexcept(false);
 
 	std::string		ExtensionExtractor(const std::string &path);
+	void			ExecuteCGI();
 
 	std::string										m_body;
 	StatusCode										m_status;
 	Request											&m_client_request;
 	std::unordered_map<std::string, std::string> 	m_headers;
-	/* The Content DataBases for ease of lookup */
 
     std::string 									m_total_response;
 	unsigned int									m_content_length;

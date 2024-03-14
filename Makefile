@@ -17,7 +17,8 @@ SRC			:=	main.cpp \
 				Response.cpp \
 				HelperFuncs.cpp \
 				Configuration.cpp \
-				Directive.cpp
+				Directive.cpp \
+				cgi.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))

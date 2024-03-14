@@ -1,8 +1,6 @@
 #include"Request.hpp"
 #include"HelperFuncs.hpp"
 
-#define BUFFER_SIZE 1096
-
 Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path("")
 {
 }

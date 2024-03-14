@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include "cgi.hpp"
 
 #define READ_ONLY std::ios::in
 #define WRITE_ONLY std::ios::out
@@ -36,18 +37,22 @@ void Response::createResponse()
 void Response::Get_Response()
 {
 	std::fstream file;
+	cgi common_gateway_interface(m_client_request);
 
 	try
 	{
 		file = this->OpenFile(READ_ONLY);
-		this->ReadFile(file);
+		if (this->ExtensionExtractor(m_client_request.Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request.Get_Path()) == "py")
+			common_gateway_interface.ExecuteScript();
+		else
+			this->ReadFile(file);
 	}
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
 	}
 	this->addHeader();
-
+	
 }
 
 std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
@@ -109,6 +114,33 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
 	file.close();
 
 	m_content_length = m_body.size();
+}
+
+void Response::ExecuteCGI() noexcept(false)
+{
+	int 	bytes_read;
+	char buffer[BUFFER_SIZE];
+
+
+	int fd;
+	cgi common_gateway_interface(m_client_request);
+
+	try
+	{
+		fd = common_gateway_interface.ExecuteScript();
+		bytes_read = read(fd, buffer, BUFFER_SIZE);
+		while (bytes_read != 0)
+		{
+			std::string str(buffer);
+			str.resize(bytes_read);
+			m_body += str;
+			bytes_read = read(fd, buffer, BUFFER_SIZE);
+		}
+	}
+	catch(const std::exception& e)
+	{
+		close(fd);
+	}
 }
 
 bool Response::DoesFileExists()

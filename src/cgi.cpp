@@ -1,6 +1,7 @@
 #include "cgi.hpp"
 
-/** 
+/**
+ * Enviroment VARS
  * REQUEST_METHOD: Specifies the HTTP request method, such as GET or POST.
  * QUERY_STRING: Contains the query string portion of the URL, if any.
  * CONTENT_LENGTH: Specifies the length of the content sent by the client for POST requests. (POST)
@@ -49,6 +50,7 @@ cgi::~cgi() {
 void    cgi::GetMethodParse()
 {
     size_t pos;
+    std::string str;
 
     m_enviroment_var.push_back("REQUEST_METHOD=GET");
 
@@ -61,10 +63,16 @@ void    cgi::GetMethodParse()
     // REMOTE_ADDR is not in the request
     ParseHeader("Host", "REMOTE_HOST");
     // SERVER_NAME is not in the request (We will need to write just Webserv)
-    // SERVER_PORT is not in the request (if host = localhost:8080 then we can extract port)(if host = www.webserv.com, we cannot extract form request)
+
+    str = m_client_request.Get_Headers().find("Host")->second;
+    pos = str.find(":");
+    if (pos != std::string::npos)
+        m_enviroment_var.push_back("SERVER_PORT=" + str.substr(pos));
+    else
+        m_enviroment_var.push_back("SERVER_PORT=80"); // If none specified default port 80 assigned        
 
     pos = m_path.find("HTTP");
-	m_enviroment_var.push_back("SERVER_PORT=" + m_path.substr(pos, m_path.find("\r\n") - pos));
+	m_enviroment_var.push_back("SERVER_PROTOCOL=" + m_path.substr(pos, m_path.find("\r\n") - pos));
 
     m_enviroment_var.push_back("SERVER_SOFTWARE=Webserv/1.0.0 (Unix) Python/3.10.12");
 }
@@ -72,9 +80,9 @@ void    cgi::GetMethodParse()
 /**
  * @brief This function is responsible for executing the script and return a file disciptor to read the output of the scripts.
  * 
- * @warning This function can throw std::logic_error
+ * @warning This function can throw std::logic_error && std::bad_alloc
  * 
- * @throw std::logic_error
+ * @throw std::logic_error std::bad_alloc
  * @return int file descriptor
  */
 int cgi::ExecuteScript() noexcept(false)
@@ -87,7 +95,7 @@ int cgi::ExecuteScript() noexcept(false)
     if (pos != std::string::npos)
         m_path.erase(pos);
 
-    if (access(m_path.c_str(), X_OK) == 0);
+    if (access(m_path.c_str(), X_OK) == 0)
         throw std::logic_error("No Premissions Exception!");
 
     m_envp = this->AllocateEnviroment();
@@ -194,7 +202,7 @@ char    **cgi::AllocateArgumentVector() noexcept(false)
     {
         argv = new char*[3];
 
-        argv[index] = new char[sizeof("/usr/bin/python3") + 1];
+        argv[index] = new char[sizeof("/usr/bin/python3") + 1]; // +1 for NULL
         strcpy(argv[0], "/usr/bin/python3");
         index++;
 
@@ -215,10 +223,12 @@ char    **cgi::AllocateArgumentVector() noexcept(false)
 
 void    cgi::DeletePointerArray(char **arr, size_t index)
 {
-    while (index >= 0)
+    int i = index;
+
+    while (i >= 0)
     {
-        delete[] arr[index];
-        index--;
+        delete[] arr[i];
+        i--;
     }
     delete[] arr; 
 }
