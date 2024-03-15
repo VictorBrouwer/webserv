@@ -8,6 +8,7 @@
 #include <cstring>
 #include "HelperFuncs.hpp"
 #include <memory>
+#include <sys/wait.h>
 
 #define FORK_ERROR -1
 #define PIPE_ERROR -1

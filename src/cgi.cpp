@@ -51,9 +51,7 @@ void    cgi::GetMethodParse()
 {
     size_t pos;
     std::string str;
-
     m_enviroment_var.push_back("REQUEST_METHOD=GET");
-
     pos = m_path.find('?');
     if (pos != std::string::npos)
         m_enviroment_var.push_back("QUERY_STRING=" + m_path.substr(pos));
@@ -71,7 +69,8 @@ void    cgi::GetMethodParse()
     else
         m_enviroment_var.push_back("SERVER_PORT=80"); // If none specified default port 80 assigned        
 
-    pos = m_path.find("HTTP");
+    log("Im here " + m_path, L_Info);
+    pos = m_client_request->Get_Request().find("HTTP");
 	m_enviroment_var.push_back("SERVER_PROTOCOL=" + m_path.substr(pos, m_path.find("\r\n") - pos));
 
     m_enviroment_var.push_back("SERVER_SOFTWARE=Webserv/1.0.0 (Unix) Python/3.10.12");
@@ -117,16 +116,17 @@ int cgi::ExecuteScript(std::string path) noexcept(false)
     }
     if (pid == CHILD)
     {
-        log("Child is executing script");
+        log("Child is executing script", L_Info);
         close(pipefds[READ]);
-        dup2(STDOUT_FILENO, pipefds[WRITE]);
+        dup2(pipefds[WRITE], STDOUT_FILENO);
         close(pipefds[WRITE]);
         execve("/usr/bin/python3", m_argv, m_envp); // This needs to be changed if we are going to support multiple code langs.
-        throw std::logic_error("Execve Failed Exception!");
+        exit(1);
     }
     close(pipefds[WRITE]);
-
     this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
+    this->DeletePointerArray(this->m_argv, 2);
+    waitpid(pid, NULL, 0);
     return (pipefds[READ]);
 }
 

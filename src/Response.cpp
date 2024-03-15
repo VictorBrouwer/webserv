@@ -12,6 +12,7 @@ Response::~Response()
 Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
+	m_CGI = false;
 }
 
 // Step 1 Recognise wich HTTP method request we got (done).
@@ -41,7 +42,10 @@ void Response::Get_Response()
 	{
 		file = this->OpenFile(READ_ONLY);
 		if (this->ExtensionExtractor(m_client_request->Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request->Get_Path()) == "py")
-			ExecuteCGI();
+		{
+			m_CGI = true;
+			this->ExecuteCGI();
+		}
 		else
 			this->ReadFile(file);
 	}
@@ -90,12 +94,15 @@ void	Response::addHeader()
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
-	m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
-	m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
-	m_total_response.append("\r\n");
+	if (!m_CGI)
+	{
+		m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
+		m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
+		m_total_response.append("\r\n");
+	}
 	m_total_response.append(m_body);
 
-	// log(m_total_response);
+	log(m_total_response, L_Error);
 }
 
 void Response::ReadFile(std::fstream &file) noexcept(false)
@@ -138,6 +145,8 @@ void Response::ExecuteCGI() noexcept(false)
 		close(fd);
 		throw;
 	}
+	log("Done reading CGI PIPE", L_Info);
+	close(fd);
 }
 
 bool Response::DoesFileExists()

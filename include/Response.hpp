@@ -66,6 +66,7 @@ private:
 
 	std::string										m_body;
 	StatusCode										m_status;
+	bool											m_CGI;
 	std::shared_ptr<Request> 						m_client_request;
 	std::unordered_map<std::string, std::string> 	m_headers;
 
