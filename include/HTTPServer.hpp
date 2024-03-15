@@ -1,5 +1,4 @@
-#if !defined(HTTP_SERVER_HPP)
-#define HTTP_SERVER_HPP
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -20,40 +19,43 @@
 #include "Server.hpp"
 #include "HelperFuncs.hpp"
 #include "Configuration.hpp"
+#include "Logger.hpp"
+#include "ConfigShared.hpp"
 
-class HTTPServer
-{
-public:
-	HTTPServer(std::string ip_address, int port);
-	// HTTPServer(const Configuration &config);
-	~HTTPServer();
-	void startListen();
-	void startPolling();
+class HTTPServer : public ConfigShared {
+	public:
+		HTTPServer(std::string ip_address, int port);
+		HTTPServer(Configuration &config, const Logger& l);
+		~HTTPServer();
+		void startListen();
+		void startPolling();
 
-private:
-	std::string        m_ip_address;
-	int                m_port;
-	int                m_listening_socket;
-	int                m_client_socket;
-	struct sockaddr_in m_listening_socketAddress;
-	unsigned int       m_listening_socketAddress_len;
-	std::string        m_serverMessage;
-	Poll	           m_poll;
+	private:
+		std::string        m_ip_address;
+		int                m_port;
+		int                m_listening_socket;
+		int                m_client_socket;
+		struct sockaddr_in m_listening_socketAddress;
+		unsigned int       m_listening_socketAddress_len;
+		std::string        m_serverMessage;
+		Poll	           m_poll;
 
-	std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
-	std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
+		std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
+		std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
-	std::vector<Client> m_clientVector;
-	std::vector<Server> m_serverVector;
+		std::vector<Client> m_clientVector;
+		std::vector<Server> m_serverVector;
 
-	int startServer();
-	void closeServer();
-	void acceptConnection();
-	void HandleActiveClient(pollfd poll_fd);
-	void updatePoll();
-	void handleEvent(int Event_fd, int i, pollfd *poll_fds);
-	// std::string buildResponse();
-	// void sendResponse(int fd);
+		Logger l;
+		std::vector<Server> servers;
+
+		int startServer();
+		void closeServer();
+		void acceptConnection();
+		void HandleActiveClient(int i);
+		// void HandleActiveClient(pollfd poll_fd);
+		void updatePoll();
+		void handleEvent(int Event_fd, int i, pollfd *poll_fds);
+		// std::string buildResponse();
+		// void sendResponse(int fd);
 };
-
-#endif // HTTP_SERVER_HPP

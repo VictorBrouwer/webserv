@@ -1,10 +1,10 @@
-#if !defined(CLIENT_HPP)
-#define CLIENT_HPP
+#pragma once
 
 
 #include<iostream>
 #include <sys/socket.h>
 #include <sstream>
+#include <memory>
 
 #include "Request.hpp"
 #include "Response.hpp"
@@ -18,14 +18,11 @@ public:
 	~Client();
 	ClientState & getState();
 	void receive();
-	// void send();
+	void sendResponse();
 	void readSocket();
 private:
-	int				m_socket;
-	Request 		m_request;
-	Response 		m_response;
-	ClientState		m_state;
+	int							m_socket;
+	std::shared_ptr<Request> 	m_request;
+	std::shared_ptr<Response>	m_response;
+	ClientState					m_state;
 };
-
-
-#endif // CLIENT_HPP

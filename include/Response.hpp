@@ -1,5 +1,4 @@
-#if !defined(RESPONSE_HPP)
-#define RESPONSE_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -14,6 +13,7 @@
 #include "Request.hpp"
 #include "HelperFuncs.hpp"
 #include <map>
+#include <memory>
 
 enum class StatusCode
 {
@@ -43,12 +43,13 @@ enum class StatusCode
 class Response
 {
 public:
-	Response(Request &client_request);
+	Response(std::shared_ptr<Request> client_request);
 	~Response();
 
 	void				addHeader();
 	void				createResponse();
 	const std::string 	&getResponse() const;
+	void				clearResponse();
 
 	void	Get_Response();
 	void	Delete_Response();
@@ -65,7 +66,7 @@ private:
 
 	std::string										m_body;
 	StatusCode										m_status;
-	Request											&m_client_request;
+	std::shared_ptr<Request> 						m_client_request;
 	std::unordered_map<std::string, std::string> 	m_headers;
 
     std::string 									m_total_response;
@@ -128,5 +129,3 @@ private:
 		};
 
 };
-
-#endif // RESPONSE_HPP

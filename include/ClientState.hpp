@@ -1,5 +1,4 @@
-#ifndef CLIENT_STATE
-#define CLIENT_STATE
+#pragma once
 
 enum class ClientState
 {
@@ -7,6 +6,5 @@ enum class ClientState
 	READING_DONE,
 	READY_TO_SEND,
 	SENDING_DONE,
+	ERROR,
 };
-
-#endif
