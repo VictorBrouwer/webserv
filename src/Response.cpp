@@ -94,15 +94,22 @@ void	Response::addHeader()
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
+
 	if (!m_CGI)
 	{
 		m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
 		m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
 		m_total_response.append("\r\n");
 	}
-	m_total_response.append(m_body);
+	else
+	{
+		request = m_body;
+		request.erase(0, request.find("\r\n") + 2);
+		log(request, L_Info);
+		m_total_response.append("Content-length: " + std::to_string(request.size() - 1) + "\r\n");
+	}
 
-	log(m_total_response, L_Error);
+	m_total_response.append(m_body);
 }
 
 void Response::ReadFile(std::fstream &file) noexcept(false)
