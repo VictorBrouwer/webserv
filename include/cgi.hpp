@@ -19,7 +19,7 @@ public:
 
     cgi(Request &client_request);
     ~cgi();
-    int     ExecuteScript();
+    int     ExecuteScript(std::string path);
 
 private:
 

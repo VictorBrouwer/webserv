@@ -69,8 +69,6 @@ private:
 	std::unordered_map<std::string, std::string> 	m_headers;
 
     std::string 									m_total_response;
-	unsigned int									m_content_length;
-
 
 
 	// These are the supported Exit codes. 

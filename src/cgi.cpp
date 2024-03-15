@@ -85,17 +85,17 @@ void    cgi::GetMethodParse()
  * @throw std::logic_error std::bad_alloc
  * @return int file descriptor
  */
-int cgi::ExecuteScript() noexcept(false)
+int cgi::ExecuteScript(std::string path) noexcept(false)
 {
     pid_t pid;
     size_t pos;
     int pipefds[2];
 
-    pos = m_path.find('?');
+    pos = path.find('?');
     if (pos != std::string::npos)
-        m_path.erase(pos);
+        path.erase(pos);
 
-    if (access(m_path.c_str(), X_OK) == 0)
+    if (access(path.c_str(), X_OK) == 0)
         throw std::logic_error("No Premissions Exception!");
 
     m_envp = this->AllocateEnviroment();

@@ -12,7 +12,6 @@ Response::~Response()
 Response::Response(Request &client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
-	m_content_length = 0;
 }
 
 // Step 1 Recognise wich HTTP method request we got (done).
@@ -37,18 +36,18 @@ void Response::createResponse()
 void Response::Get_Response()
 {
 	std::fstream file;
-	cgi common_gateway_interface(m_client_request);
 
 	try
 	{
 		file = this->OpenFile(READ_ONLY);
 		if (this->ExtensionExtractor(m_client_request.Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request.Get_Path()) == "py")
-			common_gateway_interface.ExecuteScript();
+			ExecuteCGI();
 		else
 			this->ReadFile(file);
 	}
 	catch(const std::exception& e)
 	{
+		m_status = StatusCode::InternalServerError;
 		std::cerr << e.what() << '\n';
 	}
 	this->addHeader();
@@ -91,7 +90,7 @@ void	Response::addHeader()
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
-	m_total_response.append("Content-length: " + std::to_string(m_content_length) + "\r\n");
+	m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
 	m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request.Get_Path())) + "\r\n");
 	m_total_response.append("\r\n");
 	m_total_response.append(m_body);
@@ -112,22 +111,18 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
 		throw std::logic_error("Error Reading File 501");
 	}
 	file.close();
-
-	m_content_length = m_body.size();
 }
 
 void Response::ExecuteCGI() noexcept(false)
 {
+	int 	fd;
 	int 	bytes_read;
-	char buffer[BUFFER_SIZE];
-
-
-	int fd;
-	cgi common_gateway_interface(m_client_request);
+	char 	buffer[BUFFER_SIZE];
+	cgi 	common_gateway_interface(m_client_request);
 
 	try
 	{
-		fd = common_gateway_interface.ExecuteScript();
+		fd = common_gateway_interface.ExecuteScript(m_client_request.Get_Path());
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		while (bytes_read != 0)
 		{
@@ -139,7 +134,9 @@ void Response::ExecuteCGI() noexcept(false)
 	}
 	catch(const std::exception& e)
 	{
+		m_status = StatusCode::InternalServerError;
 		close(fd);
+		throw;
 	}
 }
 
