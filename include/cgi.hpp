@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstring>
 #include "HelperFuncs.hpp"
+#include <memory>
 
 #define FORK_ERROR -1
 #define PIPE_ERROR -1
@@ -17,7 +18,7 @@
 class cgi {
 public:
 
-    cgi(Request &client_request);
+    cgi(std::shared_ptr<Request> client_request);
     ~cgi();
     int     ExecuteScript(std::string path);
 
@@ -38,7 +39,7 @@ private:
     char                        **m_argv;
     std::vector<std::string>    m_enviroment_var;
     std::string                 m_path;
-    Request                     &m_client_request;
+    std::shared_ptr<Request>    m_client_request;
 
 
 };

@@ -9,7 +9,7 @@ Response::~Response()
 
 }
 
-Response::Response(Request &client_request) : m_client_request(client_request)
+Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
 }
@@ -40,7 +40,7 @@ void Response::Get_Response()
 	try
 	{
 		file = this->OpenFile(READ_ONLY);
-		if (this->ExtensionExtractor(m_client_request.Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request.Get_Path()) == "py")
+		if (this->ExtensionExtractor(m_client_request->Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request->Get_Path()) == "py")
 			ExecuteCGI();
 		else
 			this->ReadFile(file);
@@ -91,7 +91,7 @@ void	Response::addHeader()
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
 	m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
-	m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request.Get_Path())) + "\r\n");
+	m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
 	m_total_response.append("\r\n");
 	m_total_response.append(m_body);
 
@@ -122,7 +122,7 @@ void Response::ExecuteCGI() noexcept(false)
 
 	try
 	{
-		fd = common_gateway_interface.ExecuteScript(m_client_request.Get_Path());
+		fd = common_gateway_interface.ExecuteScript(m_client_request->Get_Path());
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		while (bytes_read != 0)
 		{

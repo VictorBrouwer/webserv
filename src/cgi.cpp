@@ -22,11 +22,11 @@
  * 
  * @param client_request 
  */
-cgi::cgi(Request &client_request) : m_client_request(client_request)
+cgi::cgi(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
-    m_path = m_client_request.Get_Path();
+    m_path = m_client_request->Get_Path();
 
-    switch (m_client_request.Get_Method())
+    switch (m_client_request->Get_Method())
 	{
 	case HTTPMethod::GET:
 		this->GetMethodParse();
@@ -64,7 +64,7 @@ void    cgi::GetMethodParse()
     ParseHeader("Host", "REMOTE_HOST");
     // SERVER_NAME is not in the request (We will need to write just Webserv)
 
-    str = m_client_request.Get_Headers().find("Host")->second;
+    str = m_client_request->Get_Headers().find("Host")->second;
     pos = str.find(":");
     if (pos != std::string::npos)
         m_enviroment_var.push_back("SERVER_PORT=" + str.substr(pos));
@@ -141,7 +141,7 @@ int cgi::ExecuteScript(std::string path) noexcept(false)
  */
 void    cgi::ParseHeader(const std::string &header, const std::string &enviroment_name)
 {
-    std::unordered_map<std::string, std::string> DB_header(m_client_request.Get_Headers());
+    std::unordered_map<std::string, std::string> DB_header(m_client_request->Get_Headers());
     std::unordered_map<std::string, std::string>::iterator it;
 
     it = DB_header.find(header);
