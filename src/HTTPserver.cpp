@@ -39,7 +39,8 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 			++it;
 		}
 
-		return;
+		l.log("Setting up sockets.", L_Info);
+		this->setupSockets();
 	}
 	catch(const std::exception& e) {
 		l.log(e.what(), L_Error);
@@ -52,8 +53,17 @@ HTTPServer::~HTTPServer()
 	closeServer();
 }
 
+std::vector<Server>::iterator HTTPServer::getServerMutableIterator( void ) {
+	return this->servers.begin();
+}
+
+std::vector<Server>::iterator HTTPServer::getServerMutableEnd( void ) {
+	return this->servers.end();
+}
+
 // Assembles the map
 void HTTPServer::setupSockets( void ) {
+	l.log("Collecting required sockets.");
 	std::map<int, std::vector<std::string>> sockets_requested;
 
 	auto start = this->getServerMutableIterator();
@@ -72,19 +82,29 @@ void HTTPServer::setupSockets( void ) {
 		++it;
 	}
 
+	std::vector<std::pair<std::string, int>> sockets_to_open;
+
 	// Check which sockets need to be opened for each port
 	// If we have 0.0.0.0 or *, open that, else open each unique one individually
 	std::for_each(
 		sockets_requested.begin(), sockets_requested.end(),
 		[&](const std::pair<const int, std::vector<std::string>>& p) {
-			if (std::any_of(p.second.begin(), p.second.end(), "*") ||
-				std::any_of(p.second.begin(), p.second.end(), "0.0.0.0")) {
-
+			if (std::find(p.second.begin(), p.second.end(), "*") != p.second.end() ||
+				std::find(p.second.begin(), p.second.end(), "0.0.0.0") != p.second.end()) {
+				sockets_to_open.push_back({"0.0.0.0", p.first});
 			} else {
-
+				std::for_each(p.second.begin(), p.second.end(), [&](const std::string& interface) {
+					sockets_to_open.push_back({interface, p.first});
+				});
 			}
 		}
 	);
+
+	l.log("Done. Amount of sockets to open: " + std::to_string(sockets_to_open.size()));
+	l.log("Opening sockets...");
+	std::for_each(sockets_to_open.begin(), sockets_to_open.end(), [&](const std::pair<std::string, int>& s) {
+		// Open the sockets
+	});
 }
 
 int HTTPServer::startServer()
