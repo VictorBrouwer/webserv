@@ -62,17 +62,71 @@ private:
 	void			ReadFile(std::fstream &file) noexcept(false);
 
 	std::string		ExtensionExtractor(const std::string &path);
+	void			ExecuteCGI();
 
 	std::string										m_body;
 	StatusCode										m_status;
+	bool											m_CGI;
 	std::shared_ptr<Request> 						m_client_request;
 	std::unordered_map<std::string, std::string> 	m_headers;
-	/* The Content DataBases for ease of lookup */
-	std::unordered_map<int, std::string>			m_DB_status;
-	std::unordered_map<std::string, std::string>	m_DB_ContentType;
 
     std::string 									m_total_response;
-	unsigned int									m_content_length;
 
+
+	// These are the supported Exit codes. 
+	// The response will look at the m_status to determine its response exit message.
+	static const inline std::unordered_map<int, std::string>			m_DB_status = {
+			{000,                 "Null"},
+
+			{200,                   "OK"},
+			{201,              "Created"},
+			{202,             "Accepted"},
+			{204, 		     "NoContent"},
+
+			{302,                "Found"},
+			{304,          "NotModified"},
+
+			{400,           "BadRequest"},
+			{401,         "Unauthorized"},
+			{403,            "Forbidden"},
+			{404,             "NotFound"},
+			{405,     "MethodNotAllowed"},
+			{408,       "RequestTimeout"},
+			{411,       "LengthRequired"},
+			{413,      "PayloadTooLarge"},
+			{414,           "URITooLong"},
+			{415,  "InternalServerError"},
+
+			{500, "UnsupportedMediaType"},
+			{501,       "NotImplemented"},
+			{502,           "BadGateway"},
+			{503,   "ServiceUnavailable"},
+			{504,       "GatewayTimeout"}
+		};
+
+
+	// These are the supported content-Types if you want to add any more supported content types you can add them here
+	// Format: [file extension][Content-Type]
+	static const inline std::unordered_map<std::string, std::string>	m_DB_ContentType = {
+			{"html",      "text/html"},
+			{"txt",      "text/plain"},
+
+			{"xml", "application/xml"},
+			{"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
+
+			{"jpeg",     "image/jpeg"},
+			{"jpg",       "image/jpg"},
+			{"png", 	  "image/png"},
+			{"gif", 	  "image/gif"},
+			{"ico",    "image/x-icon"},
+
+			{"mpeg", 	 "audio/mpeg"},
+			{"ogg", 	  "audio/ogg"},
+
+			{"mp4", 	  "video/mp4"},
+			{"webm", 	 "video/webm"},
+
+			{"form-data", "multipart/form-data"},
+		};
 
 };

@@ -22,7 +22,7 @@ ClientState & Client::getState()
 void	Client::sendResponse()
 {
 	// write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
-	log(std::string("sending response: " + m_response->getResponse()), Color::Green);
+	log(std::string("sending response: " + m_response->getResponse()), L_Warning);
 	if (send(this->m_socket, m_response->getResponse().c_str(), m_response->getResponse().size(), 0) > 0)
 	{
 		this->m_request.reset(new Request());

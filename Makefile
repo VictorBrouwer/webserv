@@ -18,6 +18,7 @@ SRC			:=	main.cpp \
 				HelperFuncs.cpp \
 				Configuration.cpp \
 				Directive.cpp \
+				cgi.cpp \
 				Location.cpp \
 				Logger.cpp \
 				ConfigShared.cpp \

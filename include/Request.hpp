@@ -1,5 +1,7 @@
 #pragma once
 
+#define BUFFER_SIZE 1096
+
 #include <string>
 #include <iostream>
 #include <stdio.h>
@@ -32,7 +34,7 @@ public:
 	std::string Get_Path();
 	HTTPMethod 	Get_Method();
 	std::string Get_Request();
-	std::unordered_map<std::string, std::string> Get_Headers();
+	std::unordered_map<std::string, std::string> &Get_Headers();
 
 private:
 	size_t 		m_bytes_read;
