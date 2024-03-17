@@ -1,12 +1,6 @@
 #include "Server.hpp"
 #include "HelperFuncs.hpp"
 
-Server::Server(int socket) : m_socket(socket)
-{
-	log("Server created\n");
-	(void) m_socket;
-}
-
 Server::Server(const Directive &server_directive, ConfigShared* config, const Logger& logger) : ConfigShared(config), l("Server", logger.getLogLevel()) {
 	// Set logger context with a recognizable name if possible,
 	// else keep the default of "Server"

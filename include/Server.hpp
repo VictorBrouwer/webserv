@@ -8,7 +8,6 @@
 
 class Server : public ConfigShared, public ConfigReturn {
 	public:
-		Server(int socket);
 		Server(const Directive &server_directive, ConfigShared* config,
 				const Logger& logger);
 

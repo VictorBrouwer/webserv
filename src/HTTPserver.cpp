@@ -5,21 +5,6 @@
 #include "Directive.hpp"
 #include "Socket.hpp"
 
-HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
-{
-	m_listening_socketAddress.sin_family = AF_INET;
-	m_listening_socketAddress.sin_port = htons(m_port);
-	m_listening_socketAddress.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
-	// m_listening_socketAddress.sin_addr.s_addr = inet_addr(m_ip_address.c_str());
-
-	if (startServer() != 0)
-	{
-		std::ostringstream ss;
-		ss << "Failed to start server with PORT: " << ntohs(m_listening_socketAddress.sin_port);
-		log(ss.str());
-	}
-}
-
 HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShared(), l("HTTPServer", logger.getLogLevel())
 {
 	try {
@@ -123,42 +108,6 @@ void HTTPServer::startListening( void ) const {
 	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [](const Socket& s) {
 		s.startListening();
 	});
-}
-
-int HTTPServer::startServer()
-{
-	m_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_listening_socket < 0)
-	{
-		exitWithError("Cannot create socket");
-		return 1;
-	}
-	int reuse = 1;
-	if (setsockopt(m_listening_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
-		close(m_listening_socket);
-	if (bind(m_listening_socket, (sockaddr *)&m_listening_socketAddress, m_listening_socketAddress_len) < 0)
-	{
-		exitWithError("Cannot connect socket to address");
-		return 1;
-	}
-	return 0;
-}
-
-void HTTPServer::closeServer()
-{
-	// close(m_listening_socket);
-	// close(m_client_socket);
-	// exit(0);
-}
-
-void HTTPServer::startListen()
-{
-	if (listen(m_listening_socket, 20) < 0)
-		exitWithError("Socket listen failed");
-
-	std::ostringstream ss;
-	ss << "\n*** Listening on ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << " PORT: " << ntohs(m_listening_socketAddress.sin_port) << " ***\n\n";
-	log(ss.str());
 }
 
 void HTTPServer::startPolling()

@@ -25,7 +25,6 @@
 
 class HTTPServer : public ConfigShared {
 	public:
-		HTTPServer(std::string ip_address, int port);
 		HTTPServer(Configuration &config, const Logger& l);
 
 		~HTTPServer();
@@ -39,7 +38,6 @@ class HTTPServer : public ConfigShared {
 		void startListening( void ) const;
 
 		// Legacy
-		void startListen();
 		void startPolling();
 
 	private:
@@ -73,10 +71,14 @@ class HTTPServer : public ConfigShared {
 		// Requests, which we need to answer with a Response.
 		std::vector<Client> clients;
 
-		std::map<int, std::pair<std::string, int>> socket_map;
+		// A Request is an incoming request from a Client expecting a Response.
+		// It is not created when a connection is established with a client, and
+		// instead it represents a Response we still need to collect/send.
+		//
+		// A request needs to first be matched to a Server, after which the
+		// Server can tell us how to proceed with the response.
+		std::vector<Request> requests;
 
-		int startServer();
-		void closeServer();
 		void acceptConnection();
 		void HandleActiveClient(int i);
 		// void HandleActiveClient(pollfd poll_fd);
