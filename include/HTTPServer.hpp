@@ -17,6 +17,7 @@
 #include "Poll.hpp"
 #include "Client.hpp"
 #include "Server.hpp"
+#include "Socket.hpp"
 #include "HelperFuncs.hpp"
 #include "Configuration.hpp"
 #include "Logger.hpp"
@@ -49,7 +50,22 @@ class HTTPServer : public ConfigShared {
 		std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
 		Logger l;
+
+		// A Socket is a file descriptor on which we listen for new clients.
+		// It is a separate entity from servers because multiple servers
+		// may listen on the same socket, or a different subset of them.
+		std::vector<Socket> sockets;
+
+		// A Server is a virtual server registered in the config that listens
+		// on at least one of our Sockets and describes how it wants to answer
+		// requests. When a Request comes in, it's matched to a Server, which
+		// constructs a Response for it.
 		std::vector<Server> servers;
+
+		// A Client is a currently open connection on which we might receive
+		// Requests, which we need to answer with a Response.
+		std::vector<Client> clients;
+
 		std::map<int, std::pair<std::string, int>> socket_map;
 
 		int startServer();

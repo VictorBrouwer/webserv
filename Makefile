@@ -22,7 +22,8 @@ SRC			:=	main.cpp \
 				Location.cpp \
 				Logger.cpp \
 				ConfigShared.cpp \
-				ConfigReturn.cpp
+				ConfigReturn.cpp \
+				Socket.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))

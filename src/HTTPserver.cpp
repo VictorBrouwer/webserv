@@ -1,8 +1,9 @@
 #include <algorithm>
 
-#include"HTTPServer.hpp"
+#include "HTTPServer.hpp"
 #include "Configuration.hpp"
 #include "Directive.hpp"
+#include "Socket.hpp"
 
 HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
 {
@@ -48,8 +49,7 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 	}
 }
 
-HTTPServer::~HTTPServer()
-{
+HTTPServer::~HTTPServer() {
 	closeServer();
 }
 
@@ -61,13 +61,14 @@ std::vector<Server>::iterator HTTPServer::getServerMutableEnd( void ) {
 	return this->servers.end();
 }
 
-// Assembles the map
+// Collects all sockets to open for the virtual servers and binds them
+// to their addresses. Populates the sockets vector in HTTPServer.
 void HTTPServer::setupSockets( void ) {
 	l.log("Collecting required sockets.");
 	std::map<int, std::vector<std::string>> sockets_requested;
 
 	auto start = this->getServerMutableIterator();
-	auto end   = this->getServerMutableIterator();
+	auto end   = this->getServerMutableEnd();
 	auto it    = start;
 
 	// Collect all listen directives in our map, sorted by port
@@ -103,8 +104,10 @@ void HTTPServer::setupSockets( void ) {
 	l.log("Done. Amount of sockets to open: " + std::to_string(sockets_to_open.size()));
 	l.log("Opening sockets...");
 	std::for_each(sockets_to_open.begin(), sockets_to_open.end(), [&](const std::pair<std::string, int>& s) {
-		// Open the sockets
+		this->sockets.push_back(Socket(s.first, s.second, l));
 	});
+
+	l.log("Done. Sockets are ready for listening.");
 }
 
 int HTTPServer::startServer()

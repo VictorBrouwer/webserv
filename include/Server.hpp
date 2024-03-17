@@ -23,6 +23,7 @@ class Server : public ConfigShared, public ConfigReturn {
 		std::vector<Location>                    locations;
 		std::vector<std::pair<std::string, int>> listens;
 
+		// Socket file descriptors that this server could potentially respond to
 		std::vector<int> sockets;
 
 		Logger l;
