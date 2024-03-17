@@ -10,7 +10,7 @@
 
 class Socket {
 	public:
-		Socket(const std::string& interface, int port, const Logger& l);
+		Socket(const std::string& interface, int port, const Logger& logger);
 		~Socket();
 
 		const std::string& getInterface( void ) const;
@@ -19,6 +19,8 @@ class Socket {
 
 		std::string toString( void ) const;
 
+		void startListening( void ) const;
+
 	private:
 		int         port;
 		std::string interface;
@@ -26,6 +28,8 @@ class Socket {
 		sockaddr_in socket_struct;
 
 		int         fd = -1; // Default to avoid close() calls on nonexistent fds
+
+		Logger l;
 
 	public:
 		class Exception : public std::exception {

@@ -50,7 +50,7 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 }
 
 HTTPServer::~HTTPServer() {
-	closeServer();
+	// closeServer();
 }
 
 std::vector<Server>::iterator HTTPServer::getServerMutableIterator( void ) {
@@ -59,6 +59,14 @@ std::vector<Server>::iterator HTTPServer::getServerMutableIterator( void ) {
 
 std::vector<Server>::iterator HTTPServer::getServerMutableEnd( void ) {
 	return this->servers.end();
+}
+
+std::vector<Socket>::const_iterator HTTPServer::getSocketIterator( void ) const {
+	return this->sockets.begin();
+}
+
+std::vector<Socket>::const_iterator HTTPServer::getSocketEnd( void ) const {
+	return this->sockets.end();
 }
 
 // Collects all sockets to open for the virtual servers and binds them
@@ -104,10 +112,17 @@ void HTTPServer::setupSockets( void ) {
 	l.log("Done. Amount of sockets to open: " + std::to_string(sockets_to_open.size()));
 	l.log("Opening sockets...");
 	std::for_each(sockets_to_open.begin(), sockets_to_open.end(), [&](const std::pair<std::string, int>& s) {
-		this->sockets.push_back(Socket(s.first, s.second, l));
+		this->sockets.emplace_back(s.first, s.second, l);
 	});
 
 	l.log("Done. Sockets are ready for listening.");
+}
+
+void HTTPServer::startListening( void ) const {
+	l.log("Calling startListening() on all sockets.");
+	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [](const Socket& s) {
+		s.startListening();
+	});
 }
 
 int HTTPServer::startServer()
@@ -131,9 +146,9 @@ int HTTPServer::startServer()
 
 void HTTPServer::closeServer()
 {
-	close(m_listening_socket);
-	close(m_client_socket);
-	exit(0);
+	// close(m_listening_socket);
+	// close(m_client_socket);
+	// exit(0);
 }
 
 void HTTPServer::startListen()

@@ -52,7 +52,7 @@ int main(int ac, char **av)
 		config->validate(l);
 
 		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config, l) );
-		// 	HTTPServer->startListen();
+		http_server->startListening();
 		// 	HTTPServer->startPolling();
 	}
 	catch(const std::exception& e) {

@@ -33,10 +33,17 @@ class HTTPServer : public ConfigShared {
 		std::vector<Server>::iterator getServerMutableIterator( void );
 		std::vector<Server>::iterator getServerMutableEnd( void );
 
+		std::vector<Socket>::const_iterator getSocketIterator( void ) const;
+		std::vector<Socket>::const_iterator getSocketEnd( void ) const;
+
+		void startListening( void ) const;
+
+		// Legacy
 		void startListen();
 		void startPolling();
 
 	private:
+		// Legacy
 		std::string        m_ip_address;
 		int                m_port;
 		int                m_listening_socket;
