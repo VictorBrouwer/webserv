@@ -1,6 +1,8 @@
+#include <memory>
+#include <unistd.h>
+
 #include "PollableFileDescriptor.hpp"
 #include "Request.hpp"
-#include <unistd.h>
 
 // ReadFileDescriptor
 
@@ -17,7 +19,7 @@ void ReadFileDescriptor::setReadFDStatus(FDStatus status) {
 }
 
 void ReadFileDescriptor::readFromFileDescriptor( void ) {
-	char *temp_buffer = new char[BUFFER_SIZE];
+	std::unique_ptr<char[]> temp_buffer(new char[BUFFER_SIZE]);
 
 	std::size_t bytes_read = read(this->read_fd, &temp_buffer, BUFFER_SIZE);
 	if (bytes_read < 0)
@@ -26,10 +28,8 @@ void ReadFileDescriptor::readFromFileDescriptor( void ) {
 		this->read_status = FD_DONE;
 	else {
 		this->bytes_read += bytes_read;
-		this->read_buffer.write(temp_buffer, bytes_read);
+		this->read_buffer.write(temp_buffer.get(), bytes_read);
 	}
-
-	delete[] temp_buffer;
 }
 
 void ReadFileDescriptor::resetReadBuffer( void ) {
@@ -53,12 +53,12 @@ void WriteFileDescriptor::setWriteFDStatus(FDStatus status) {
 }
 
 void WriteFileDescriptor::writeToFileDescriptor( void ) {
-	char *temp_buffer = new char[BUFFER_SIZE];
+	std::unique_ptr<char[]> temp_buffer(new char[BUFFER_SIZE]);
 
-	this->write_buffer.read(temp_buffer, BUFFER_SIZE);
+	this->write_buffer.read(temp_buffer.get(), BUFFER_SIZE);
 	std::size_t bytes_read = this->write_buffer.gcount();
 
-	std::size_t result = write(this->write_fd, temp_buffer, bytes_read);
+	std::size_t result = write(this->write_fd, temp_buffer.get(), bytes_read);
 
 	if (result < 0)
 		// Write errored and we stop here
@@ -70,8 +70,6 @@ void WriteFileDescriptor::writeToFileDescriptor( void ) {
 	} else if (this->write_buffer.eof())
 		// We have reached the end of our buffer and we are done writing.
 		this->write_status = FD_DONE;
-
-	delete[] temp_buffer;
 }
 
 void WriteFileDescriptor::resetWriteBuffer( void ) {
