@@ -3,15 +3,21 @@
 
 // const int BUFFER_SIZE = 30720;
 
-Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>())
-{
-	Response response(this->m_request);
-	m_response = std::make_shared<Response>(response);
-	std::cout << "Client created\n";
+Client::Client(int fd, const Socket& socket, const Logger& logger) :
+	ReadFileDescriptor(fd), WriteFileDescriptor(fd),
+	socket(socket), l(logger) {
+	this->fd = fd;
 }
 
-Client::~Client()
-{
+// Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>()), ReadFileDescriptor(socket), WriteFileDescriptor(socket)
+// {
+// 	Response response(this->m_request);
+// 	m_response = std::make_shared<Response>(response);
+// 	std::cout << "Client created\n";
+// }
+
+Client::~Client() {
+	close(this->fd);
 }
 
 ClientState & Client::getState()
@@ -39,7 +45,7 @@ void	Client::receive()
 	log(m_request->Get_Request(), Color::Yellow);
 	// m_state is either loading or reading_done
 	// if client state is loading, the poll event should remain POLLIN
-	// if client statis done_reading, a response should be created and then 
+	// if client statis done_reading, a response should be created and then
 	// the poll event should be set to pollout
 	// pollout basically tells you that the sending will succeed
 	switch (m_state)
