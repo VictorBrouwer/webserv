@@ -16,7 +16,7 @@ class Server : public ConfigShared, public ConfigReturn {
 		~Server();
 
 	private:
-		int m_socket;
+		// int m_socket;
 
 		std::vector<std::string>                 server_names;
 		std::vector<Location>                    locations;

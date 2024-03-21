@@ -38,22 +38,9 @@ class HTTPServer : public ConfigShared {
 		void startListening( void ) const;
 
 		// Legacy
-		void startPolling();
+		// void startPolling();
 
 	private:
-		// Legacy
-		std::string        m_ip_address;
-		int                m_port;
-		int                m_listening_socket;
-		int                m_client_socket;
-		struct sockaddr_in m_listening_socketAddress;
-		unsigned int       m_listening_socketAddress_len;
-		std::string        m_serverMessage;
-		Poll	           m_poll;
-
-		std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
-		std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
-
 		Logger l;
 
 		// A Socket is a file descriptor on which we listen for new clients.
@@ -79,11 +66,11 @@ class HTTPServer : public ConfigShared {
 		// Server can tell us how to proceed with the response.
 		std::vector<Request> requests;
 
-		void acceptConnection();
-		void HandleActiveClient(int i);
+		// void acceptConnection();
+		// void HandleActiveClient(int i);
 		// void HandleActiveClient(pollfd poll_fd);
-		void updatePoll();
-		void handleEvent(int Event_fd, int i, pollfd *poll_fds);
+		// void updatePoll();
+		// void handleEvent(int Event_fd, int i, pollfd *poll_fds);
 		// std::string buildResponse();
 		// void sendResponse(int fd);
 
