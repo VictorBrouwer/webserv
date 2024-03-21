@@ -17,13 +17,19 @@ SRC			:=	main.cpp \
 				Response.cpp \
 				HelperFuncs.cpp \
 				Configuration.cpp \
-				Directive.cpp
+				Directive.cpp \
+				cgi.cpp \
+				Location.cpp \
+				Logger.cpp \
+				ConfigShared.cpp \
+				ConfigReturn.cpp \
+				Socket.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
 
 CC			:=	c++
-FLAGS 		:= -std=c++2a -Wall -Werror -Wextra
+FLAGS 		:= -std=c++20 -Wall -Werror -Wextra -g
 
 ifdef DEBUG
 	FLAGS += -g

@@ -76,6 +76,7 @@ void Request::parseHeaders()
 ClientState	Request::readFromClient(int client_fd)
 {
 	size_t pos;
+	std::string str;
 	char buffer[BUFFER_SIZE];
 
 	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);

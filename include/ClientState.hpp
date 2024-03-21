@@ -1,5 +1,4 @@
-#ifndef CLIENT_STATE
-#define CLIENT_STATE
+#pragma once
 
 enum class ClientState
 {
@@ -11,5 +10,3 @@ enum class ClientState
 	REMOVE_CONNECTION,
 	ERROR,
 };
-
-#endif

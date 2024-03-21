@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include "cgi.hpp"
 
 #define READ_ONLY std::ios::in
 #define WRITE_ONLY std::ios::out
@@ -8,69 +9,10 @@ Response::~Response()
 
 }
 
-// void	Response::clearResponse()
-// {
-// 	m_body.clear();
-// }
-
-Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request), \
-	m_DB_status(
-		{
-			{000, "Null"},
-
-			{200, "OK"},
-			{201, "Created"},
-			{202, "Accepted"},
-			{204, "NoContent"},
-
-			{302, "Found"},
-			{304, "NotModified"},
-
-			{400, "BadRequest"},
-			{401, "Unauthorized"},
-			{403, "Forbidden"},
-			{404, "NotFound"},
-			{405, "MethodNotAllowed"},
-			{408, "RequestTimeout"},
-			{411, "LengthRequired"},
-			{413, "PayloadTooLarge"},
-			{414, "URITooLong"},
-			{415, "InternalServerError"},
-
-			{500, "UnsupportedMediaType"},
-			{501, "NotImplemented"},
-			{502, "BadGateway"},
-			{503, "ServiceUnavailable"},
-			{504, "GatewayTimeout"}
-		}
-	),
-// Here You can add additional file_types
-	m_DB_ContentType(
-		{
-			{"html", "text/html"},
-			{"txt", "text/plain"},
-
-			{"xml", "application/xml"},
-			{"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
-
-			{"jpeg", "image/jpeg"},
-			{"jpg", "image/jpg"},
-			{"png", "image/png"},
-			{"gif", "image/gif"},
-			{"ico",  "image/x-icon"},
-
-			{"mpeg", "audio/mpeg"},
-			{"ogg", "audio/ogg"},
-
-			{"mp4", "video/mp4"},
-			{"webm", "video/webm"},
-
-			{"form-data", "multipart/form-data"},
-		}
-	)
+Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
-	m_content_length = 0;
+	m_CGI = false;
 }
 
 // Step 1 Recognise wich HTTP method request we got (done).
@@ -99,10 +41,17 @@ void Response::Get_Response()
 	try
 	{
 		file = this->OpenFile(READ_ONLY);
-		this->ReadFile(file);
+		if (this->ExtensionExtractor(m_client_request->Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request->Get_Path()) == "py")
+		{
+			m_CGI = true;
+			this->ExecuteCGI();
+		}
+		else
+			this->ReadFile(file);
 	}
 	catch(const std::exception& e)
 	{
+		m_status = StatusCode::InternalServerError;
 		std::cerr << e.what() << '\n';
 	}
 	this->addHeader();
@@ -145,12 +94,22 @@ void	Response::addHeader()
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
-	m_total_response.append("Content-length: " + std::to_string(m_content_length) + "\r\n");
-	m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
-	m_total_response.append("\r\n");
-	m_total_response.append(m_body);
 
-	// log(m_total_response);
+	if (!m_CGI)
+	{
+		m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
+		m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
+		m_total_response.append("\r\n");
+	}
+	else
+	{
+		request = m_body;
+		request.erase(0, request.find("\r\n") + 2);
+		log(request, L_Info);
+		m_total_response.append("Content-length: " + std::to_string(request.size() - 1) + "\r\n");
+	}
+
+	m_total_response.append(m_body);
 }
 
 void Response::ReadFile(std::fstream &file) noexcept(false)
@@ -166,8 +125,35 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
 		throw std::logic_error("Error Reading File 501");
 	}
 	file.close();
+}
 
-	m_content_length = m_body.size();
+void Response::ExecuteCGI() noexcept(false)
+{
+	int 	fd;
+	int 	bytes_read;
+	char 	buffer[BUFFER_SIZE];
+	cgi 	common_gateway_interface(m_client_request);
+
+	try
+	{
+		fd = common_gateway_interface.ExecuteScript(m_client_request->Get_Path());
+		bytes_read = read(fd, buffer, BUFFER_SIZE);
+		while (bytes_read != 0)
+		{
+			std::string str(buffer);
+			str.resize(bytes_read);
+			m_body += str;
+			bytes_read = read(fd, buffer, BUFFER_SIZE);
+		}
+	}
+	catch(const std::exception& e)
+	{
+		m_status = StatusCode::InternalServerError;
+		close(fd);
+		throw;
+	}
+	log("Done reading CGI PIPE", L_Info);
+	close(fd);
 }
 
 bool Response::DoesFileExists()

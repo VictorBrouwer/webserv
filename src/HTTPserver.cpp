@@ -1,5 +1,9 @@
-#include"HTTPServer.hpp"
+#include <algorithm>
+
+#include "HTTPServer.hpp"
 #include "Configuration.hpp"
+#include "Directive.hpp"
+#include "Socket.hpp"
 
 HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
 {
@@ -16,14 +20,109 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 	}
 }
 
-// HTTPServer::HTTPServer(const Configuration &config)
-// {
-
-// }
-
-HTTPServer::~HTTPServer()
+HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShared(), l("HTTPServer", logger.getLogLevel())
 {
-	closeServer();
+	try {
+		l.log("Constructing HTTPServer.", L_Info);
+
+		l.log("Checking for http directive");
+		const Directive& http_directive = config.getHttpDirective();
+
+		this->applySharedDirectives(http_directive.getSubdirectives(), l);
+
+		std::vector<Directive>::const_iterator it  = http_directive.getSubdirectivesIterator();
+		std::vector<Directive>::const_iterator end = http_directive.getSubdirectivesEnd();
+
+		l.log("Setting up virtual servers.", L_Info);
+		while (it != end) {
+			if (*it == "server")
+				this->servers.push_back(Server(*it, (ConfigShared*) this, l));
+			++it;
+		}
+
+		l.log("Setting up sockets.", L_Info);
+		this->setupSockets();
+	}
+	catch(const std::exception& e) {
+		l.log(e.what(), L_Error);
+		throw; // Rethrow to catch in main
+	}
+}
+
+HTTPServer::~HTTPServer() {
+	// closeServer();
+}
+
+std::vector<Server>::iterator HTTPServer::getServerMutableIterator( void ) {
+	return this->servers.begin();
+}
+
+std::vector<Server>::iterator HTTPServer::getServerMutableEnd( void ) {
+	return this->servers.end();
+}
+
+std::vector<Socket>::const_iterator HTTPServer::getSocketIterator( void ) const {
+	return this->sockets.begin();
+}
+
+std::vector<Socket>::const_iterator HTTPServer::getSocketEnd( void ) const {
+	return this->sockets.end();
+}
+
+// Collects all sockets to open for the virtual servers and binds them
+// to their addresses. Populates the sockets vector in HTTPServer.
+void HTTPServer::setupSockets( void ) {
+	l.log("Collecting required sockets.");
+	std::map<int, std::vector<std::string>> sockets_requested;
+
+	auto start = this->getServerMutableIterator();
+	auto end   = this->getServerMutableEnd();
+	auto it    = start;
+
+	// Collect all listen directives in our map, sorted by port
+	while (it != end) {
+		auto listens = it->getListens();
+		std::for_each(
+			listens.begin(), listens.end(),
+			[&](const std::pair<std::string, int>& p) {
+				sockets_requested[p.second].push_back(p.first);
+			}
+		);
+		++it;
+	}
+
+	std::vector<std::pair<std::string, int>> sockets_to_open;
+
+	// Check which sockets need to be opened for each port
+	// If we have 0.0.0.0 or *, open that, else open each unique one individually
+	std::for_each(
+		sockets_requested.begin(), sockets_requested.end(),
+		[&](const std::pair<const int, std::vector<std::string>>& p) {
+			if (std::find(p.second.begin(), p.second.end(), "*") != p.second.end() ||
+				std::find(p.second.begin(), p.second.end(), "0.0.0.0") != p.second.end()) {
+				sockets_to_open.push_back({"0.0.0.0", p.first});
+			} else {
+				std::for_each(p.second.begin(), p.second.end(), [&](const std::string& interface) {
+					sockets_to_open.push_back({interface, p.first});
+				});
+			}
+		}
+	);
+
+	l.log("Done. Amount of sockets to open: " + std::to_string(sockets_to_open.size()));
+	l.log("Opening sockets...");
+	std::for_each(sockets_to_open.begin(), sockets_to_open.end(), [&](const std::pair<std::string, int>& s) {
+		this->sockets.emplace_back(s.first, s.second, l);
+	});
+
+	l.log("Done. Sockets are ready for listening.");
+}
+
+void HTTPServer::startListening( void ) const {
+	l.log("Calling startListening() on all sockets.");
+	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [](const Socket& s) {
+		s.startListening();
+	});
 }
 
 int HTTPServer::startServer()
@@ -47,9 +146,9 @@ int HTTPServer::startServer()
 
 void HTTPServer::closeServer()
 {
-	close(m_listening_socket);
-	close(m_client_socket);
-	exit(0);
+	// close(m_listening_socket);
+	// close(m_client_socket);
+	// exit(0);
 }
 
 void HTTPServer::startListen()

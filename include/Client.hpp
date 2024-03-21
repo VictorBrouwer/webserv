@@ -1,5 +1,5 @@
-#if !defined(CLIENT_HPP)
-#define CLIENT_HPP
+#pragma once
+
 
 #include<iostream>
 #include <sys/socket.h>
@@ -29,6 +29,3 @@ private:
 	std::string					m_host;
 	void extractHost();
 };
-
-
-#endif // CLIENT_HPP

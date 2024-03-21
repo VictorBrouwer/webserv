@@ -1,5 +1,6 @@
-#if !defined(REQUEST_HPP)
-#define REQUEST_HPP
+#pragma once
+
+#define BUFFER_SIZE 1096
 
 #include <string>
 #include <iostream>
@@ -47,5 +48,3 @@ private:
     std::string m_body;
 	bool		m_keep_alive;
 };
-
-#endif // REQUEST_HPP
