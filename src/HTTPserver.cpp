@@ -179,6 +179,7 @@ void HTTPServer::updatePoll(ClientState state, pollfd poll_fd)
 	case ClientState::ERROR:
 		this->m_poll.RemovePollFd(poll_fd.fd);
 		this->m_clientMap.erase(poll_fd.fd);
+		log(std::string("removed client with fd: " + std::to_string(poll_fd.fd)), Color::Blue);
 		break;
 	case ClientState::LOADING:
 		this->m_poll.setEvents(poll_fd.fd, POLLIN);

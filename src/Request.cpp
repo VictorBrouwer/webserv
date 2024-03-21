@@ -69,8 +69,8 @@ void Request::parseHeaders()
         i += 2; // Move past the "\r\n" delimiter
 		j = i;
     }
-	for (const auto& pair : m_headers)
-		log(std::string(pair.first + " : " + pair.second), Color::Magenta);
+	// for (const auto& pair : m_headers)
+	// 	log(std::string(pair.first + " : " + pair.second), Color::Magenta);
 }
 
 ClientState	Request::readFromClient(int client_fd)
@@ -79,6 +79,8 @@ ClientState	Request::readFromClient(int client_fd)
 	char buffer[BUFFER_SIZE];
 
 	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
+	if (m_bytes_read <= 0)
+		return ClientState::ERROR;
 	std::string str(buffer);
 	str.resize(m_bytes_read);
 	m_total_request += str;

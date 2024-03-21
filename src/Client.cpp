@@ -59,6 +59,8 @@ void	Client::receive()
 	// pollout basically tells you that the sending will succeed
 	switch (m_state)
 	{
+	case ClientState::ERROR:
+		break;
 	case ClientState::LOADING:
 		break;
 	case ClientState::READING_DONE:
