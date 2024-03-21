@@ -1,6 +1,6 @@
 #pragma once
 
-#define BUFFER_SIZE 1096
+#define BUFFER_SIZE 25600
 
 #include <string>
 #include <iostream>
