@@ -48,10 +48,19 @@ void	Client::sendResponse()
 		m_state = ClientState::SENDING;
 }
 
+void	Client::extractHost()
+{
+	m_host = m_request->Get_Headers().at("Host"); // dit kan een exception gooien als Host niet een key is
+	size_t start_port_num = m_host.find(':');
+	if (start_port_num != std::string::npos)
+		m_host = m_host.substr(0,start_port_num);
+}
+
 void	Client::receive()
 {
 	m_state = m_request->readFromClient(m_socket);
 	log(m_request->Get_Request(), Color::Yellow);
+	extractHost();
 	// m_state is either loading or reading_done
 	// if client state is loading, the poll event should remain POLLIN
 	// if client statis done_reading, a response should be created and then 

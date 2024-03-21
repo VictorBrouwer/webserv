@@ -26,6 +26,8 @@ private:
 	std::shared_ptr<Response>	m_response;
 	ClientState					m_state;
 	size_t						m_total_bytes_sent;
+	std::string					m_host;
+	void extractHost();
 };
 
 
