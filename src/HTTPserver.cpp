@@ -22,6 +22,11 @@ HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_addre
 
 HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShared(), l("HTTPServer", logger.getLogLevel())
 {
+	// m_ip_address = "0.0.0.0";
+	// m_port = 8080;
+	m_listening_socketAddress.sin_family = AF_INET;
+	m_listening_socketAddress.sin_port = htons(m_port);
+	m_listening_socketAddress.sin_addr.s_addr = INADDR_ANY;
 	try {
 		l.log("Constructing HTTPServer.", L_Info);
 
@@ -39,7 +44,6 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 				this->servers.push_back(Server(*it, (ConfigShared*) this, l));
 			++it;
 		}
-
 		l.log("Setting up sockets.", L_Info);
 		this->setupSockets();
 	}
@@ -161,18 +165,27 @@ void HTTPServer::startListen()
 	log(ss.str());
 }
 
+void HTTPServer::addSocketsToPoll()
+{
+	for (const auto & socket :this->sockets)
+	{
+		this->m_poll.AddPollFd(socket.getFileDescriptor(), POLLIN);
+		log(std::string("added socket: " + std::to_string(socket.getFileDescriptor()) + " to Poll"));
+	}
+}
+
 void HTTPServer::startPolling()
 {
-	this->m_poll.AddPollFd(m_listening_socket, POLLIN);
-	std::shared_ptr<Server> server = std::make_shared<Server>(this->m_listening_socket);
-	this->m_serverMap.insert({this->m_listening_socket, server});
+	addSocketsToPoll();
+	// this->m_poll.AddPollFd(m_listening_socket, POLLIN);
+	// std::shared_ptr<Server> server = std::make_shared<Server>(this->m_listening_socket);
+	// this->m_serverMap.insert({this->m_listening_socket, server});
 	while (true)
 	{
 		log("====== Waiting for a new event ======\n\n\n");
 		pollfd *poll_fds = this->m_poll.getPollFDs().data();
 		size_t	num_poll_fds = this->m_poll.getPollFDs().size();
 		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time. now it is set to wait forever(-1)
-		log("poll running", Color::Magenta);
 		if (num_events < 0)
 			exitWithError("poll failed");
 		if (num_events == 0)
@@ -220,22 +233,27 @@ void HTTPServer::handleEvent(int Event_fd, int i, pollfd *poll_fds)
 		log(error_message, Color::Red);
 		this->m_poll.RemovePollFd(Event_fd);
 		this->m_clientMap.erase(Event_fd);
-		exitWithError("ERROR");
+		// exitWithError("ERROR");
 	}
-	if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
-		acceptConnection();
+	for (const auto & socket : this->sockets)
+	{
+		if (socket.getFileDescriptor() == Event_fd)
+			acceptConnection(Event_fd);
+	}
+	// if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
+	// 	acceptConnection();
 	if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
 		this->HandleActiveClient(i);
 }
 
-void HTTPServer::acceptConnection()
+void HTTPServer::acceptConnection(int Event_fd)
 {
-	m_client_socket = accept(m_listening_socket, (sockaddr *)&m_listening_socketAddress, &m_listening_socketAddress_len);
+	m_client_socket = accept(Event_fd, (sockaddr *)&m_listening_socketAddress, &m_listening_socketAddress_len);
 	if (m_client_socket < 0)
 	{
 		std::ostringstream ss;
 		ss << "Server failed to accept incoming connection from ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << "; PORT: " << ntohs(m_listening_socketAddress.sin_port);
-		exitWithError(ss.str());
+		log(ss.str(), Color::Red); // also remove 
 	}
 	else
 	{
@@ -255,7 +273,7 @@ void HTTPServer::HandleActiveClient(int i) // still needs work
 	switch (poll_fd.revents)
 	{
 	case POLLIN:
-		active_client->receive();
+		active_client->receive(servers);
 		state = active_client->getState();
 		break;
 	case POLLOUT:

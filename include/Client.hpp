@@ -9,6 +9,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "ClientState.hpp"
+#include "Server.hpp"
 
 
 class Client
@@ -17,7 +18,7 @@ public:
 	Client(int socket);
 	~Client();
 	ClientState & getState();
-	void receive();
+	void receive(std::vector<Server> servers);
 	void sendResponse();
 	void readSocket();
 private:
@@ -26,6 +27,4 @@ private:
 	std::shared_ptr<Response>	m_response;
 	ClientState					m_state;
 	size_t						m_total_bytes_sent;
-	std::string					m_host;
-	void extractHost();
 };

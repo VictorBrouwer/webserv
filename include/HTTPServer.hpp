@@ -77,10 +77,11 @@ class HTTPServer : public ConfigShared {
 
 		int startServer();
 		void closeServer();
-		void acceptConnection();
+		void acceptConnection(int Event_fd);
 		void HandleActiveClient(int i);
 		// void HandleActiveClient(pollfd poll_fd);
-		void updatePoll();
+		void addSocketsToPoll();
+		void updatePoll(ClientState state, pollfd poll_fd);
 		void handleEvent(int Event_fd, int i, pollfd *poll_fds);
 		// std::string buildResponse();
 		// void sendResponse(int fd);

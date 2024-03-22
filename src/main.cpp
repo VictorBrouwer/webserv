@@ -26,7 +26,7 @@ int main(int ac, char **av)
 	l.log("Starting webserv! 🌐", L_Info);
 
 	if (ac == 1)
-		config_path = "./config/webserv.conf";
+		config_path = "/home/vbrouwer/core/webserv/config/webserv.conf";
 	else
 		config_path = av[1];
 	l.log("Using config file: " + config_path, L_Info);
@@ -53,7 +53,7 @@ int main(int ac, char **av)
 
 		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config, l) );
 		http_server->startListening();
-		// 	HTTPServer->startPolling();
+		http_server->startPolling();
 	}
 	catch(const std::exception& e) {
 		l.log(std::string("Uncaught or unrecoverable exception thrown: ") + e.what(), L_Error);

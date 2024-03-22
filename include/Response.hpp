@@ -95,9 +95,9 @@ private:
 			{411,       "LengthRequired"},
 			{413,      "PayloadTooLarge"},
 			{414,           "URITooLong"},
-			{415,  "InternalServerError"},
+			{415, "UnsupportedMediaType"},
 
-			{500, "UnsupportedMediaType"},
+			{500,  "InternalServerError"},
 			{501,       "NotImplemented"},
 			{502,           "BadGateway"},
 			{503,   "ServiceUnavailable"},

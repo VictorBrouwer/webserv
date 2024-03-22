@@ -73,10 +73,36 @@ void Request::parseHeaders()
 	// 	log(std::string(pair.first + " : " + pair.second), Color::Magenta);
 }
 
+/**
+ * @brief Select Which u want HOST or PORT inside get variable
+*/
+std::string	Request::extractHostPort(HostPort get)
+{
+	std::string ret;
+	ret = this->m_headers.at("Host");
+	size_t start_port_num = ret.find(':');
+	switch (get)
+	{
+	case HostPort::HOST:
+		if (start_port_num != std::string::npos)
+			ret = ret.substr(0,start_port_num);
+		break;
+	case HostPort::PORT:
+		if (start_port_num != std::string::npos)
+			ret = ret.substr(start_port_num);
+		else
+			ret = "80";
+		break;
+	default:
+		log("unsupported enum in exctractHostPort");
+		break;
+	}
+	return ret;
+}
+
 ClientState	Request::readFromClient(int client_fd)
 {
 	size_t pos;
-	std::string str;
 	char buffer[BUFFER_SIZE];
 
 	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);

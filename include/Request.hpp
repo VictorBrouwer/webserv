@@ -20,6 +20,12 @@ enum class HTTPMethod
 	UNDEFINED,
 };
 
+enum class HostPort
+{
+	HOST,
+	PORT,
+};
+
 class Request
 {
 public:
@@ -34,6 +40,7 @@ public:
 	const std::string& 	Get_Path();
 	const HTTPMethod& 	Get_Method();
 	const std::string& 	Get_Request();
+	std::string			extractHostPort(HostPort get);
 	const bool& 			Get_Keep_Alive();
 	const std::unordered_map<std::string, std::string>& Get_Headers();
 
