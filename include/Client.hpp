@@ -16,8 +16,6 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 	public:
 		Client(int fd, const Socket& socket, const Logger& logger);
 
-		// Override the afterRead member function to be able to cut off bad actors,
-		// override the readingDone function to build and construct requests
 
 		// Legacy
 
@@ -29,6 +27,11 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		// void readSocket();
 
 	private:
+		// Override the afterRead member function to be able to cut off bad actors
+		void afterRead( void );
+		// Override the readingDone function to build and construct requests
+		void readingDone( void );
+
 		Logger        l;
 		int           fd = -1;
 		const Socket& socket;

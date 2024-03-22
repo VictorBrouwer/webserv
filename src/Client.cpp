@@ -1,24 +1,27 @@
 #include"Client.hpp"
 #include"HelperFuncs.hpp"
 
-// const int BUFFER_SIZE = 30720;
-
 Client::Client(int fd, const Socket& socket, const Logger& logger) :
 	ReadFileDescriptor(fd), WriteFileDescriptor(fd),
 	l(logger), socket(socket) {
 	this->fd = fd;
+	this->setReadFDStatus(FD_POLLING);
 }
-
-// Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>()), ReadFileDescriptor(socket), WriteFileDescriptor(socket)
-// {
-// 	Response response(this->m_request);
-// 	m_response = std::make_shared<Response>(response);
-// 	std::cout << "Client created\n";
-// }
 
 Client::~Client() {
 	if (this->fd != -1)
 		close(this->fd);
+}
+
+// Check if we have a full request ready or if we've been kept
+// reading for too long
+void Client::afterRead( void ) {
+
+}
+
+// If we have to keepalive, keep the file descriptor open
+void Client::readingDone( void ) {
+
 }
 
 // Legacy
