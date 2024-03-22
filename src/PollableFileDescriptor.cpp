@@ -14,22 +14,16 @@ FDStatus ReadFileDescriptor::getReadFDStatus( void ) const {
 	return this->read_status;
 }
 
-void ReadFileDescriptor::setReadFDStatus(FDStatus status) {
-	this->read_status = status;
-}
-
 void ReadFileDescriptor::readFromFileDescriptor( void ) {
-	std::unique_ptr<char[]> temp_buffer(new char[BUFFER_SIZE]);
+	ssize_t bytes_read = this->doRead();
 
-	std::size_t bytes_read = read(this->read_fd, &temp_buffer, BUFFER_SIZE);
-	if (bytes_read < 0)
-		this->read_status = FD_ERROR;
-	else if (bytes_read == 0)
-		this->read_status = FD_DONE;
-	else {
+	if (bytes_read > 0)
 		this->bytes_read += bytes_read;
-		this->read_buffer.write(temp_buffer.get(), bytes_read);
-	}
+
+	if (this->read_status != FD_ERROR)
+		this->afterRead();
+	if (this->read_status == FD_DONE)
+		this->readingDone();
 }
 
 void ReadFileDescriptor::resetReadBuffer( void ) {
@@ -37,6 +31,32 @@ void ReadFileDescriptor::resetReadBuffer( void ) {
 	this->bytes_read  = 0;
 	this->read_status = FD_IDLE;
 }
+
+void ReadFileDescriptor::setReadFDStatus(FDStatus status) {
+	this->read_status = status;
+}
+
+void ReadFileDescriptor::setReadFileDescriptor(int fd) {
+	this->read_fd = fd;
+}
+
+ssize_t ReadFileDescriptor::doRead( void ) {
+	std::unique_ptr<char[]> temp_buffer(new char[BUFFER_SIZE]);
+
+	ssize_t bytes_read = read(this->read_fd, temp_buffer.get(), BUFFER_SIZE);
+	if (bytes_read < 0)
+		// Something went wrong and we error out here
+		this->read_status = FD_ERROR;
+	else if (bytes_read == 0)
+		// We have reached end of file and our buffer is done
+		this->read_status = FD_DONE;
+	else
+		// We have new data to add to our buffer
+		this->read_buffer.write(temp_buffer.get(), bytes_read);
+
+	return bytes_read;
+}
+
 
 // WriteFileDescriptor
 
@@ -48,17 +68,39 @@ FDStatus WriteFileDescriptor::getWriteFDStatus( void ) const {
 	return this->write_status;
 }
 
+void WriteFileDescriptor::writeToFileDescriptor( void ) {
+	ssize_t bytes_written = this->doWrite();
+
+	if (bytes_written > 0)
+		this->bytes_written += bytes_written;
+
+	if (this->write_status != FD_ERROR)
+		this->afterWrite();
+	if (this->write_status == FD_DONE)
+		this->writingDone();
+}
+
+void WriteFileDescriptor::resetWriteBuffer( void ) {
+	this->write_buffer.str("");
+	this->bytes_written = 0;
+	this->write_status  = FD_IDLE;
+}
+
 void WriteFileDescriptor::setWriteFDStatus(FDStatus status) {
 	this->write_status = status;
 }
 
-void WriteFileDescriptor::writeToFileDescriptor( void ) {
+void WriteFileDescriptor::setWriteFileDescriptor(int fd) {
+	this->write_fd = fd;
+}
+
+ssize_t WriteFileDescriptor::doWrite( void ) {
 	std::unique_ptr<char[]> temp_buffer(new char[BUFFER_SIZE]);
 
 	this->write_buffer.read(temp_buffer.get(), BUFFER_SIZE);
-	std::size_t bytes_read = this->write_buffer.gcount();
+	ssize_t bytes_read = this->write_buffer.gcount();
 
-	std::size_t result = write(this->write_fd, temp_buffer.get(), bytes_read);
+	ssize_t result = write(this->write_fd, temp_buffer.get(), bytes_read);
 
 	if (result < 0)
 		// Write errored and we stop here
@@ -70,10 +112,6 @@ void WriteFileDescriptor::writeToFileDescriptor( void ) {
 	} else if (this->write_buffer.eof())
 		// We have reached the end of our buffer and we are done writing.
 		this->write_status = FD_DONE;
-}
 
-void WriteFileDescriptor::resetWriteBuffer( void ) {
-	this->write_buffer.str("");
-	this->bytes_written = 0;
-	this->write_status  = FD_IDLE;
+	return result;
 }
