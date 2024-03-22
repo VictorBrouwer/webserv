@@ -16,27 +16,21 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 	public:
 		Client(int fd, const Socket& socket, const Logger& logger);
 
-		// Override to do recv instead of reading, and to cut off if we
-		// do not receive a properly formatted request after some time
-		void readFromFileDescriptor( void );
-
-		// We have received data and should process it to form a Request
-		void readingDone( void );
-
-		// Override to do send instead of writing
-		void writeToFileDescriptor( void );
+		// Override the afterRead member function to be able to cut off bad actors,
+		// override the readingDone function to build and construct requests
 
 		// Legacy
+
 		// Client(int socket);
 		~Client();
 		ClientState & getState();
 		void receive();
 		void sendResponse();
-		void readSocket();
+		// void readSocket();
 
 	private:
 		Logger        l;
-		int           fd;
+		int           fd = -1;
 		const Socket& socket;
 
 		int							m_socket;

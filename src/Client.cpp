@@ -5,7 +5,7 @@
 
 Client::Client(int fd, const Socket& socket, const Logger& logger) :
 	ReadFileDescriptor(fd), WriteFileDescriptor(fd),
-	socket(socket), l(logger) {
+	l(logger), socket(socket) {
 	this->fd = fd;
 }
 
@@ -17,8 +17,11 @@ Client::Client(int fd, const Socket& socket, const Logger& logger) :
 // }
 
 Client::~Client() {
-	close(this->fd);
+	if (this->fd != -1)
+		close(this->fd);
 }
+
+// Legacy
 
 ClientState & Client::getState()
 {
