@@ -5,27 +5,10 @@
 #include "Directive.hpp"
 #include "Socket.hpp"
 
-HTTPServer::HTTPServer(std::string ip_address, int port) : m_ip_address(ip_address), m_port(port), m_listening_socketAddress_len(sizeof(m_listening_socketAddress))
-{
-	m_listening_socketAddress.sin_family = AF_INET;
-	m_listening_socketAddress.sin_port = htons(m_port);
-	m_listening_socketAddress.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
-	// m_listening_socketAddress.sin_addr.s_addr = inet_addr(m_ip_address.c_str());
-
-	if (startServer() != 0)
-	{
-		std::ostringstream ss;
-		ss << "Failed to start server with PORT: " << ntohs(m_listening_socketAddress.sin_port);
-		log(ss.str());
-	}
-}
-
 HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShared(), l("HTTPServer", logger.getLogLevel())
 {
-	// m_ip_address = "0.0.0.0";
-	// m_port = 8080;
 	m_listening_socketAddress.sin_family = AF_INET;
-	m_listening_socketAddress.sin_port = htons(m_port);
+	m_listening_socketAddress.sin_port = htons(m_port); // m_port kan waarscijnlijk verwijderd worden
 	m_listening_socketAddress.sin_addr.s_addr = INADDR_ANY;
 	try {
 		l.log("Constructing HTTPServer.", L_Info);
@@ -129,40 +112,8 @@ void HTTPServer::startListening( void ) const {
 	});
 }
 
-int HTTPServer::startServer()
-{
-	m_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_listening_socket < 0)
-	{
-		exitWithError("Cannot create socket");
-		return 1;
-	}
-	int reuse = 1;
-	if (setsockopt(m_listening_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
-		close(m_listening_socket);
-	if (bind(m_listening_socket, (sockaddr *)&m_listening_socketAddress, m_listening_socketAddress_len) < 0)
-	{
-		exitWithError("Cannot connect socket to address");
-		return 1;
-	}
-	return 0;
-}
-
 void HTTPServer::closeServer()
 {
-	// close(m_listening_socket);
-	// close(m_client_socket);
-	// exit(0);
-}
-
-void HTTPServer::startListen()
-{
-	if (listen(m_listening_socket, 20) < 0)
-		exitWithError("Socket listen failed");
-
-	std::ostringstream ss;
-	ss << "\n*** Listening on ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << " PORT: " << ntohs(m_listening_socketAddress.sin_port) << " ***\n\n";
-	log(ss.str());
 }
 
 void HTTPServer::addSocketsToPoll()
@@ -177,9 +128,6 @@ void HTTPServer::addSocketsToPoll()
 void HTTPServer::startPolling()
 {
 	addSocketsToPoll();
-	// this->m_poll.AddPollFd(m_listening_socket, POLLIN);
-	// std::shared_ptr<Server> server = std::make_shared<Server>(this->m_listening_socket);
-	// this->m_serverMap.insert({this->m_listening_socket, server});
 	while (true)
 	{
 		log("====== Waiting for a new event ======\n\n\n");
@@ -233,15 +181,12 @@ void HTTPServer::handleEvent(int Event_fd, int i, pollfd *poll_fds)
 		log(error_message, Color::Red);
 		this->m_poll.RemovePollFd(Event_fd);
 		this->m_clientMap.erase(Event_fd);
-		// exitWithError("ERROR");
 	}
 	for (const auto & socket : this->sockets)
 	{
 		if (socket.getFileDescriptor() == Event_fd)
 			acceptConnection(Event_fd);
 	}
-	// if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
-	// 	acceptConnection();
 	if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
 		this->HandleActiveClient(i);
 }

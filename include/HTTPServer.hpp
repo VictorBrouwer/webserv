@@ -25,7 +25,6 @@
 
 class HTTPServer : public ConfigShared {
 	public:
-		HTTPServer(std::string ip_address, int port);
 		HTTPServer(Configuration &config, const Logger& l);
 
 		~HTTPServer();
@@ -39,14 +38,11 @@ class HTTPServer : public ConfigShared {
 		void startListening( void ) const;
 
 		// Legacy
-		void startListen();
 		void startPolling();
 
 	private:
 		// Legacy
-		std::string        m_ip_address;
 		int                m_port;
-		int                m_listening_socket;
 		int                m_client_socket;
 		struct sockaddr_in m_listening_socketAddress;
 		unsigned int       m_listening_socketAddress_len;
@@ -54,7 +50,6 @@ class HTTPServer : public ConfigShared {
 		Poll	           m_poll;
 
 		std::unordered_map<int, std::shared_ptr<Client>> m_clientMap;
-		std::unordered_map<int, std::shared_ptr<Server>> m_serverMap;
 
 		Logger l;
 
@@ -75,7 +70,6 @@ class HTTPServer : public ConfigShared {
 
 		std::map<int, std::pair<std::string, int>> socket_map;
 
-		int startServer();
 		void closeServer();
 		void acceptConnection(int Event_fd);
 		void HandleActiveClient(int i);
