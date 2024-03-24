@@ -15,7 +15,7 @@ class Server : public ConfigShared, public ConfigReturn {
 		const std::vector<std::pair<std::string, int>>& getListens( void ) const;
 
 		~Server();
-
+		const std::vector<std::string>& getServerNames();
 	private:
 		int m_socket;
 

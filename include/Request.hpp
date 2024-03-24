@@ -32,7 +32,7 @@ public:
 	Request(/* args */);
 	~Request();
 	void			parseHeaders();
-	std::string		extractPath();
+	void			extractPath();
 	void			setMethod();
 	ClientState		readFromClient(int client_fd);
 

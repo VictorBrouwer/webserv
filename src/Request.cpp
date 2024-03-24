@@ -29,24 +29,21 @@ void Request::setMethod()
 	}
 }
 
-std::string Request::extractPath()
+void Request::extractPath()
 {
 	size_t firstSpacePos = m_total_request.find(' ');
-
 	if (firstSpacePos != std::string::npos)
 	{
 		size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
 		if (secondSpacePos != std::string::npos)
-			return "/home/vbrouwer/core/webserv" + m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
+			m_path = m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
 	}
-	return "";
 }
 
 void Request::parseHeaders()
 {
 
-	if (m_path == "")
-		m_path = this->extractPath();
+	this->extractPath();
 	size_t start_headers = m_total_request.find(CRLF) + 2;
 	size_t end_headers = m_total_request.find(CRLFCRLF);
 	std::string headers_section = m_total_request.substr(start_headers, (end_headers-start_headers));
@@ -89,9 +86,7 @@ std::string	Request::extractHostPort(HostPort get)
 		break;
 	case HostPort::PORT:
 		if (start_port_num != std::string::npos)
-			ret = ret.substr(start_port_num);
-		else
-			ret = "80";
+			ret = ret.substr(start_port_num); // need to discuss what we want to do in the else case
 		break;
 	default:
 		log("unsupported enum in exctractHostPort");

@@ -21,8 +21,9 @@ Response::Response(std::shared_ptr<Request> client_request) : m_client_request(c
 // Step 4 Create Header If no status code has been set set status to 200 (OK)
 // Step 5 Make a function that fills additional information (Set this to template)
 // Step 6 Copy the requested information in the (Body)
-void Response::createResponse()
+void Response::createResponse(Server *server)
 {
+	m_server = server;
 	switch (m_client_request->Get_Method())
 	{
 	case HTTPMethod::GET:

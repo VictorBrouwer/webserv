@@ -18,7 +18,8 @@ public:
 	Client(int socket);
 	~Client();
 	ClientState & getState();
-	void receive(std::vector<Server> servers);
+	void receive(std::vector<Server> *servers);
+	void extractServer(std::vector<Server> *servers);
 	void sendResponse();
 	void readSocket();
 private:
@@ -27,4 +28,5 @@ private:
 	std::shared_ptr<Response>	m_response;
 	ClientState					m_state;
 	size_t						m_total_bytes_sent;
+	Server 						*m_server;
 };

@@ -117,3 +117,8 @@ void Server::applyListenDirective(const Directive& directive) {
 		throw;
 	}
 }
+
+const std::vector<std::string>& Server::getServerNames()
+{
+	return server_names;
+}

@@ -3,7 +3,7 @@
 
 // const int BUFFER_SIZE = 30720;
 
-Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>()), m_total_bytes_sent(0)
+Client::Client(int socket) : m_socket(socket), m_request(std::make_shared<Request>()), m_total_bytes_sent(0), m_server(nullptr)
 {
 	Response response(this->m_request);
 	m_response = std::make_shared<Response>(response);
@@ -48,11 +48,10 @@ void	Client::sendResponse()
 		m_state = ClientState::SENDING;
 }
 
-void	Client::receive(std::vector<Server> servers)
+void	Client::receive(std::vector<Server> *servers)
 {
 	m_state = m_request->readFromClient(m_socket);
 	log(m_request->Get_Request(), Color::Yellow);
-	(void)servers;
 	// m_state is either loading or reading_done
 	// if client state is loading, the poll event should remain POLLIN
 	// if client statis done_reading, a response should be created and then 
@@ -65,10 +64,26 @@ void	Client::receive(std::vector<Server> servers)
 	case ClientState::LOADING:
 		break;
 	case ClientState::READING_DONE:
-		m_response->createResponse();
+		this->extractServer(servers);
+		m_response->createResponse(m_server);
 		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
 		break;
 	default:
 		break;
 	}
+}
+
+void	Client::extractServer(std::vector<Server> *servers)
+{
+	for (auto& server : *servers)
+	{
+		for (const auto& servername : server.getServerNames())
+		{
+			if (servername == this->m_request->extractHostPort(HostPort::HOST))
+				m_server = &server;
+		}
+	}
+	if (!m_server)
+		m_server = servers->data();
+		// m_server = &(*(servers->begin()));
 }

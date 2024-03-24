@@ -11,6 +11,7 @@
 #include <fstream>
 #include <filesystem>
 #include "Request.hpp"
+#include "Server.hpp"
 #include "HelperFuncs.hpp"
 #include <map>
 #include <memory>
@@ -47,7 +48,7 @@ public:
 	~Response();
 
 	void				addHeader();
-	void				createResponse();
+	void				createResponse(Server *server);
 	const std::string 	&getResponse() const;
 	void				clearResponse();
 
@@ -64,6 +65,7 @@ private:
 	std::string		ExtensionExtractor(const std::string &path);
 	void			ExecuteCGI();
 
+	Server				 							*m_server;
 	std::string										m_body;
 	StatusCode										m_status;
 	bool											m_CGI;
