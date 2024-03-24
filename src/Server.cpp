@@ -118,6 +118,16 @@ void Server::applyListenDirective(const Directive& directive) {
 	}
 }
 
+const Location Server::findLocation(const std::string &uri)
+{
+	for(auto location : locations)
+	{
+		if (location == uri)
+			return location;
+	}
+	return (*(locations.begin()));
+}
+
 const std::vector<std::string>& Server::getServerNames()
 {
 	return server_names;

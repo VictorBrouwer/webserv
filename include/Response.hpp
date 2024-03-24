@@ -51,6 +51,7 @@ public:
 	void				createResponse(Server *server);
 	const std::string 	&getResponse() const;
 	void				clearResponse();
+	std::string			parsePath();
 
 	void	ParseResponse(std::ios_base::openmode mode);
 
@@ -66,6 +67,7 @@ private:
 	Server				 							*m_server;
 	HTTPMethod										m_method;
 	std::string										m_body;
+	std::string										m_path;
 	StatusCode										m_status;
 	bool											m_CGI;
 	std::shared_ptr<Request> 						m_client_request;

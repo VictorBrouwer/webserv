@@ -25,6 +25,7 @@ void Response::createResponse(Server *server)
 {
 	m_server = server;
 	m_method = m_client_request->Get_Method();
+	m_path = this->parsePath();
 	switch (m_method)
 	{
 	case HTTPMethod::GET:
@@ -49,7 +50,7 @@ void Response::ParseResponse(std::ios_base::openmode mode)
 	try
 	{
 		file = this->OpenFile(mode);
-		if (this->ExtensionExtractor(m_client_request->Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request->Get_Path()) == "py")
+		if (this->ExtensionExtractor(m_path) == "cgi" || this->ExtensionExtractor(m_path) == "py")
 		{
 			m_CGI = true;
 			this->ExecuteCGI();
@@ -76,7 +77,7 @@ std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
 		throw std::logic_error("File Not Found 404");
 	}
 
-	file.open(m_client_request->Get_Path(), mode);
+	file.open(m_path, mode);
 	if (!file.is_open())
 	{
 		m_status = StatusCode::Forbidden;
@@ -106,7 +107,7 @@ void	Response::addHeader()
 	if (!m_CGI)
 	{
 		m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
-		m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_client_request->Get_Path())) + "\r\n");
+		m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
 		m_total_response.append("\r\n");
 	}
 	else
@@ -116,6 +117,8 @@ void	Response::addHeader()
 		log(request, L_Info);
 		m_total_response.append("Content-length: " + std::to_string(request.size() - 1) + "\r\n");
 	}
+
+	m_total_response.append(m_body);
 
 }
 
@@ -143,7 +146,7 @@ void Response::ExecuteCGI() noexcept(false)
 
 	try
 	{
-		fd = common_gateway_interface.ExecuteScript(m_client_request->Get_Path());
+		fd = common_gateway_interface.ExecuteScript(m_path);
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		while (bytes_read != 0)
 		{
@@ -165,7 +168,7 @@ void Response::ExecuteCGI() noexcept(false)
 
 bool Response::DoesFileExists()
 {
-	if (!std::filesystem::exists(m_client_request->Get_Path()))
+	if (!std::filesystem::exists(m_path))
 		return false;
 	return true;
 }
@@ -178,6 +181,26 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	if (path.find('.') == line.npos)
 		line = "txt";
 	return line;
+}
+
+std::string	Response::parsePath()
+{
+	std::string ret;
+	std::string temp_path;
+
+
+
+	temp_path = m_client_request->Get_Path();
+	std::filesystem::path currentPath = std::filesystem::current_path();
+
+	if (*(m_client_request->Get_Path().end() - 1) == '/')
+		temp_path = m_server->findLocation(m_client_request->Get_Path()).getIndices()[0];
+	ret = currentPath.string() + m_server->getRootPath() + temp_path;
+	log(ret, L_Info);
+
+	
+
+	return (ret);
 }
 
 const std::string &Response::getResponse() const
