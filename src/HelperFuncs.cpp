@@ -5,7 +5,7 @@
 #include "HelperFuncs.hpp"
 #include "Logger.hpp"
 
-// Deprecated, please use the Logger class instead
+// Deprecated, please use the Logger class instead (ga ik wel doen :P)
 void log(const std::string& message, const std::string& color) noexcept
 {
 	Logger l;

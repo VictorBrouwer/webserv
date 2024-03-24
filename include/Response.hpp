@@ -52,9 +52,7 @@ public:
 	const std::string 	&getResponse() const;
 	void				clearResponse();
 
-	void	Get_Response();
-	void	Delete_Response();
-	void	Post_Response();
+	void	ParseResponse(std::ios_base::openmode mode);
 
 private:
 
@@ -66,6 +64,7 @@ private:
 	void			ExecuteCGI();
 
 	Server				 							*m_server;
+	HTTPMethod										m_method;
 	std::string										m_body;
 	StatusCode										m_status;
 	bool											m_CGI;

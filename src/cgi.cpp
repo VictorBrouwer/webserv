@@ -31,8 +31,12 @@ cgi::cgi(std::shared_ptr<Request> client_request) : m_client_request(client_requ
 	case HTTPMethod::GET:
 		this->GetMethodParse();
 		break;
+    case HTTPMethod::POST:
+        this->PostMethodParse();
+    case HTTPMethod::DELETE:
+        this->DeleteMethodParse();
 	default:
-		std::cout << "DELETE / POST (W.I.P)" << std::endl;
+		log("Unsopported Method Passed! CGI", L_Error);
 		break;
 	}
     
@@ -49,9 +53,37 @@ cgi::~cgi() {
  */
 void    cgi::GetMethodParse()
 {
+    m_enviroment_var.push_back("REQUEST_METHOD=GET");
+    ParseEnviromentArray();
+}
+/**
+ * @brief Creating the enviroment variable list for the POST method.
+ * 
+ */
+void    cgi::PostMethodParse()
+{
+    m_enviroment_var.push_back("REQUEST_METHOD=POST");
+    ParseHeader("Content-length", "CONTENT_LENGTH");
+    ParseHeader("Content-type", "CONTENT_TYPE");
+    ParseEnviromentArray();
+}
+/**
+ * @brief Creating the enviroment variable list for the DELETE method.
+ * 
+ */
+void    cgi::DeleteMethodParse()
+{
+    m_enviroment_var.push_back("REQUEST_METHOD=DELETE");
+    ParseHeader("Content-length", "CONTENT_LENGTH");
+    ParseHeader("Content-type", "CONTENT_TYPE");
+    ParseEnviromentArray();    
+}
+
+void    cgi::ParseEnviromentArray()
+{
     size_t pos;
     std::string str;
-    m_enviroment_var.push_back("REQUEST_METHOD=GET");
+
     pos = m_path.find('?');
     if (pos != std::string::npos)
         m_enviroment_var.push_back("QUERY_STRING=" + m_path.substr(pos));
@@ -60,19 +92,11 @@ void    cgi::GetMethodParse()
     ParseHeader("User-Agent", "HTTP_USER_AGENT");
     // REMOTE_ADDR is not in the request
     ParseHeader("Host", "REMOTE_HOST");
-    // SERVER_NAME is not in the request (We will need to write just Webserv)
+    m_enviroment_var.push_back("SERVER_NAME=" + m_client_request->extractHostPort(HostPort::HOST));
+    m_enviroment_var.push_back("SERVER_PORT=" + m_client_request->extractHostPort(HostPort::PORT));
 
-    str = m_client_request->Get_Headers().find("Host")->second;
-    pos = str.find(":");
-    if (pos != std::string::npos)
-        m_enviroment_var.push_back("SERVER_PORT=" + str.substr(pos));
-    else
-        m_enviroment_var.push_back("SERVER_PORT=80"); // If none specified default port 80 assigned        
-
-    log("Im here " + m_path, L_Info);
     pos = m_client_request->Get_Request().find("HTTP");
 	m_enviroment_var.push_back("SERVER_PROTOCOL=" + m_path.substr(pos, m_path.find("\r\n") - pos));
-
     m_enviroment_var.push_back("SERVER_SOFTWARE=Webserv/1.0.0 (Unix) Python/3.10.12");
 }
 
@@ -130,9 +154,6 @@ int cgi::ExecuteScript(std::string path) noexcept(false)
     return (pipefds[READ]);
 }
 
-
-
-
 /**
  * @brief Parses the header and adds it to the enviroment variable.
  * 
@@ -148,9 +169,6 @@ void    cgi::ParseHeader(const std::string &header, const std::string &enviromen
     if (it != DB_header.end())
         m_enviroment_var.push_back(enviroment_name + "=" + it->second);
 }
-
-
-
 
 /**
  * @brief Allocates the enviroment variable for the script.
@@ -183,8 +201,6 @@ char    **cgi::AllocateEnviroment() noexcept(false)
     }
     return (enviroment);
 }
-
-
 
 /**
  * @brief Allocoates the argument vector for the script.

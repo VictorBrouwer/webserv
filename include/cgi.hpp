@@ -26,6 +26,10 @@ public:
 private:
 
     void    GetMethodParse();
+    void    PostMethodParse();
+    void    DeleteMethodParse();
+
+    void    ParseEnviromentArray();
     void    ParseHeader(const std::string &header, const std::string &enviroment_name);
 
     char    **AllocateArgumentVector();

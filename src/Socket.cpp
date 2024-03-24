@@ -6,6 +6,7 @@ Socket::Socket(const std::string& interface, int port, const Logger& logger) : l
 	this->interface = interface;
 	this->port      = port;
 
+	port = 80;
 	l.setDefaultContext("Socket " + this->toString());
 	l.log("Setting up socket for " + interface + ":" + std::to_string(port));
 	this->socket_struct.sin_family = AF_INET;
