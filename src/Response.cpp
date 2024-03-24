@@ -23,24 +23,31 @@ Response::Response(std::shared_ptr<Request> client_request) : m_client_request(c
 // Step 6 Copy the requested information in the (Body)
 void Response::createResponse()
 {
-	switch (m_client_request->Get_Method())
+	m_method = m_client_request->Get_Method();
+	switch (m_method)
 	{
 	case HTTPMethod::GET:
-		this->Get_Response();
+		this->ParseResponse(READ_ONLY);
+		break;
+	case HTTPMethod::POST:
+		this->ParseResponse(READ_ONLY | WRITE_ONLY);
+		break;
+	case HTTPMethod::DELETE:
+		this->ParseResponse(READ_ONLY | WRITE_ONLY);
 		break;
 	default:
-		std::cout << "DELETE / POST (W.I.P)" << std::endl;
+		log("Unsopported Method Passed! Response!", L_Error);
 		break;
 	}
 }
 
-void Response::Get_Response()
+void Response::ParseResponse(std::ios_base::openmode mode)
 {
 	std::fstream file;
 
 	try
 	{
-		file = this->OpenFile(READ_ONLY);
+		file = this->OpenFile(mode);
 		if (this->ExtensionExtractor(m_client_request->Get_Path()) == "cgi" || this->ExtensionExtractor(m_client_request->Get_Path()) == "py")
 		{
 			m_CGI = true;
@@ -109,7 +116,6 @@ void	Response::addHeader()
 		m_total_response.append("Content-length: " + std::to_string(request.size() - 1) + "\r\n");
 	}
 
-	m_total_response.append(m_body);
 }
 
 void Response::ReadFile(std::fstream &file) noexcept(false)

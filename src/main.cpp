@@ -26,7 +26,7 @@ int main(int ac, char **av)
 	l.log("Starting webserv! 🌐", L_Info);
 
 	if (ac == 1)
-		config_path = "/home/vbrouwer/core/webserv/config/webserv.conf";
+		config_path = "/home/jmeruma/Documents/personal/webserv/config/webserv.conf";
 	else
 		config_path = av[1];
 	l.log("Using config file: " + config_path, L_Info);
