@@ -65,12 +65,33 @@ void	Client::receive(std::vector<Server> *servers)
 		break;
 	case ClientState::READING_DONE:
 		this->extractServer(servers);
+		this->checkRequestSyntax(m_request->Get_Request());
 		m_response->createResponse(m_server);
 		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
 		break;
 	default:
 		break;
 	}
+}
+
+void Client::checkRequestSyntax(const std::string& request)
+{
+   std::istringstream iss(request);
+   std::vector<std::string> lines;
+   std::string line;
+   while (std::getline(iss, line))
+	   lines.push_back(line);
+	// Check the minimum number of lines
+   if (lines.size() < 3)
+		throw std::runtime_error("invalid HTTP-request");
+	const std::string& request_line = lines[0];
+	std::istringstream request_line_stream(request_line);
+	std::string method, path, http_version;
+	request_line_stream >> method >> path >> http_version;
+	if (path[0] != '/')
+		throw std::runtime_error("invalid HTTP-request");
+	if (http_version != "HTTP/1.1")
+		throw std::runtime_error("invalid HTTP-request");
 }
 
 void	Client::extractServer(std::vector<Server> *servers)

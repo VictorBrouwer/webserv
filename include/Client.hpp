@@ -22,6 +22,7 @@ public:
 	void extractServer(std::vector<Server> *servers);
 	void sendResponse();
 	void readSocket();
+	void checkRequestSyntax(const std::string& request);
 private:
 	int							m_socket;
 	std::shared_ptr<Request> 	m_request;

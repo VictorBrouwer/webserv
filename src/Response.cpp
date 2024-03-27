@@ -189,13 +189,23 @@ std::string	Response::parsePath()
 	std::string temp_path;
 
 	temp_path = m_client_request->Get_Path();
+	if (std::filesystem::exists(temp_path))
+		return (temp_path);
 	std::filesystem::path currentPath = std::filesystem::current_path();
 	if (*(m_client_request->Get_Path().end() - 1) == '/')
 		temp_path = "/" + m_server->findLocation(m_client_request->Get_Path()).getIndices()[0];
 	ret = currentPath.string() + m_server->getRootPath() + temp_path;
+	if (std::filesystem::exists(ret))
+		return (ret);
+	else
+	{
+		temp_path = "/" + m_server->findLocation(m_client_request->Get_Path()).getIndices()[0];
+		ret = currentPath.string() + m_server->getRootPath() + temp_path;
+	}
 	log(ret, L_Info);
 	return (ret);
 }
+
 
 const std::string &Response::getResponse() const
 {
