@@ -64,6 +64,9 @@ private:
 	std::string		ExtensionExtractor(const std::string &path);
 	void			ExecuteCGI();
 
+	void			DeleteFile();
+	void			UploadFile();
+
 	Server				 							*m_server;
 	HTTPMethod										m_method;
 	std::string										m_body;

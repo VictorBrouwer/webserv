@@ -49,19 +49,32 @@ void Response::ParseResponse(std::ios_base::openmode mode)
 
 	try
 	{
+		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
+		{
+			m_status = StatusCode::NotFound;
+			throw std::logic_error("File Not Found 404");
+		}
+
+		if (m_method == HTTPMethod::DELETE)
+			this->DeleteFile();
+
+		if (m_method == HTTPMethod::POST)
+			this->UploadFile();
+
 		file = this->OpenFile(mode);
 		if (this->ExtensionExtractor(m_path) == "cgi" || this->ExtensionExtractor(m_path) == "py")
 		{
 			m_CGI = true;
 			this->ExecuteCGI();
 		}
-		else
+		else if (m_method != HTTPMethod::DELETE)
 			this->ReadFile(file);
 	}
 	catch(const std::exception& e)
 	{
-		m_status = StatusCode::InternalServerError;
-		std::cerr << e.what() << '\n';
+		if (m_status == StatusCode::Null)
+			m_status = StatusCode::InternalServerError;
+		log(e.what(), L_Error);
 	}
 	this->addHeader();
 	
@@ -71,19 +84,12 @@ std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
 {
 	std::fstream file;
 
-	if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
-	{
-		m_status = StatusCode::NotFound;
-		throw std::logic_error("File Not Found 404");
-	}
-
 	file.open(m_path, mode);
 	if (!file.is_open())
 	{
 		m_status = StatusCode::Forbidden;
 		throw std::logic_error("Forbidden File 403");
 	}
-
 	return file;
 }
 
@@ -104,7 +110,7 @@ void	Response::addHeader()
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
 
-	if (!m_CGI)
+	if (m_CGI == false)
 	{
 		m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
 		m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
@@ -210,4 +216,28 @@ std::string	Response::parsePath()
 const std::string &Response::getResponse() const
 {
 	return m_total_response;
+}
+
+void	Response::DeleteFile() noexcept(false)
+{
+	std::filesystem::remove(m_path);
+	m_body.append("File Deleted Succesfully");
+	log("File Deleted Succesfully!", L_Info);
+}
+
+void	Response::UploadFile() noexcept(false)
+{
+	size_t pos;
+	std::string line;
+	long	max_file_size;
+
+	pos = m_body.find("MAX_FILE_SIZE");
+	pos += 17;
+
+	line = m_body.substr(pos, m_body.find("\r\n") - pos);
+	log("MAX FILE SIZE" + line, L_Info);
+	max_file_size = std::stoi(line);
+	
+
+
 }
