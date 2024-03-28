@@ -5,7 +5,7 @@
 #include "ConfigShared.hpp"
 #include "ConfigReturn.hpp"
 #include "Logger.hpp"
-#include <cstring>
+#include <memory>
 
 class Server : public ConfigShared, public ConfigReturn {
 	public:

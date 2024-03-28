@@ -183,12 +183,24 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	return line;
 }
 
+
+
 std::string	Response::parsePath()
 {
 	std::string ret;
-	std::string temp_path;
+	std::string raw_path;
 
-	temp_path = m_client_request->Get_Path();
+	raw_path = m_client_request->Get_Path();
+	// if url contains ? get rid of part up to but not including ?
+	if (raw_path.find('?') != std::string::npos)
+		raw_path = raw_path.substr(0, raw_path.find('?') - 1);
+	Location loc = m_server->findLocation(raw_path);
+	std::string redir_path = loc.getRootPath();
+	if (redir_path != "" && redir_path[0] != '/')
+        redir_path = "/" + redir_path;
+	
+	
+	
 	if (std::filesystem::exists(temp_path))
 		return (temp_path);
 	std::filesystem::path currentPath = std::filesystem::current_path();

@@ -24,3 +24,7 @@ void exitWithError(const std::string &errorMessage);
 
 std::string vector_to_string(const std::vector<std::string>& vector);
 size_t      size_to_int(const std::string& str);
+std::string strip(const std::string &input, std::string strip_chars);
+std::vector<std::string> split(const std::string &input,
+								  const std::string &delimiter,
+								  std::size_t max_count = -1);

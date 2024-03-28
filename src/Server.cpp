@@ -120,22 +120,26 @@ void Server::applyListenDirective(const Directive& directive) {
 
 const Location Server::findLocation(const std::string &uri) // to do: find the longest location match with uri
 {
-	int biggest = 0;
-	Location *ret;
+	Location *matching_loc = NULL;
+    std::vector<std::string> path_comps = split(uri, "/");
+    std::string basename;
+
+	if (path_comps.size() == 1)
+		basename = "";
+	else
+		basename = path_comps[1];
+	Location default_loc = (*(locations.begin()));
 	for(auto location : locations)
 	{
-		if (location == uri)
-			return location;
-		if (uri.compare(location.getUri()) > biggest)
-		{
-			biggest = strcmp(uri.c_str(), location.getUri().c_str());
-			ret = &location;
-		}
-	}
-	log(ret->getUri(), Color::Red);
-	return (*ret);
-	// return (*(locations.begin()));
+		std::string location_dir = strip(location.getUri(), "/");
+		if (location_dir == basename)
+            matching_loc = &location;
+    }
+	if (matching_loc == NULL)
+		matching_loc = &default_loc;
+	return *matching_loc;
 }
+
 
 const std::vector<std::string>& Server::getServerNames()
 {
