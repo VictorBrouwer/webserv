@@ -171,8 +171,12 @@ void Request::handleLocation(Server *server)
 	// std::string root = m_loc->getRootPath();
 	if (raw_path.find(m_loc->getRootPath()) == std::string::npos)
 		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/"); // still need to fix directory listing
+	else
+		m_final_path = raw_path;
 	if (raw_path == "/")
 		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
+	if (m_final_path[0] == '/')
+		m_final_path = m_final_path.substr(1);
 }
 
 std::string Request::joinPath(std::vector<std::string> paths, std::string delimeter)
