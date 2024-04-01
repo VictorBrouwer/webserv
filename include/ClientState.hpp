@@ -10,3 +10,11 @@ enum class ClientState
 	REMOVE_CONNECTION,
 	ERROR,
 };
+
+enum class HTTPMethod
+{
+	GET,
+	POST,
+	DELETE,
+	UNDEFINED,
+};

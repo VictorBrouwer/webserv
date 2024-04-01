@@ -66,6 +66,7 @@ void	Client::receive(std::vector<Server> *servers)
 	case ClientState::READING_DONE:
 		this->extractServer(servers);
 		this->checkRequestSyntax(m_request->Get_Request());
+		m_request->handleLocation(m_server);
 		m_response->createResponse(m_server);
 		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
 		break;
@@ -105,6 +106,6 @@ void	Client::extractServer(std::vector<Server> *servers)
 		}
 	}
 	if (!m_server)
-		m_server = servers->data();
-		// m_server = &(*(servers->begin()));
+		m_server = &(*(servers->begin()));
+		// m_server = servers->data();
 }

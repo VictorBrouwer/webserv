@@ -42,4 +42,45 @@ bool Location::operator==(const std::string& uri) const {
 	return (this->uri == uri);
 }
 
+bool Location::checkMethod(HTTPMethod method)
+{
+	std::string s_method;
+	switch (method)
+	{
+	case HTTPMethod::GET:
+		s_method = "GET";
+		break;
+	case HTTPMethod::POST:
+		s_method = "POST";
+		break;
+	case HTTPMethod::DELETE:
+		s_method = "DELETE";
+		break;
+	default:
+		s_method = "UNDEFINED";
+		break;
+	}
+	for (const auto &met : allowed_methods)
+	{
+		if (met == s_method)
+			return true;
+	}
+	return false;
+}
+
+bool Location::getReturnActive()
+{
+	return this->return_active;
+}
+
+int Location::getReturnStatusCode()
+{
+	return this->return_status_code;
+}
+
+std::string& Location::getReturnBody()
+{
+	return this->return_body;
+}
+
 Location::~Location() { }

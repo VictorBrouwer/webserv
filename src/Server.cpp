@@ -118,7 +118,7 @@ void Server::applyListenDirective(const Directive& directive) {
 	}
 }
 
-const Location Server::findLocation(const std::string &uri) // to do: find the longest location match with uri
+Location* Server::findLocation(const std::string &uri) // to do: find the longest location match with uri
 {
 	Location *matching_loc = NULL;
     std::vector<std::string> path_comps = split(uri, "/");
@@ -129,7 +129,7 @@ const Location Server::findLocation(const std::string &uri) // to do: find the l
 	else
 		basename = path_comps[1];
 	Location default_loc = (*(locations.begin()));
-	for(auto location : locations)
+	for(auto &location : locations)
 	{
 		std::string location_dir = strip(location.getUri(), "/");
 		if (location_dir == basename)
@@ -137,7 +137,7 @@ const Location Server::findLocation(const std::string &uri) // to do: find the l
     }
 	if (matching_loc == NULL)
 		matching_loc = &default_loc;
-	return *matching_loc;
+	return matching_loc;
 }
 
 

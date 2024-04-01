@@ -24,7 +24,7 @@
  */
 cgi::cgi(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
-    m_path = m_client_request->Get_Path();
+    m_path = m_client_request->Get_URI();
 
     switch (m_client_request->Get_Method())
 	{

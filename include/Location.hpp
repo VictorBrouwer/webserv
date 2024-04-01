@@ -7,6 +7,7 @@
 #include "Directive.hpp"
 #include "ConfigShared.hpp"
 #include "ConfigReturn.hpp"
+#include "ClientState.hpp"
 
 class Location : public ConfigShared, public ConfigReturn {
 	public:
@@ -14,6 +15,10 @@ class Location : public ConfigShared, public ConfigReturn {
 
 		bool operator==(const std::string& uri) const;
 		std::string & getUri();
+		bool checkMethod(HTTPMethod method);
+		bool getReturnActive();
+		int getReturnStatusCode();
+		std::string& getReturnBody();
 
 		~Location();
 

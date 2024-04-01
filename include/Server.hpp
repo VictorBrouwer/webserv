@@ -17,7 +17,7 @@ class Server : public ConfigShared, public ConfigReturn {
 
 		~Server();
 		const std::vector<std::string>& getServerNames();
-		const Location findLocation(const std::string &uri);
+		Location* findLocation(const std::string &uri);
 
 	private:
 		int m_socket;

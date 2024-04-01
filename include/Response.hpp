@@ -23,7 +23,9 @@ enum class StatusCode
 	Created = 201,
 	Accepted = 202,
 	NoContent = 204,
+	MovedPermanently = 301,
 	Found = 302,
+	SeeOther = 303,
 	NotModified = 304,
 	BadRequest = 400,
 	Unauthorized = 401,
@@ -51,7 +53,7 @@ public:
 	void				createResponse(Server *server);
 	const std::string 	&getResponse() const;
 	void				clearResponse();
-	std::string			parsePath();
+	void				createRedirect();
 
 	void	ParseResponse(std::ios_base::openmode mode);
 
@@ -86,7 +88,9 @@ private:
 			{202,             "Accepted"},
 			{204, 		     "NoContent"},
 
+			{301,	 "Moved Permanently"},
 			{302,                "Found"},
+			{303,			 "See Other"},
 			{304,          "NotModified"},
 
 			{400,           "BadRequest"},

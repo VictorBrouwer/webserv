@@ -4,7 +4,7 @@
 
 #define BUFFER_SIZE 1096
 
-Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path(""), m_keep_alive(false)
+Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_uri(""), m_keep_alive(false), m_loc(nullptr)
 {
 }
 
@@ -36,7 +36,7 @@ void Request::extractPath()
 	{
 		size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
 		if (secondSpacePos != std::string::npos)
-			m_path = m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
+			m_uri = m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
 	}
 }
 
@@ -152,14 +152,68 @@ ClientState	Request::readFromClient(int client_fd)
 		return ClientState::LOADING;
 }
 
+
+void Request::handleLocation(Server *server)
+{
+	std::string raw_path = split(this->Get_URI(), "?")[0];
+	std::string redir_path;
+	m_loc = server->findLocation(raw_path);
+	if (m_loc->checkMethod(m_method) == false)
+		throw std::runtime_error("invalid request method");
+	if (m_loc->getReturnActive())
+	{
+		redir_path = m_loc->getReturnBody();
+		if (redir_path != "" && redir_path[0] != '/')
+			redir_path = "/" + redir_path;
+		m_redirection_path = redir_path;
+		return ;
+	}
+	// std::string root = m_loc->getRootPath();
+	if (raw_path.find(m_loc->getRootPath()) == std::string::npos)
+		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/"); // still need to fix directory listing
+}
+
+std::string Request::joinPath(std::vector<std::string> paths, std::string delimeter)
+{
+    std::string joined_path;
+
+    for (size_t i = 0; i < paths.size(); i++)
+    {
+        std::string stripped = strip(paths[i], "/");
+        if (stripped != "")
+            joined_path += stripped + delimeter;
+    }
+
+    if (paths.back() == "/" || paths.back().back() != '/')
+    {
+        joined_path.pop_back();
+    }
+    return joined_path;
+}
+
 const std::string&	Request::Get_Body()
 {
 	return m_body;
 }
 
-const std::string& Request::Get_Path() 
+const std::string& Request::Get_URI() 
 {
-	return m_path;
+	return m_uri;
+}
+
+const std::string& Request::Get_final_path() 
+ {
+	return m_final_path;
+}
+
+const std::string& Request::Get_redir_path() 
+{
+	return m_redirection_path;
+}
+
+const Location& Request::Get_location() 
+{
+	return *m_loc;
 }
 
 const HTTPMethod& 	Request::Get_Method() 

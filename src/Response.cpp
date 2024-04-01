@@ -1,5 +1,6 @@
 #include "Response.hpp"
 #include "cgi.hpp"
+#include "constants.hpp"
 
 #define READ_ONLY std::ios::in
 #define WRITE_ONLY std::ios::out
@@ -24,8 +25,13 @@ Response::Response(std::shared_ptr<Request> client_request) : m_client_request(c
 void Response::createResponse(Server *server)
 {
 	m_server = server;
+	if (m_client_request->Get_redir_path() != "")
+	{
+		createRedirect();
+		return ;
+	}
 	m_method = m_client_request->Get_Method();
-	m_path = this->parsePath();
+	m_path = m_client_request->Get_final_path();
 	switch (m_method)
 	{
 	case HTTPMethod::GET:
@@ -183,41 +189,15 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	return line;
 }
 
-
-
-std::string	Response::parsePath()
+void Response::createRedirect()
 {
-	std::string ret;
-	std::string raw_path;
-
-	raw_path = m_client_request->Get_Path();
-	// if url contains ? get rid of part up to but not including ?
-	if (raw_path.find('?') != std::string::npos)
-		raw_path = raw_path.substr(0, raw_path.find('?') - 1);
-	Location loc = m_server->findLocation(raw_path);
-	std::string redir_path = loc.getRootPath();
-	if (redir_path != "" && redir_path[0] != '/')
-        redir_path = "/" + redir_path;
-	
-	
-	
-	if (std::filesystem::exists(temp_path))
-		return (temp_path);
-	std::filesystem::path currentPath = std::filesystem::current_path();
-	if (*(m_client_request->Get_Path().end() - 1) == '/')
-		temp_path = "/" + m_server->findLocation(m_client_request->Get_Path()).getIndices()[0];
-	ret = currentPath.string() + m_server->getRootPath() + temp_path;
-	if (std::filesystem::exists(ret))
-		return (ret);
-	else
-	{
-		temp_path = "/" + m_server->findLocation(m_client_request->Get_Path()).getIndices()[0];
-		ret = currentPath.string() + m_server->getRootPath() + temp_path;
-	}
-	log(ret, L_Info);
-	return (ret);
+	Location loc = m_client_request->Get_location();
+	int redir_status_code = loc.getReturnStatusCode();
+	m_total_response = "HTTP/1.1 ";
+	m_total_response.append(std::to_string(static_cast<int>(redir_status_code)) + " " + m_DB_status.at(static_cast<int>(redir_status_code)));
+	m_total_response += CRLF;
+	m_total_response += "Location: " + loc.getReturnBody() + CRLFCRLF;
 }
-
 
 const std::string &Response::getResponse() const
 {
