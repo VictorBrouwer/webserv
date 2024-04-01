@@ -218,7 +218,7 @@ void HTTPServer::HandleActiveClient(int i) // still needs work
 	switch (poll_fd.revents)
 	{
 	case POLLIN:
-		active_client->receive(&servers);
+		active_client->receive(servers);
 		state = active_client->getState();
 		break;
 	case POLLOUT:

@@ -18,8 +18,8 @@ public:
 	Client(int socket);
 	~Client();
 	ClientState & getState();
-	void receive(std::vector<Server> *servers);
-	void extractServer(std::vector<Server> *servers);
+	void receive(std::vector<Server> &servers);
+	void extractServer(std::vector<Server> &servers);
 	void sendResponse();
 	void readSocket();
 	void checkRequestSyntax(const std::string& request);

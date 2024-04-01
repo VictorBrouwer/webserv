@@ -48,7 +48,7 @@ void	Client::sendResponse()
 		m_state = ClientState::SENDING;
 }
 
-void	Client::receive(std::vector<Server> *servers)
+void	Client::receive(std::vector<Server> &servers)
 {
 	m_state = m_request->readFromClient(m_socket);
 	log(m_request->Get_Request(), Color::Yellow);
@@ -95,9 +95,9 @@ void Client::checkRequestSyntax(const std::string& request)
 		throw std::runtime_error("invalid HTTP-request");
 }
 
-void	Client::extractServer(std::vector<Server> *servers)
+void	Client::extractServer(std::vector<Server> &servers)
 {
-	for (auto& server : *servers)
+	for (auto server : servers)
 	{
 		for (const auto& servername : server.getServerNames())
 		{
@@ -106,6 +106,6 @@ void	Client::extractServer(std::vector<Server> *servers)
 		}
 	}
 	if (!m_server)
-		m_server = &(*(servers->begin()));
+		m_server = &(*(servers.begin()));
 		// m_server = servers->data();
 }
