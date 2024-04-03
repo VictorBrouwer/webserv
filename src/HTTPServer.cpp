@@ -46,11 +46,11 @@ std::vector<Server>::iterator HTTPServer::getServerMutableEnd( void ) {
 	return this->servers.end();
 }
 
-std::vector<Socket>::const_iterator HTTPServer::getSocketIterator( void ) const {
+std::vector<Socket>::iterator HTTPServer::getSocketIterator( void ) {
 	return this->sockets.begin();
 }
 
-std::vector<Socket>::const_iterator HTTPServer::getSocketEnd( void ) const {
+std::vector<Socket>::iterator HTTPServer::getSocketEnd( void ) {
 	return this->sockets.end();
 }
 
@@ -103,9 +103,9 @@ void HTTPServer::setupSockets( void ) {
 	l.log("Done. Sockets are ready for listening.");
 }
 
-void HTTPServer::startListening( void ) const {
+void HTTPServer::startListening( void ) {
 	l.log("Calling startListening() on all sockets.");
-	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [](const Socket& s) {
+	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [](Socket& s) {
 		s.startListening();
 	});
 }

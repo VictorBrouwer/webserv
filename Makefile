@@ -9,7 +9,7 @@ INC			:=	-I include
 HEADERS		:=	$(wildcard include/*.hpp)
 
 SRC			:=	main.cpp \
-				HTTPserver.cpp \
+				HTTPServer.cpp \
 				Poll.cpp \
 				Client.cpp \
 				Server.cpp \
