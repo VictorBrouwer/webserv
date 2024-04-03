@@ -4,6 +4,8 @@ Content-Type: application/json
 Authorization: Bearer <token>
 Content-Length: 54
 
+filename 
+
 {
   "name": "New Resource",
   "description": "A description for the new resource."

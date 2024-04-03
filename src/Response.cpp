@@ -4,6 +4,7 @@
 
 #define READ_ONLY std::ios::in
 #define WRITE_ONLY std::ios::out
+#define ERROR -1
 
 Response::~Response()
 {
@@ -55,19 +56,34 @@ void Response::ParseResponse(std::ios_base::openmode mode)
 
 	try
 	{
-		file = this->OpenFile(mode);
+		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
+		{
+			m_status = StatusCode::NotFound;
+			throw std::logic_error("File Not Found 404");
+		}
+
+		if (m_method == HTTPMethod::DELETE)
+			this->DeleteFile();
+
+		if (m_method == HTTPMethod::POST)
+			this->UploadFile();
+
 		if (this->ExtensionExtractor(m_path) == "cgi" || this->ExtensionExtractor(m_path) == "py")
 		{
 			m_CGI = true;
 			this->ExecuteCGI();
 		}
-		else
+		else if (m_method == HTTPMethod::GET)
+		{
+			file = this->OpenFile(mode);
 			this->ReadFile(file);
+		}
 	}
 	catch(const std::exception& e)
 	{
-		m_status = StatusCode::InternalServerError;
-		std::cerr << e.what() << '\n';
+		if (m_status == StatusCode::Null)
+			m_status = StatusCode::InternalServerError;
+		log(e.what(), L_Error);
 	}
 	this->addHeader();
 	
@@ -77,19 +93,12 @@ std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
 {
 	std::fstream file;
 
-	if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
-	{
-		m_status = StatusCode::NotFound;
-		throw std::logic_error("File Not Found 404");
-	}
-
 	file.open(m_path, mode);
 	if (!file.is_open())
 	{
 		m_status = StatusCode::Forbidden;
 		throw std::logic_error("Forbidden File 403");
 	}
-
 	return file;
 }
 
@@ -110,10 +119,10 @@ void	Response::addHeader()
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
 
-	if (!m_CGI)
+	if (m_CGI == false)
 	{
-		m_total_response.append("Content-length: " + std::to_string(m_body.size()) + "\r\n");
-		m_total_response.append("Content-type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
+		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
+		m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
 		m_total_response.append("\r\n");
 	}
 	else
@@ -121,7 +130,7 @@ void	Response::addHeader()
 		request = m_body;
 		request.erase(0, request.find("\r\n") + 2);
 		log(request, L_Info);
-		m_total_response.append("Content-length: " + std::to_string(request.size() - 1) + "\r\n");
+		m_total_response.append("Content-Length: " + std::to_string(request.size() - 1) + "\r\n");
 	}
 
 	m_total_response.append(m_body);
@@ -143,6 +152,7 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
 	file.close();
 }
 
+// This function can be changed into one read useage!!
 void Response::ExecuteCGI() noexcept(false)
 {
 	int 	fd;
@@ -202,4 +212,52 @@ void Response::createRedirect()
 const std::string &Response::getResponse() const
 {
 	return m_total_response;
+}
+
+void	Response::DeleteFile() noexcept(false)
+{
+	if (!std::filesystem::remove(m_path))
+	{
+		m_body.append("File Deleted Unseccesfull! [ERROR]");
+		m_status = StatusCode::InternalServerError;
+		throw std::logic_error("DeleteFile: Failed to delete File!");
+	}
+	m_body.append("File Deleted Succesfully");
+	log("File Deleted Succesfully!", L_Info);
+	m_status = StatusCode::NoContent;
+}
+
+void	Response::UploadFile() noexcept(false)
+{
+	int fd;
+	size_t pos;
+	std::string body;
+	std::string filename;
+	std::string request_body;
+
+	request_body = m_client_request->Get_Body();
+
+	pos = request_body.find("\r\n\r\n");
+	pos += 4; // Skip over [\r\n\r\n]
+	body = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
+	
+	pos = request_body.find("filename");
+	pos += 10; // Skip over [filename="]
+	filename = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
+
+	fd = open((m_path + filename).c_str(), O_CREAT | O_WRONLY | O_RDONLY);
+	if (fd == ERROR)
+	{
+		m_status = StatusCode::Forbidden;
+		throw std::logic_error("Open: ERROR");
+	}
+
+	WriteToFile(fd, body); /* @warning needs to be changed when we implement chunk reading!! */
+	close(fd);
+	m_body = "Uploaded File!";
+}
+
+void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
+{
+	write(fd, buffer.c_str(), buffer.size());
 }

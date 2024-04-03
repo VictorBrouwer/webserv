@@ -13,6 +13,7 @@
 #include "Request.hpp"
 #include "Server.hpp"
 #include "HelperFuncs.hpp"
+#include <fcntl.h>
 #include <map>
 #include <memory>
 
@@ -65,6 +66,11 @@ private:
 
 	std::string		ExtensionExtractor(const std::string &path);
 	void			ExecuteCGI();
+
+	void			DeleteFile();
+	void			UploadFile();
+	void			WriteToFile(int fd, const std::string &buffer);
+
 
 	Server				 							*m_server;
 	HTTPMethod										m_method;
