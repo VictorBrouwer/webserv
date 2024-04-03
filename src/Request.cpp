@@ -173,7 +173,7 @@ void Request::handleLocation(Server *server)
 		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/"); // still need to fix directory listing
 	else
 		m_final_path = raw_path;
-	if (raw_path == "/")
+	if (raw_path.back() == '/')
 		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
 	if (m_final_path[0] == '/')
 		m_final_path = m_final_path.substr(1);
