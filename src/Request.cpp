@@ -2,8 +2,6 @@
 #include"HelperFuncs.hpp"
 #include"constants.hpp"
 
-#define BUFFER_SIZE 1096
-
 Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path(""), m_keep_alive(false)
 {
 }
@@ -66,8 +64,8 @@ void Request::parseHeaders()
         i += 2; // Move past the "\r\n" delimiter
 		j = i;
     }
-	// for (const auto& pair : m_headers)
-	// 	log(std::string(pair.first + " : " + pair.second), Color::Magenta);
+	for (const auto& pair : m_headers)
+		log(std::string(pair.first + " : " + pair.second), L_Info);
 }
 
 /**
@@ -128,15 +126,17 @@ ClientState	Request::readFromClient(int client_fd)
 
 	if (pos != std::string::npos)
 	{
+		std::cout << buffer << std::endl;
 		this->parseHeaders();
+		log("CHECK 1", L_Warning);
 		if (m_headers.find("Connection") != m_headers.end())
 		{
 			if (m_headers.at("Connection") == "keep-alive")
 				m_keep_alive = true;
 		}
-		if (m_headers.find("Content-length") != m_headers.end())
+		if (m_headers.find("Content-Length") != m_headers.end())
 		{
-			m_content_length = std::stoi(m_headers.at("Content-length"));
+			m_content_length = std::stoi(m_headers.at("Content-Length"));
 			if (m_total_request.size() - (pos + 4) >= m_content_length)
 			{
 				m_body = m_total_request.substr(pos + 4);
