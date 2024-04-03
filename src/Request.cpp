@@ -64,8 +64,6 @@ void Request::parseHeaders()
         i += 2; // Move past the "\r\n" delimiter
 		j = i;
     }
-	for (const auto& pair : m_headers)
-		log(std::string(pair.first + " : " + pair.second), L_Info);
 }
 
 /**
@@ -105,10 +103,6 @@ ClientState	Request::readFromClient(int client_fd)
 	str.resize(m_bytes_read);
 	m_total_request += str;
 
-	// log("\n====== incoming request  ======\n");
-	// std::cout << m_total_request << std::endl;
-
-
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
 
@@ -118,6 +112,9 @@ ClientState	Request::readFromClient(int client_fd)
 		if (m_total_request.size() - (pos + 4) >= m_content_length)
 		{
 			m_body = m_total_request.substr(pos + 4);
+			// log(std::to_string(m_body.size()), L_Error);
+			// log(std::to_string(m_content_length), L_Error);
+			// log(m_body, L_Error);
 			return ClientState::READING_DONE;
 		}
 		else
@@ -128,7 +125,6 @@ ClientState	Request::readFromClient(int client_fd)
 	{
 		std::cout << buffer << std::endl;
 		this->parseHeaders();
-		log("CHECK 1", L_Warning);
 		if (m_headers.find("Connection") != m_headers.end())
 		{
 			if (m_headers.at("Connection") == "keep-alive")
@@ -140,6 +136,7 @@ ClientState	Request::readFromClient(int client_fd)
 			if (m_total_request.size() - (pos + 4) >= m_content_length)
 			{
 				m_body = m_total_request.substr(pos + 4);
+				log(m_body, L_Error);
 				return ClientState::READING_DONE;
 			}
 			else
@@ -153,7 +150,7 @@ ClientState	Request::readFromClient(int client_fd)
 }
 
 
-void Request::handleLocation(Server *server)
+void Request::handleLocation(Server *server) // still need to fix directory listing
 {
 	std::string raw_path = split(this->Get_URI(), "?")[0];
 	std::string redir_path;
@@ -168,12 +165,14 @@ void Request::handleLocation(Server *server)
 		m_redirection_path = redir_path;
 		return ;
 	}
-	// std::string root = m_loc->getRootPath();
-	if (raw_path.find(m_loc->getRootPath()) == std::string::npos)
-		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/"); // still need to fix directory listing
-	else
-		m_final_path = raw_path;
-	if (raw_path.back() == '/')
+	if (raw_path.find(m_loc->getUri()) != std::string::npos) // if uri contains the location extract the uri-part after the location
+		m_final_path = raw_path.substr(raw_path.find(m_loc->getUri()));
+	if (raw_path == m_loc->getUri())
+		m_final_path = "";
+	m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/"); // add root path to the uri 
+	if (raw_path.back() == '/' && m_method != HTTPMethod::POST)
+		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
+	else if (raw_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
 		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
 	if (m_final_path[0] == '/')
 		m_final_path = m_final_path.substr(1);
@@ -240,4 +239,9 @@ const std::string& Request::Get_Request()
 const bool&	Request::Get_Keep_Alive()
 {
 	return m_keep_alive;
+}
+
+size_t Request::Get_ContentLength()
+{
+	return m_content_length;
 }

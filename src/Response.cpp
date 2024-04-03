@@ -129,7 +129,7 @@ void	Response::addHeader()
 	{
 		request = m_body;
 		request.erase(0, request.find("\r\n") + 2);
-		log(request, L_Info);
+		log("\n" + request, L_Info);
 		m_total_response.append("Content-Length: " + std::to_string(request.size() - 1) + "\r\n");
 	}
 
@@ -236,16 +236,19 @@ void	Response::UploadFile() noexcept(false)
 	std::string request_body;
 
 	request_body = m_client_request->Get_Body();
-
+	
 	pos = request_body.find("\r\n\r\n");
 	pos += 4; // Skip over [\r\n\r\n]
 	body = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
 	
+	log("Response = Body[" + std::to_string(body.size()) + "]", L_Warning);
+
 	pos = request_body.find("filename");
+	// log(std::to_string(body.size()), L_Error);
 	pos += 10; // Skip over [filename="]
 	filename = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
 
-	fd = open((m_path + filename).c_str(), O_CREAT | O_WRONLY | O_RDONLY);
+	fd = open((m_path + filename).c_str(), O_CREAT | O_RDWR, 0666);
 	if (fd == ERROR)
 	{
 		m_status = StatusCode::Forbidden;
@@ -259,5 +262,10 @@ void	Response::UploadFile() noexcept(false)
 
 void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
 {
-	write(fd, buffer.c_str(), buffer.size());
+	size_t pos;
+	std::string request_body = m_client_request->Get_Body();
+
+	pos = request_body.find("\r\n\r\n");
+	pos += 4;
+	write(fd, buffer.c_str(), request_body.find("\r\n", pos) - (pos + 1));
 }

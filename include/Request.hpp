@@ -37,6 +37,7 @@ public:
 	const Location&		Get_location();
 	const HTTPMethod& 	Get_Method();
 	const std::string& 	Get_Request();
+	size_t				Get_ContentLength();
 	std::string			extractHostPort(HostPort get);
 	const bool& 			Get_Keep_Alive();
 	const std::unordered_map<std::string, std::string>& Get_Headers();

@@ -33,8 +33,10 @@ cgi::cgi(std::shared_ptr<Request> client_request) : m_client_request(client_requ
 		break;
     case HTTPMethod::POST:
         this->PostMethodParse();
+		break;
     case HTTPMethod::DELETE:
         this->DeleteMethodParse();
+		break;
 	default:
 		log("Unsopported Method Passed! CGI", L_Error);
 		break;
