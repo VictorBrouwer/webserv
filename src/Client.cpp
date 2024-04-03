@@ -24,7 +24,7 @@ void	Client::sendResponse()
 	int bytes_sent;
 
 	// write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
-	log(std::string("sending response: " + m_response->getResponse()), L_Info);
+	// log(std::string("sending response: " + m_response->getResponse()), L_Info);
 	bytes_sent = send(this->m_socket, m_response->getResponse().c_str(), m_response->getResponse().size(), 0);
 	if (bytes_sent < 0)
 	{

@@ -96,12 +96,12 @@ ClientState	Request::readFromClient(int client_fd)
 	size_t pos;
 	char buffer[BUFFER_SIZE];
 
-	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
+	m_bytes_read = read(client_fd, buffer, BUFFER_SIZE);
 	if (m_bytes_read <= 0)
 		return ClientState::ERROR;
 	std::string str(buffer);
 	str.resize(m_bytes_read);
-	m_total_request += str;
+	m_total_request.append(str, 0, m_bytes_read);
 
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
