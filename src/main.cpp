@@ -6,10 +6,12 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <filesystem>
 
 int main(int ac, char **av)
 {
 	std::string config_path;
+	std::filesystem::path currentPath = std::filesystem::current_path();
 	// Before we've parsed the config, we don't know what the log level
 	// should be. This is the setting for the level until then.
 	// Change me to L_Debug for debug messages from the config parser
@@ -18,7 +20,7 @@ int main(int ac, char **av)
 	l.log("Starting webserv! 🌐", L_Info);
 
 	if (ac == 1)
-		config_path = "./config/webserv.conf";
+		config_path = currentPath.string() + "/config/webserv.conf";
 	else
 		config_path = av[1];
 	l.log("Using config file: " + config_path, L_Info);

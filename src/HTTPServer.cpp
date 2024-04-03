@@ -248,37 +248,7 @@ void HTTPServer::addWriteFileDescriptorToPoll(WriteFileDescriptor* write_fd) {
 	this->write_fd_pointers.insert({write_fd->getWriteFileDescriptor(), write_fd});
 }
 
-// void HTTPServer::startPolling()
-// {
-// 	this->m_poll.AddPollFd(m_listening_socket, POLLIN);
-// 	std::shared_ptr<Server> server = std::make_shared<Server>(this->m_listening_socket);
-// 	this->m_serverMap.insert({this->m_listening_socket, server});
-// 	while (true)
-// 	{
-// 		log("====== Waiting for a new event ======\n\n\n");
-// 		pollfd *poll_fds = this->m_poll.getPollFDs().data();
-// 		size_t	num_poll_fds = this->m_poll.getPollFDs().size();
-// 		int num_events = poll(poll_fds, num_poll_fds, -1); // should clarify max wait time. now it is set to wait forever(-1)
-// 		log("poll running", Color::Magenta);
-// 		if (num_events < 0)
-// 			exitWithError("poll failed");
-// 		if (num_events == 0)
-// 			exitWithError("poll timed out");
-// 		std::cout << "number of events = " << num_events << std::endl;
-// 		for (size_t i = 0; i < num_poll_fds; i++)
-// 		{
-// 			int Event_fd = poll_fds[i].fd;
-// 			if (poll_fds[i].revents != 0)
-// 			{
-// 				handleEvent(Event_fd, i, poll_fds);
-// 				num_events--;
-// 			}
-// 			if (num_events <= 0)
-// 				break;
-// 		}
-// 		updatePoll();
-// 	}
-// }
+
 
 // void HTTPServer::handleEvent(int Event_fd, int i, pollfd *poll_fds)
 // {
@@ -293,22 +263,24 @@ void HTTPServer::addWriteFileDescriptorToPoll(WriteFileDescriptor* write_fd) {
 // 		log(error_message, Color::Red);
 // 		this->m_poll.RemovePollFd(Event_fd);
 // 		this->m_clientMap.erase(Event_fd);
-// 		exitWithError("ERROR");
 // 	}
-// 	if (this->m_serverMap.find(Event_fd) != this->m_serverMap.end())
-// 		acceptConnection();
+// 	for (const auto & socket : this->sockets)
+// 	{
+// 		if (socket.getFileDescriptor() == Event_fd)
+// 			acceptConnection(Event_fd);
+// 	}
 // 	if (this->m_clientMap.find(Event_fd) != this->m_clientMap.end())
 // 		this->HandleActiveClient(i);
 // }
 
-// void HTTPServer::acceptConnection()
+// void HTTPServer::acceptConnection(int Event_fd)
 // {
-// 	m_client_socket = accept(m_listening_socket, (sockaddr *)&m_listening_socketAddress, &m_listening_socketAddress_len);
+// 	m_client_socket = accept(Event_fd, (sockaddr *)&m_listening_socketAddress, &m_listening_socketAddress_len);
 // 	if (m_client_socket < 0)
 // 	{
 // 		std::ostringstream ss;
 // 		ss << "Server failed to accept incoming connection from ADDRESS: " << inet_ntoa(m_listening_socketAddress.sin_addr) << "; PORT: " << ntohs(m_listening_socketAddress.sin_port);
-// 		exitWithError(ss.str());
+// 		log(ss.str(), Color::Red); // also remove
 // 	}
 // 	else
 // 	{
@@ -328,43 +300,53 @@ void HTTPServer::addWriteFileDescriptorToPoll(WriteFileDescriptor* write_fd) {
 // 	switch (poll_fd.revents)
 // 	{
 // 	case POLLIN:
-// 		active_client->receive();
+// 		active_client->receive(servers);
+// 		state = active_client->getState();
 // 		break;
 // 	case POLLOUT:
 // 		if (state == ClientState::READY_TO_SEND)
 // 		{
 // 			active_client->sendResponse();
-// 			if (active_client->getState() == ClientState::READING_DONE)
-// 				this->m_poll.setEvents(poll_fd.fd, POLLIN);
-// 			if (active_client->getState() == ClientState::ERROR)
-// 			{
-// 				this->m_poll.RemovePollFd(poll_fd.fd);
-// 				this->m_clientMap.erase(poll_fd.fd);
-// 			}
-// 			// this->m_poll.unsetEvents(poll_fd.fd);
-// 			// exitWithError(std::string("fd of client is: " + std::to_string(poll_fd.fd)));
+// 			state = active_client->getState();
 // 		}
 // 		break;
 // 	default:
 // 		break;
 // 	}
+// 	this->updatePoll(state, poll_fd);
 // }
 
-// void HTTPServer::updatePoll()
+// void HTTPServer::updatePoll(ClientState state, pollfd poll_fd)
 // {
-// 	for (const auto& pair : m_clientMap)
+// 	switch (state)
 // 	{
-// 		int socket = pair.first;
-// 		std::shared_ptr<Client> client = pair.second;
-// 		if (client->getState() == ClientState::LOADING)
-// 			m_poll.setEvents(socket, POLLIN);
-// 		if (client->getState() == ClientState::READING_DONE) // unsure if this is correct. Should you still accept incoming requests at this point?
-// 			m_poll.setEvents(socket, POLLIN);
-// 		if (client->getState() == ClientState::READY_TO_SEND)
-// 			m_poll.setEvents(socket, POLLOUT);
-// 		if (client->getState() == ClientState::SENDING_DONE)
-// 			m_poll.setEvents(socket, POLLIN);
-// 		else
-// 			continue;
+// 	case ClientState::ERROR:
+// 		this->m_poll.RemovePollFd(poll_fd.fd);
+// 		this->m_clientMap.erase(poll_fd.fd);
+// 		log(std::string("removed client with fd: " + std::to_string(poll_fd.fd)), Color::Blue);
+// 		break;
+// 	case ClientState::LOADING:
+// 		this->m_poll.setEvents(poll_fd.fd, POLLIN);
+// 		break;
+// 	case ClientState::READING_DONE: // unsure if this is possible. Also, should you still accept incoming requests at this point?
+// 		this->m_poll.setEvents(poll_fd.fd, POLLIN);
+// 		break;
+// 	case ClientState::READY_TO_SEND:
+// 		this->m_poll.setEvents(poll_fd.fd, POLLOUT);
+// 		break;
+// 	case ClientState::SENDING:
+// 		this->m_poll.setEvents(poll_fd.fd, POLLOUT);
+// 		break;
+// 	case ClientState::KEEP_ALIVE:
+// 		this->m_poll.unsetEvents(poll_fd.fd);
+// 		this->m_poll.setEvents(poll_fd.fd, POLLIN);
+// 		break;
+// 	case ClientState::REMOVE_CONNECTION:
+// 		this->m_poll.RemovePollFd(poll_fd.fd);
+// 		this->m_clientMap.erase(poll_fd.fd);
+// 		log(std::string("removed client with fd: " + std::to_string(poll_fd.fd)), Color::Blue);
+// 		break;
+// 	default:
+// 		break;
 // 	}
 // }

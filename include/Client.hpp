@@ -13,6 +13,7 @@
 #include "Logger.hpp"
 
 class Socket;
+class Server;
 
 class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 	public:
@@ -24,14 +25,15 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		Client(const Client& src);
 		Client(Client&& to_move);
 
+		~Client();
+
 		// Legacy
 
-		// Client(int socket);
-		~Client();
 		ClientState & getState();
-		void receive();
+		void receive(std::vector<Server> &servers);
+		void extractServer(std::vector<Server> &servers);
 		void sendResponse();
-		// void readSocket();
+		void checkRequestSyntax(const std::string& request);
 
 	private:
 		// Override the afterRead member function to be able to cut off bad actors
@@ -50,4 +52,6 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		std::shared_ptr<Request> 	m_request;
 		std::shared_ptr<Response>	m_response;
 		ClientState					m_state;
+		size_t						m_total_bytes_sent;
+		Server 						*m_server;
 };

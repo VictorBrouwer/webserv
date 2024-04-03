@@ -11,7 +11,9 @@
 #include <fstream>
 #include <filesystem>
 #include "Request.hpp"
+#include "Server.hpp"
 #include "HelperFuncs.hpp"
+#include <fcntl.h>
 #include <map>
 #include <memory>
 
@@ -22,7 +24,9 @@ enum class StatusCode
 	Created = 201,
 	Accepted = 202,
 	NoContent = 204,
+	MovedPermanently = 301,
 	Found = 302,
+	SeeOther = 303,
 	NotModified = 304,
 	BadRequest = 400,
 	Unauthorized = 401,
@@ -47,13 +51,12 @@ public:
 	~Response();
 
 	void				addHeader();
-	void				createResponse();
+	void				createResponse(Server *server);
 	const std::string 	&getResponse() const;
 	void				clearResponse();
+	void				createRedirect();
 
-	void	Get_Response();
-	void	Delete_Response();
-	void	Post_Response();
+	void	ParseResponse(std::ios_base::openmode mode);
 
 private:
 
@@ -64,7 +67,15 @@ private:
 	std::string		ExtensionExtractor(const std::string &path);
 	void			ExecuteCGI();
 
+	void			DeleteFile();
+	void			UploadFile();
+	void			WriteToFile(int fd, const std::string &buffer);
+
+
+	Server				 							*m_server;
+	HTTPMethod										m_method;
 	std::string										m_body;
+	std::string										m_path;
 	StatusCode										m_status;
 	bool											m_CGI;
 	std::shared_ptr<Request> 						m_client_request;
@@ -83,7 +94,9 @@ private:
 			{202,             "Accepted"},
 			{204, 		     "NoContent"},
 
+			{301,	 "Moved Permanently"},
 			{302,                "Found"},
+			{303,			 "See Other"},
 			{304,          "NotModified"},
 
 			{400,           "BadRequest"},
@@ -95,9 +108,9 @@ private:
 			{411,       "LengthRequired"},
 			{413,      "PayloadTooLarge"},
 			{414,           "URITooLong"},
-			{415,  "InternalServerError"},
+			{415, "UnsupportedMediaType"},
 
-			{500, "UnsupportedMediaType"},
+			{500,  "InternalServerError"},
 			{501,       "NotImplemented"},
 			{502,           "BadGateway"},
 			{503,   "ServiceUnavailable"},

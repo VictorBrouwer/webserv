@@ -1,7 +1,8 @@
 #include"Request.hpp"
 #include"HelperFuncs.hpp"
+#include"constants.hpp"
 
-Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_path("")
+Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_uri(""), m_keep_alive(false), m_loc(nullptr)
 {
 }
 
@@ -26,60 +27,81 @@ void Request::setMethod()
 	}
 }
 
-std::string Request::extractPath()
+void Request::extractPath()
 {
-    size_t firstSpacePos = m_total_request.find(' ');
-
-    if (firstSpacePos != std::string::npos)
+	size_t firstSpacePos = m_total_request.find(' ');
+	if (firstSpacePos != std::string::npos)
 	{
-        size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
-        if (secondSpacePos != std::string::npos)
-            return "/home/jmeruma/Documents/personal/webserv" + m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
-    }
-    return "";
+		size_t secondSpacePos = m_total_request.find(' ', firstSpacePos + 1);
+		if (secondSpacePos != std::string::npos)
+			m_uri = m_total_request.substr(firstSpacePos + 1, secondSpacePos - firstSpacePos - 1);
+	}
 }
 
 void Request::parseHeaders()
 {
-    std::string line;
-    size_t i = 0;
-	size_t prev_i = 0;
 
-	if (m_path == "")
-		m_path = this->extractPath();
-    while ((i = m_total_request.find("\r\n", i)) != std::string::npos)
+	this->extractPath();
+	size_t start_headers = m_total_request.find(CRLF) + 2;
+	size_t end_headers = m_total_request.find(CRLFCRLF);
+	std::string headers_section = m_total_request.substr(start_headers, (end_headers-start_headers));
+    std::string line, key, value;
+    size_t i = 0, j = 0;
+    while ((i = headers_section.find("\r\n", i)) != std::string::npos)
 	{
-        line = m_total_request.substr(prev_i, (i - prev_i));
+        line = headers_section.substr(j, (i-j));
         if (line.empty()) // Empty line indicates end of headers
             break;
-
-        size_t pos = line.find(':', 0);
+        size_t pos = line.find(':');
         if (pos != std::string::npos)
 		{
-            std::string key = line.substr(0, pos);
-            std::string value = line.substr(pos + 2);
+            key = line.substr(0, pos);
+            value = line.substr(pos + 2);
             m_headers.emplace(key, value);
         }
+		else
+			throw std::logic_error("invalid header format");
         i += 2; // Move past the "\r\n" delimiter
-		prev_i = i;
+		j = i;
     }
+}
+
+/**
+ * @brief Select Which u want HOST or PORT inside get variable
+*/
+std::string	Request::extractHostPort(HostPort get)
+{
+	std::string ret;
+	ret = this->m_headers.at("Host");
+	size_t start_port_num = ret.find(':');
+	switch (get)
+	{
+	case HostPort::HOST:
+		if (start_port_num != std::string::npos)
+			ret = ret.substr(0,start_port_num);
+		break;
+	case HostPort::PORT:
+		if (start_port_num != std::string::npos)
+			ret = ret.substr(start_port_num); // need to discuss what we want to do in the else case
+		break;
+	default:
+		log("unsupported enum in exctractHostPort");
+		break;
+	}
+	return ret;
 }
 
 ClientState	Request::readFromClient(int client_fd)
 {
 	size_t pos;
-	std::string str;
 	char buffer[BUFFER_SIZE];
 
-	m_bytes_read = recv(client_fd, buffer, BUFFER_SIZE, 0);
- 	str = std::string(buffer);
+	m_bytes_read = read(client_fd, buffer, BUFFER_SIZE);
+	if (m_bytes_read <= 0)
+		return ClientState::ERROR;
+	std::string str(buffer);
 	str.resize(m_bytes_read);
-	m_total_request += str;
-
-
-	// log("\n====== incoming request  ======\n");
-	// std::cout << m_total_request << std::endl;
-
+	m_total_request.append(str, 0, m_bytes_read);
 
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
@@ -90,6 +112,9 @@ ClientState	Request::readFromClient(int client_fd)
 		if (m_total_request.size() - (pos + 4) >= m_content_length)
 		{
 			m_body = m_total_request.substr(pos + 4);
+			// log(std::to_string(m_body.size()), L_Error);
+			// log(std::to_string(m_content_length), L_Error);
+			// log(m_body, L_Error);
 			return ClientState::READING_DONE;
 		}
 		else
@@ -98,13 +123,20 @@ ClientState	Request::readFromClient(int client_fd)
 
 	if (pos != std::string::npos)
 	{
+		std::cout << buffer << std::endl;
 		this->parseHeaders();
-		if (m_headers.find("Content-length") != m_headers.end())
+		if (m_headers.find("Connection") != m_headers.end())
 		{
-			m_content_length = std::stoi(m_headers.at("Content-length"));
+			if (m_headers.at("Connection") == "keep-alive")
+				m_keep_alive = true;
+		}
+		if (m_headers.find("Content-Length") != m_headers.end())
+		{
+			m_content_length = std::stoi(m_headers.at("Content-Length"));
 			if (m_total_request.size() - (pos + 4) >= m_content_length)
 			{
 				m_body = m_total_request.substr(pos + 4);
+				log(m_body, L_Error);
 				return ClientState::READING_DONE;
 			}
 			else
@@ -117,27 +149,97 @@ ClientState	Request::readFromClient(int client_fd)
 		return ClientState::LOADING;
 }
 
-std::string	Request::Get_Body() 
+
+void Request::handleLocation(Server *server) // still need to fix directory listing
+{
+	std::string raw_path = split(this->Get_URI(), "?")[0];
+	std::string redir_path;
+	m_loc = server->findLocation(raw_path);
+	if (m_loc->checkMethod(m_method) == false)
+		throw std::runtime_error("invalid request method");
+	if (m_loc->getReturnActive())
+	{
+		redir_path = m_loc->getReturnBody();
+		if (redir_path != "" && redir_path[0] != '/')
+			redir_path = "/" + redir_path;
+		m_redirection_path = redir_path;
+		return ;
+	}
+	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
+		m_final_path = raw_path.substr(m_loc->getUri().length());
+	m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/"); // add root path to the uri 
+	if (raw_path.back() == '/' && m_method != HTTPMethod::POST)
+		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
+	else if (raw_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
+		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
+	if (m_final_path[0] == '/')
+		m_final_path = m_final_path.substr(1);
+}
+
+std::string Request::joinPath(std::vector<std::string> paths, std::string delimeter)
+{
+    std::string joined_path;
+
+    for (size_t i = 0; i < paths.size(); i++)
+    {
+        std::string stripped = strip(paths[i], "/");
+        if (stripped != "")
+            joined_path += stripped + delimeter;
+    }
+
+    if (paths.back() == "/" || paths.back().back() != '/')
+    {
+        joined_path.pop_back();
+    }
+    return joined_path;
+}
+
+const std::string&	Request::Get_Body()
 {
 	return m_body;
 }
 
-std::string Request::Get_Path() 
+const std::string& Request::Get_URI() 
 {
-	return m_path;
+	return m_uri;
 }
 
-HTTPMethod 	Request::Get_Method() 
+const std::string& Request::Get_final_path() 
+ {
+	return m_final_path;
+}
+
+const std::string& Request::Get_redir_path() 
+{
+	return m_redirection_path;
+}
+
+const Location& Request::Get_location() 
+{
+	return *m_loc;
+}
+
+const HTTPMethod& 	Request::Get_Method() 
 {
 	return m_method;
 }
 
-std::unordered_map<std::string, std::string> &Request::Get_Headers() 
+const std::unordered_map<std::string, std::string>& Request::Get_Headers() 
 {
 	return m_headers;
 }
 
-std::string Request::Get_Request()
+const std::string& Request::Get_Request()
 {
 	return m_total_request;
+}
+
+const bool&	Request::Get_Keep_Alive()
+{
+	return m_keep_alive;
+}
+
+size_t Request::Get_ContentLength()
+{
+	return m_content_length;
 }

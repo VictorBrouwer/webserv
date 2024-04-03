@@ -5,6 +5,7 @@
 #include "ConfigShared.hpp"
 #include "ConfigReturn.hpp"
 #include "Logger.hpp"
+#include <memory>
 
 class Server : public ConfigShared, public ConfigReturn {
 	public:
@@ -14,6 +15,8 @@ class Server : public ConfigShared, public ConfigReturn {
 		const std::vector<std::pair<std::string, int>>& getListens( void ) const;
 
 		~Server();
+		const std::vector<std::string>& getServerNames();
+		Location* findLocation(const std::string &uri);
 
 	private:
 		// int m_socket;
