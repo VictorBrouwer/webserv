@@ -1,5 +1,5 @@
 #include "Response.hpp"
-#include "cgi.hpp"
+#include "CGI.hpp"
 #include "constants.hpp"
 
 #define READ_ONLY std::ios::in
@@ -86,7 +86,7 @@ void Response::ParseResponse(std::ios_base::openmode mode)
 		log(e.what(), L_Error);
 	}
 	this->addHeader();
-	
+
 }
 
 std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
@@ -158,7 +158,7 @@ void Response::ExecuteCGI() noexcept(false)
 	int 	fd;
 	int 	bytes_read;
 	char 	buffer[BUFFER_SIZE];
-	cgi 	common_gateway_interface(m_client_request);
+	CGI 	common_gateway_interface(m_client_request);
 
 	try
 	{
@@ -237,11 +237,11 @@ void	Response::UploadFile() noexcept(false)
 	std::string request_body;
 
 	request_body = m_client_request->Get_Body();
-	
+
 	pos = request_body.find("\r\n\r\n");
 	pos += 4; // Skip over [\r\n\r\n]
 	body = request_body.substr(pos, request_body.find("\r\n", pos) - pos);
-	
+
 	log("Response = Body[" + std::to_string(request_body.size()) + "]-[" + std::to_string(request_body.find("\r\n", pos) - pos) + "]", L_Warning);
 
 	pos = request_body.find("filename");

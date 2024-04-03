@@ -1,5 +1,4 @@
-#ifndef CGI_HPP
-#define CGI_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -16,11 +15,11 @@
 #define WRITE 1
 #define CHILD 0
 
-class cgi {
+class CGI {
 public:
 
-    cgi(std::shared_ptr<Request> client_request);
-    ~cgi();
+    CGI(std::shared_ptr<Request> client_request);
+    ~CGI();
     int     ExecuteScript(std::string path);
 
 private:
@@ -39,7 +38,7 @@ private:
     void    DeletePointerArray(char **arr, size_t index);
 
 
-    
+
     char                        **m_envp;
     char                        **m_argv;
     std::vector<std::string>    m_enviroment_var;
@@ -48,5 +47,3 @@ private:
 
 
 };
-
-#endif

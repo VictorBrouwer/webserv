@@ -1,4 +1,4 @@
-#include "cgi.hpp"
+#include "CGI.hpp"
 
 /**
  * Enviroment VARS
@@ -18,11 +18,11 @@
 **/
 
 /**
- * @brief Construct a new cgi::cgi object
- * 
- * @param client_request 
+ * @brief Construct a new CGI::CGI object
+ *
+ * @param client_request
  */
-cgi::cgi(std::shared_ptr<Request> client_request) : m_client_request(client_request)
+CGI::CGI(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
     m_path = m_client_request->Get_URI();
 
@@ -41,28 +41,28 @@ cgi::cgi(std::shared_ptr<Request> client_request) : m_client_request(client_requ
 		log("Unsopported Method Passed! CGI", L_Error);
 		break;
 	}
-    
+
 }
 
-cgi::~cgi() {
-    std::cout << "cgi Destructor called" << std::endl;
+CGI::~CGI() {
+    std::cout << "CGI Destructor called" << std::endl;
 }
 
 
 /**
  * @brief Creating the enviroment variable list for the GET method.
- * 
+ *
  */
-void    cgi::GetMethodParse()
+void    CGI::GetMethodParse()
 {
     m_enviroment_var.push_back("REQUEST_METHOD=GET");
     ParseEnviromentArray();
 }
 /**
  * @brief Creating the enviroment variable list for the POST method.
- * 
+ *
  */
-void    cgi::PostMethodParse()
+void    CGI::PostMethodParse()
 {
     m_enviroment_var.push_back("REQUEST_METHOD=POST");
     ParseHeader("Content-length", "CONTENT_LENGTH");
@@ -71,17 +71,17 @@ void    cgi::PostMethodParse()
 }
 /**
  * @brief Creating the enviroment variable list for the DELETE method.
- * 
+ *
  */
-void    cgi::DeleteMethodParse()
+void    CGI::DeleteMethodParse()
 {
     m_enviroment_var.push_back("REQUEST_METHOD=DELETE");
     ParseHeader("Content-length", "CONTENT_LENGTH");
     ParseHeader("Content-type", "CONTENT_TYPE");
-    ParseEnviromentArray();    
+    ParseEnviromentArray();
 }
 
-void    cgi::ParseEnviromentArray()
+void    CGI::ParseEnviromentArray()
 {
     size_t pos;
     std::string str;
@@ -89,7 +89,7 @@ void    cgi::ParseEnviromentArray()
     pos = m_path.find('?');
     if (pos != std::string::npos)
         m_enviroment_var.push_back("QUERY_STRING=" + m_path.substr(pos));
-    
+
     ParseHeader("Cookie", "HTTP_COOKIE");
     ParseHeader("User-Agent", "HTTP_USER_AGENT");
     // REMOTE_ADDR is not in the request
@@ -104,13 +104,13 @@ void    cgi::ParseEnviromentArray()
 
 /**
  * @brief This function is responsible for executing the script and return a file disciptor to read the output of the scripts.
- * 
+ *
  * @warning This function can throw std::logic_error && std::bad_alloc
- * 
+ *
  * @throw std::logic_error std::bad_alloc
  * @return int file descriptor
  */
-int cgi::ExecuteScript(std::string path) noexcept(false)
+int CGI::ExecuteScript(std::string path) noexcept(false)
 {
     pid_t pid;
     size_t pos;
@@ -125,7 +125,7 @@ int cgi::ExecuteScript(std::string path) noexcept(false)
 
     m_envp = this->AllocateEnviroment();
     m_argv = this->AllocateArgumentVector();
-    
+
     if (pipe(pipefds) == PIPE_ERROR)
     {
         this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
@@ -158,11 +158,11 @@ int cgi::ExecuteScript(std::string path) noexcept(false)
 
 /**
  * @brief Parses the header and adds it to the enviroment variable.
- * 
+ *
  * @param header the header to be parsed
  * @param enviroment_name
  */
-void    cgi::ParseHeader(const std::string &header, const std::string &enviroment_name)
+void    CGI::ParseHeader(const std::string &header, const std::string &enviroment_name)
 {
     std::unordered_map<std::string, std::string> DB_header(m_client_request->Get_Headers());
     std::unordered_map<std::string, std::string>::iterator it;
@@ -174,12 +174,12 @@ void    cgi::ParseHeader(const std::string &header, const std::string &enviromen
 
 /**
  * @brief Allocates the enviroment variable for the script.
- * 
+ *
  * @warning This function can throw std::bad_alloc
- * 
+ *
  * @return enviroment variable
  */
-char    **cgi::AllocateEnviroment() noexcept(false)
+char    **CGI::AllocateEnviroment() noexcept(false)
 {
     char **enviroment = NULL;
     size_t index = 0;
@@ -206,12 +206,12 @@ char    **cgi::AllocateEnviroment() noexcept(false)
 
 /**
  * @brief Allocoates the argument vector for the script.
- * 
+ *
  * @warning This function can throw std::bad_alloc
- * 
+ *
  * @return Argument vector
  */
-char    **cgi::AllocateArgumentVector() noexcept(false)
+char    **CGI::AllocateArgumentVector() noexcept(false)
 {
     char **argv = NULL;
     size_t index = 0;
@@ -227,7 +227,7 @@ char    **cgi::AllocateArgumentVector() noexcept(false)
         argv[index] = new char[m_path.size() + 1];
         strcpy(argv[1], m_path.c_str());
         index++;
-    
+
         argv[index] = NULL;
     }
     catch(const std::exception& e)
@@ -239,7 +239,7 @@ char    **cgi::AllocateArgumentVector() noexcept(false)
     return (argv);
 }
 
-void    cgi::DeletePointerArray(char **arr, size_t index)
+void    CGI::DeletePointerArray(char **arr, size_t index)
 {
     int i = index;
 
@@ -248,7 +248,5 @@ void    cgi::DeletePointerArray(char **arr, size_t index)
         delete[] arr[i];
         i--;
     }
-    delete[] arr; 
+    delete[] arr;
 }
-
-

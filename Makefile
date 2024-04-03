@@ -8,23 +8,23 @@ INC			:=	-I include
 
 HEADERS		:=	$(wildcard include/*.hpp)
 
-SRC			:=	main.cpp \
-				HTTPServer.cpp \
-				Poll.cpp \
+SRC			:=	CGI.cpp \
 				Client.cpp \
-				Server.cpp \
-				Request.cpp \
-				Response.cpp \
-				HelperFuncs.cpp \
+				ConfigReturn.cpp \
+				ConfigShared.cpp \
 				Configuration.cpp \
 				Directive.cpp \
-				cgi.cpp \
+				HelperFuncs.cpp \
+				HTTPServer.cpp \
 				Location.cpp \
 				Logger.cpp \
-				ConfigShared.cpp \
-				ConfigReturn.cpp \
-				Socket.cpp \
-				PollableFileDescriptor.cpp
+				main.cpp \
+				Poll.cpp \
+				PollableFileDescriptor.cpp \
+				Request.cpp \
+				Response.cpp \
+				Server.cpp \
+				Socket.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
