@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <cerrno>
+#include <cstring>
 
 #include "HTTPServer.hpp"
 #include "Configuration.hpp"
@@ -27,6 +29,12 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 
 		l.log("Setting up sockets.", L_Info);
 		this->setupSockets();
+
+		// Reserve space in the poll loop vectors for everything
+		// we are going to do there
+		this->poll_vector.reserve((this->sockets.size() * 5) + (this->servers.size() * 10));
+		// this->read_fd_pointers.reserve(this->poll_vector.capacity());
+		// this->write_fd_pointers.reserve(this->poll_vector.capacity());
 	}
 	catch(const std::exception& e) {
 		l.log(e.what(), L_Error);
@@ -52,6 +60,14 @@ std::vector<Socket>::iterator HTTPServer::getSocketIterator( void ) {
 
 std::vector<Socket>::iterator HTTPServer::getSocketEnd( void ) {
 	return this->sockets.end();
+}
+
+std::vector<Client>::iterator HTTPServer::getClientIterator( void ) {
+	return this->clients.begin();
+}
+
+std::vector<Client>::iterator HTTPServer::getClientEnd( void ) {
+	return this->clients.end();
 }
 
 // Collects all sockets to open for the virtual servers and binds them
@@ -97,7 +113,7 @@ void HTTPServer::setupSockets( void ) {
 	l.log("Done. Amount of sockets to open: " + std::to_string(sockets_to_open.size()));
 	l.log("Opening sockets...");
 	std::for_each(sockets_to_open.begin(), sockets_to_open.end(), [&](const std::pair<std::string, int>& s) {
-		this->sockets.emplace_back(s.first, s.second, l);
+		this->sockets.emplace_back(s.first, s.second, l, this->clients);
 	});
 
 	l.log("Done. Sockets are ready for listening.");
@@ -108,6 +124,128 @@ void HTTPServer::startListening( void ) {
 	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [](Socket& s) {
 		s.startListening();
 	});
+}
+
+void HTTPServer::doPollLoop( void ) {
+	l.log("Starting poll loop.");
+	this->assemblePollQueue();
+	this->runPoll();
+}
+
+// Grab all ReadFileDescriptor and WriteFileDescriptor instances and
+// assemble a queue out of them
+void HTTPServer::assemblePollQueue( void ) {
+	// Clear whatever is in the queue from before
+	this->poll_vector.clear();
+	this->read_fd_pointers.clear();
+	this->write_fd_pointers.clear();
+
+	// Add all listening sockets
+	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [&](Socket& socket) {
+		this->addReadFileDescriptorToPoll((ReadFileDescriptor*) &socket);
+	});
+
+	// Add all Clients that want to keep reading/writing
+	std::for_each(this->clients.begin(), this->clients.end(), [&](Client& client) {
+		if (client.getReadFDStatus() == FD_POLLING)
+			this->addReadFileDescriptorToPoll((ReadFileDescriptor*) &client);
+		if (client.getWriteFDStatus() == FD_POLLING)
+			this->addWriteFileDescriptorToPoll((WriteFileDescriptor*) &client);
+	});
+}
+
+static std::string formatRevents(const struct pollfd& poll_fd) {
+    std::string result;
+    result += (poll_fd.revents & POLLIN)     ? " POLLIN"     : "";
+    result += (poll_fd.revents & POLLOUT)    ? " POLLOUT"    : "";
+    result += (poll_fd.revents & POLLHUP)    ? " POLLHUP"    : "";
+    result += (poll_fd.revents & POLLNVAL)   ? " POLLNVAL"   : "";
+    result += (poll_fd.revents & POLLPRI)    ? " POLLPRI"    : "";
+    result += (poll_fd.revents & POLLRDBAND) ? " POLLRDBAND" : "";
+    result += (poll_fd.revents & POLLRDNORM) ? " POLLRDNORM" : "";
+    result += (poll_fd.revents & POLLWRBAND) ? " POLLWRBAND" : "";
+    result += (poll_fd.revents & POLLWRNORM) ? " POLLWRNORM" : "";
+    result += (poll_fd.revents & POLLERR)    ? " POLLERR"    : "";
+    return result;
+}
+
+// Run the poll call on the queue as it has been assembled
+void HTTPServer::runPoll( void ) {
+	pollfd* poll_data  = this->poll_vector.data();
+	nfds_t  poll_count = this->poll_vector.size();
+
+	l.log("Running poll with " + std::to_string(poll_count) + " file descriptors.", L_Info);
+
+	int poll_return = poll(poll_data, poll_count, 10000);
+	if (poll_return < 0) {
+		throw HTTPServer::Exception("poll error: " + std::string(std::strerror(errno)));
+	}
+	else if (poll_return == 0) {
+		l.log("No events returned this cycle.", L_Info);
+	}
+	else {
+		l.log("Events returned: " + std::to_string(poll_return), L_Info);
+		this->handleEvents();
+	}
+}
+
+// For each event returned by runPoll, perform the required action
+void HTTPServer::handleEvents( void ) {
+	std::for_each(this->poll_vector.begin(), this->poll_vector.end(), [&](pollfd pollfd) {
+		if (pollfd.revents != 0) {
+			l.log("File descriptor " + std::to_string(pollfd.fd) + " has these events:" + formatRevents(pollfd), L_Info);
+
+			if (pollfd.revents & POLLIN) {
+				this->read_fd_pointers[pollfd.fd]->readFromFileDescriptor();
+			}
+
+			if (pollfd.revents & POLLOUT) {
+				this->write_fd_pointers[pollfd.fd]->writeToFileDescriptor();
+			}
+
+			// Only close the connection if there is nothing left to read,
+			// these events can come up at the same time
+			if (pollfd.revents & POLLHUP && pollfd.revents | POLLIN) {
+
+			}
+		}
+	});
+}
+
+void HTTPServer::addReadFileDescriptorToPoll(ReadFileDescriptor* read_fd) {
+	auto existing_fd = std::find_if(this->poll_vector.begin(), this->poll_vector.end(), [&](pollfd pollfd) {
+		return read_fd->getReadFileDescriptor() == pollfd.fd;
+	});
+
+	if (existing_fd != this->poll_vector.end()) {
+		// Add read capabilities to this file descriptor
+		existing_fd->events  = existing_fd->events | 1 << POLLIN;
+	}
+	else {
+		// Add a new file descriptor with read capabilities
+		this->poll_vector.push_back({read_fd->getReadFileDescriptor(), POLLIN, 0});
+	}
+
+	// Add the pointer to the vector as well to be able to find it back later
+	this->read_fd_pointers.insert({read_fd->getReadFileDescriptor(), read_fd});
+}
+
+void HTTPServer::addWriteFileDescriptorToPoll(WriteFileDescriptor* write_fd) {
+	auto existing_fd = std::find_if(this->poll_vector.begin(), this->poll_vector.end(), [&](pollfd pollfd) {
+		return write_fd->getWriteFileDescriptor() == pollfd.fd;
+	});
+
+	if (existing_fd != this->poll_vector.end()) {
+		// Add write capabilities to this file descriptor
+		existing_fd->events  = existing_fd->events | 1 << POLLOUT;
+	}
+	else {
+		// Add a new file descriptor with write capabilities
+		this->poll_vector.push_back({write_fd->getWriteFileDescriptor(), POLLOUT, 0});
+	}
+
+	// Add the pointer to the vector as well to be able to find it back later
+	this->write_fd_pointers.insert({write_fd->getWriteFileDescriptor(), write_fd});
 }
 
 // void HTTPServer::startPolling()
@@ -140,21 +278,6 @@ void HTTPServer::startListening( void ) {
 // 		}
 // 		updatePoll();
 // 	}
-// }
-
-// std::string formatRevents(const struct pollfd& poll_fd) {
-//     std::string result = ", revents:";
-//     result += (poll_fd.revents & POLLIN) ? " POLLIN" : "";
-//     result += (poll_fd.revents & POLLOUT) ? " POLLOUT" : "";
-//     result += (poll_fd.revents & POLLHUP) ? " POLLHUP" : "";
-//     result += (poll_fd.revents & POLLNVAL) ? " POLLNVAL" : "";
-//     result += (poll_fd.revents & POLLPRI) ? " POLLPRI" : "";
-//     result += (poll_fd.revents & POLLRDBAND) ? " POLLRDBAND" : "";
-//     result += (poll_fd.revents & POLLRDNORM) ? " POLLRDNORM" : "";
-//     result += (poll_fd.revents & POLLWRBAND) ? " POLLWRBAND" : "";
-//     result += (poll_fd.revents & POLLWRNORM) ? " POLLWRNORM" : "";
-//     result += (poll_fd.revents & POLLERR) ? " POLLERR" : "";
-//     return result;
 // }
 
 // void HTTPServer::handleEvent(int Event_fd, int i, pollfd *poll_fds)

@@ -53,6 +53,7 @@ class ReadFileDescriptor {
 	public:
 		virtual ~ReadFileDescriptor() { };
 
+		int      getReadFileDescriptor( void ) const;
 		FDStatus getReadFDStatus( void ) const;
 
 		// Interactable functions
@@ -102,6 +103,7 @@ class WriteFileDescriptor {
 	public:
 		virtual ~WriteFileDescriptor() { };
 
+		int      getWriteFileDescriptor( void ) const;
 		FDStatus getWriteFDStatus( void ) const;
 
 		// Interactable functions

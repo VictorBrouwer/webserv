@@ -1,12 +1,35 @@
 #include"Client.hpp"
 #include"HelperFuncs.hpp"
 
-Client::Client(int fd, const Socket& socket, const Logger& logger) :
+Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socket, const Logger& logger) :
 	ReadFileDescriptor(fd), WriteFileDescriptor(fd),
 	l(logger), socket(socket) {
+	this->l.setDefaultContext("Client");
 	this->fd = fd;
+
+	this->address        = address;
+	this->address_length = addr_len;
+
+	l.log("Marking client socket as ready for reading");
 	this->setReadFDStatus(FD_POLLING);
 	(void) this->socket;
+}
+
+Client::Client(const Client& src) : ReadFileDescriptor(src.fd), WriteFileDescriptor(src.fd), socket(src.socket) {
+	this->fd = src.fd;
+
+	this->l = src.l;
+	this->address = src.address;
+	this->address_length = src.address_length;
+}
+
+Client::Client(Client&& to_move) : ReadFileDescriptor(to_move.fd), WriteFileDescriptor(to_move.fd), socket(to_move.socket) {
+	this->fd = to_move.fd;
+	to_move.fd = -1;
+
+	this->l = to_move.l;
+	this->address = to_move.address;
+	this->address_length = to_move.address_length;
 }
 
 Client::~Client() {

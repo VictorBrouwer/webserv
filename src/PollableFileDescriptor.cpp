@@ -14,6 +14,10 @@ ReadFileDescriptor::ReadFileDescriptor(int fd) {
 	this->read_fd = fd;
 }
 
+int ReadFileDescriptor::getReadFileDescriptor( void ) const {
+	return this->read_fd;
+}
+
 FDStatus ReadFileDescriptor::getReadFDStatus( void ) const {
 	return this->read_status;
 }
@@ -66,6 +70,10 @@ ssize_t ReadFileDescriptor::doRead( void ) {
 
 WriteFileDescriptor::WriteFileDescriptor(int fd) {
 	this->write_fd = fd;
+}
+
+int WriteFileDescriptor::getWriteFileDescriptor( void ) const {
+	return this->write_fd;
 }
 
 FDStatus WriteFileDescriptor::getWriteFDStatus( void ) const {

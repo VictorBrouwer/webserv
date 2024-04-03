@@ -5,13 +5,20 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <unistd.h>
+#include <vector>
 
 #include "Logger.hpp"
 #include "PollableFileDescriptor.hpp"
+#include "Client.hpp"
 
 class Socket : public ReadFileDescriptor {
 	public:
-		Socket(const std::string& interface, int port, const Logger& logger);
+		Socket(
+			const std::string& interface,
+			int port,
+			const Logger& logger,
+			std::vector<Client>& client_vector
+		);
 		~Socket();
 
 		const std::string& getInterface( void ) const;
@@ -22,6 +29,14 @@ class Socket : public ReadFileDescriptor {
 
 		void startListening( void );
 
+		// Override the doRead function to open a connection with a Client
+		// instead of actually reading from the file descriptor
+		ssize_t doRead( void );
+
+		// Override the readingDone function to mark the descriptor for
+		// reading again
+		void readingDone( void );
+
 	private:
 		int         port;
 		std::string interface;
@@ -31,6 +46,7 @@ class Socket : public ReadFileDescriptor {
 		int         fd = -1; // Default to avoid close() calls on nonexistent fds
 
 		Logger l;
+		std::vector<Client>* client_vector;
 
 	public:
 		class Exception : public std::exception {

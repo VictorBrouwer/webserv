@@ -7,14 +7,6 @@
 #include <fstream>
 #include <memory>
 
-// int main() {
-// 	HTTPServer HTTPServer("0.0.0.0", 8080);
-// 	HTTPServer.startListen();
-// 	HTTPServer.startPolling();
-
-// 	return 0;
-// }
-
 int main(int ac, char **av)
 {
 	std::string config_path;
@@ -53,7 +45,10 @@ int main(int ac, char **av)
 
 		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config, l) );
 		http_server->startListening();
-		// 	HTTPServer->startPolling();
+
+		while (true) {
+			http_server->doPollLoop();
+		}
 	}
 	catch(const std::exception& e) {
 		l.log(std::string("Uncaught or unrecoverable exception thrown: ") + e.what(), L_Error);

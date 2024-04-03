@@ -8,14 +8,21 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "ClientState.hpp"
-#include "Socket.hpp"
+// #include "Socket.hpp"
 #include "PollableFileDescriptor.hpp"
 #include "Logger.hpp"
 
+class Socket;
+
 class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 	public:
-		Client(int fd, const Socket& socket, const Logger& logger);
+		Client(
+			int fd, sockaddr address, socklen_t addr_len,
+			const Socket& socket, const Logger& logger
+		);
 
+		Client(const Client& src);
+		Client(Client&& to_move);
 
 		// Legacy
 
@@ -33,8 +40,11 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		void readingDone( void );
 
 		Logger        l;
-		int           fd = -1;
 		const Socket& socket;
+
+		int       fd = -1;
+		sockaddr  address;
+		socklen_t address_length;
 
 		int							m_socket;
 		std::shared_ptr<Request> 	m_request;

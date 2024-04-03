@@ -1,10 +1,15 @@
-#include "Socket.hpp"
 #include <cerrno>
 #include <cstring>
 
-Socket::Socket(const std::string& interface, int port, const Logger& logger) : ReadFileDescriptor(-1), l(logger) {
-	this->interface = interface;
-	this->port      = port;
+#include "Socket.hpp"
+
+Socket::Socket(
+	const std::string& interface, int port,
+	const Logger& logger, std::vector<Client>& client_vector
+) : ReadFileDescriptor(-1), l(logger) {
+	this->interface     = interface;
+	this->port          = port;
+	this->client_vector = &client_vector;
 
 	l.setDefaultContext("Socket " + this->toString());
 	l.log("Setting up socket for " + interface + ":" + std::to_string(port));
@@ -64,4 +69,23 @@ void Socket::startListening( void ) {
 	this->setReadFDStatus(FD_POLLING);
 
 	l.log("Now listening on socket");
+}
+
+ssize_t Socket::doRead( void ) {
+	sockaddr  address;
+	socklen_t address_length;
+	int client_socket = accept(this->getFileDescriptor(), (sockaddr *)&address, &address_length);
+
+	if (client_socket < 0) {
+		throw Socket::Exception(*this, "Accepting connection failed: " + std::string(std::strerror(errno)));
+	}
+
+	this->client_vector->emplace_back(client_socket, address, address_length, *this, this->l);
+
+	return 1;
+}
+
+void Socket::readingDone( void ) {
+	this->resetReadBuffer();
+	this->setReadFDStatus(FD_POLLING);
 }

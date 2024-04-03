@@ -35,8 +35,13 @@ class HTTPServer : public ConfigShared {
 		std::vector<Socket>::iterator getSocketIterator( void );
 		std::vector<Socket>::iterator getSocketEnd( void );
 
+		std::vector<Client>::iterator getClientIterator( void );
+		std::vector<Client>::iterator getClientEnd( void );
+
 
 		void startListening( void );
+
+		void doPollLoop( void );
 
 		// Legacy
 		// void startPolling();
@@ -76,4 +81,31 @@ class HTTPServer : public ConfigShared {
 		// void sendResponse(int fd);
 
 		void setupSockets( void );
+
+		// Poll stuff
+
+		std::vector<pollfd> poll_vector;
+		std::map<int,ReadFileDescriptor*>  read_fd_pointers;
+		std::map<int,WriteFileDescriptor*> write_fd_pointers;
+
+		void assemblePollQueue( void );
+		void runPoll( void );
+		void handleEvents( void );
+
+		void addReadFileDescriptorToPoll(ReadFileDescriptor* read_fd);
+		void addWriteFileDescriptorToPoll(WriteFileDescriptor* read_fd);
+
+		public:
+		class Exception : public std::exception {
+			private:
+				const std::string _message;
+
+			public:
+				Exception(const std::string& reason) :
+				_message("HTTPServer Exception : " + reason) { }
+
+				virtual const char* what() const throw() {
+					return _message.c_str();
+				}
+		};
 };
