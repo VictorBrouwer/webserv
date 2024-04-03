@@ -61,7 +61,7 @@ void Response::ParseResponse(std::ios_base::openmode mode)
 			m_status = StatusCode::NotFound;
 			throw std::logic_error("File Not Found 404");
 		}
-
+		log("Different 404", L_Info);
 		if (m_method == HTTPMethod::DELETE)
 			this->DeleteFile();
 
@@ -184,6 +184,7 @@ void Response::ExecuteCGI() noexcept(false)
 
 bool Response::DoesFileExists()
 {
+	log(m_path, L_Info);
 	if (!std::filesystem::exists(m_path))
 		return false;
 	return true;
