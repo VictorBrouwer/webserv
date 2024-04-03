@@ -165,10 +165,8 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		m_redirection_path = redir_path;
 		return ;
 	}
-	if (raw_path.find(m_loc->getUri()) != std::string::npos) // if uri contains the location extract the uri-part after the location
-		m_final_path = raw_path.substr(raw_path.find(m_loc->getUri()));
-	if (raw_path == m_loc->getUri())
-		m_final_path = "";
+	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
+		m_final_path = raw_path.substr(m_loc->getUri().length());
 	m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/"); // add root path to the uri 
 	if (raw_path.back() == '/' && m_method != HTTPMethod::POST)
 		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
