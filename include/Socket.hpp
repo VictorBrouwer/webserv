@@ -7,8 +7,9 @@
 #include <unistd.h>
 
 #include "Logger.hpp"
+#include "PollableFileDescriptor.hpp"
 
-class Socket {
+class Socket : public ReadFileDescriptor {
 	public:
 		Socket(const std::string& interface, int port, const Logger& logger);
 		~Socket();
@@ -19,7 +20,7 @@ class Socket {
 
 		std::string toString( void ) const;
 
-		void startListening( void ) const;
+		void startListening( void );
 
 	private:
 		int         port;

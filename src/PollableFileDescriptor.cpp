@@ -6,6 +6,10 @@
 
 // ReadFileDescriptor
 
+ReadFileDescriptor::ReadFileDescriptor(const ReadFileDescriptor& src) {
+	this->read_fd = src.read_fd;
+}
+
 ReadFileDescriptor::ReadFileDescriptor(int fd) {
 	this->read_fd = fd;
 }

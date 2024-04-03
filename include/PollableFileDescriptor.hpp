@@ -64,6 +64,7 @@ class ReadFileDescriptor {
 
 	protected:
 		ReadFileDescriptor(int fd);
+		ReadFileDescriptor(const ReadFileDescriptor& src);
 
 		// This function clears the buffer and resets the FDStatus.
 		void resetReadBuffer( void );

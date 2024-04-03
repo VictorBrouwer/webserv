@@ -2,7 +2,7 @@
 #include <cerrno>
 #include <cstring>
 
-Socket::Socket(const std::string& interface, int port, const Logger& logger) : l(logger) {
+Socket::Socket(const std::string& interface, int port, const Logger& logger) : ReadFileDescriptor(-1), l(logger) {
 	this->interface = interface;
 	this->port      = port;
 
@@ -21,6 +21,9 @@ Socket::Socket(const std::string& interface, int port, const Logger& logger) : l
 	if (this->fd < 0) {
 		throw Socket::Exception(*this, "Could not open socket: " + std::string(std::strerror(errno)));
 	}
+
+	this->setReadFileDescriptor(this->fd);
+
 	const int reuse = 1;
 	if (setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) != 0) {
 		throw Socket::Exception(*this, "Could not configure socket options: " + std::string(std::strerror(errno)));
@@ -53,10 +56,12 @@ std::string Socket::toString( void ) const {
 	return this->interface + ":" + std::to_string(this->port);
 }
 
-void Socket::startListening( void ) const {
+void Socket::startListening( void ) {
 	if (listen(this->fd, 20) != 0) {
 		throw Socket::Exception(*this, "Listening on socket failed: " + std::string(std::strerror(errno)));
 	}
+
+	this->setReadFDStatus(FD_POLLING);
 
 	l.log("Now listening on socket");
 }

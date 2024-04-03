@@ -6,6 +6,7 @@ Client::Client(int fd, const Socket& socket, const Logger& logger) :
 	l(logger), socket(socket) {
 	this->fd = fd;
 	this->setReadFDStatus(FD_POLLING);
+	(void) this->socket;
 }
 
 Client::~Client() {
