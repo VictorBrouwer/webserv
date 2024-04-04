@@ -99,9 +99,8 @@ ClientState	Request::readFromClient(int client_fd)
 	m_bytes_read = read(client_fd, buffer, BUFFER_SIZE);
 	if (m_bytes_read <= 0)
 		return ClientState::ERROR;
-	std::string str(buffer);
-	str.resize(m_bytes_read);
-	m_total_request.append(str, 0, m_bytes_read);
+	std::string str(buffer, m_bytes_read);
+	m_total_request.append(str);
 
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
@@ -112,8 +111,9 @@ ClientState	Request::readFromClient(int client_fd)
 		if (m_total_request.size() - (pos + 4) >= m_content_length)
 		{
 			m_body = m_total_request.substr(pos + 4);
-			// log(std::to_string(m_body.size()), L_Error);
-			// log(std::to_string(m_content_length), L_Error);
+			log(std::to_string(m_body.size()), L_Error);
+			log(std::to_string(m_content_length), L_Error);
+			log(m_body);
 			// log(m_body, L_Error);
 			return ClientState::READING_DONE;
 		}

@@ -237,15 +237,12 @@ void	Response::UploadFile() noexcept(false)
 	std::string request_body;
 
 	request_body = m_client_request->Get_Body();
-	
+
 	pos = request_body.find("\r\n\r\n");
 	pos += 4; // Skip over [\r\n\r\n]
-	body = request_body.substr(pos, request_body.find("\r\n", pos) - pos);
-	
-	log("Response = Body[" + std::to_string(request_body.size()) + "]-[" + std::to_string(request_body.find("\r\n", pos) - pos) + "]", L_Warning);
+	body = request_body.substr(pos, request_body.find("\r\n\r\n", pos) - pos);
 
 	pos = request_body.find("filename");
-	// log(std::to_string(body.size()), L_Error);
 	pos += 10; // Skip over [filename="]
 	filename = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
 
@@ -263,10 +260,5 @@ void	Response::UploadFile() noexcept(false)
 
 void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
 {
-	size_t pos;
-	std::string request_body = m_client_request->Get_Body();
-
-	pos = request_body.find("\r\n\r\n");
-	pos += 4;
-	write(fd, buffer.c_str(), request_body.find("\r\n", pos) - pos);
+	write(fd, buffer.c_str(), buffer.size());
 }
