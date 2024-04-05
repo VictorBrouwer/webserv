@@ -48,6 +48,15 @@ void Client::readingDone( void ) {
 
 }
 
+
+ssize_t Client::findRequestBoundary( void ) {
+	std::string stream_contents = std::move(this->read_buffer).str();
+
+	stream_contents.find("\r\n\r\n");
+
+	this->read_buffer.str(std::move(stream_contents));
+}
+
 // Legacy
 
 ClientState & Client::getState()

@@ -41,6 +41,8 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		// Override the readingDone function to build and construct requests
 		void readingDone( void );
 
+		ssize_t findRequestBoundary( void );
+
 		Logger        l;
 		const Socket& socket;
 
