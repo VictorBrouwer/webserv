@@ -85,8 +85,8 @@ class HTTPServer : public ConfigShared {
 		// Poll stuff
 
 		std::vector<pollfd> poll_vector;
-		std::map<int,ReadFileDescriptor*>  read_fd_pointers;
-		std::map<int,WriteFileDescriptor*> write_fd_pointers;
+		std::unordered_map<int,ReadFileDescriptor*>  read_fd_pointers;
+		std::unordered_map<int,WriteFileDescriptor*> write_fd_pointers;
 
 		void assemblePollQueue( void );
 		void runPoll( void );

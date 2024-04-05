@@ -74,7 +74,7 @@ std::vector<Client>::iterator HTTPServer::getClientEnd( void ) {
 // to their addresses. Populates the sockets vector in HTTPServer.
 void HTTPServer::setupSockets( void ) {
 	l.log("Collecting required sockets.");
-	std::map<int, std::vector<std::string>> sockets_requested;
+	std::unordered_map<int, std::vector<std::string>> sockets_requested;
 
 	auto start = this->getServerMutableIterator();
 	auto end   = this->getServerMutableEnd();
