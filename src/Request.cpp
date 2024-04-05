@@ -154,6 +154,7 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 {
 	std::string raw_path = split(this->Get_URI(), "?")[0];
 	std::string redir_path;
+	std::string temp_path;
 	m_loc = server->findLocation(raw_path);
 	if (m_loc->checkMethod(m_method) == false)
 		throw std::runtime_error("invalid request method");
@@ -173,20 +174,27 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 			m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");;
 			return;
 		}
-		else
+		if (raw_path.find(m_loc->getUri()) == 0)
+			raw_path = raw_path.substr(m_loc->getUri().length());
+		for (const auto &index : m_loc->getIndices())
 		{
-			m_final_path = joinPath({raw_path, m_loc->getIndices()[0]}, "/");
-			m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/");
-			return;
+			temp_path = joinPath({m_loc->getRootPath(), raw_path, index}, "/");
+			if (std::filesystem::exists(temp_path))
+			{
+				m_final_path = temp_path;
+				return ;
+			}
 		}
+		return; // forbidden
 	}
 	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
-		m_final_path = raw_path.substr(m_loc->getUri().length());
-	m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/"); // add root path to the uri 
-	if (m_final_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
-		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
-	if (m_final_path[0] == '/')
-		m_final_path = m_final_path.substr(1);
+		m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
+	else
+		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
+	// if (m_final_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
+	// 	m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
+	// if (m_final_path[0] == '/')
+	// 	m_final_path = m_final_path.substr(1);
 }
 
 std::string Request::joinPath(std::vector<std::string> paths, std::string delimeter)

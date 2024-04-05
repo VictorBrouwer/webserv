@@ -322,6 +322,8 @@ void Response::respondWithDirectoryListing()
     html << "		<pre>\n";
 	for (const auto& entry : std::filesystem::directory_iterator(m_path)) {
 		std::string filename = entry.path().filename().string();
+		if (filename.find('.') == std::string::npos)
+			filename.append("/");
 		html << "<li><a href=\"" << filename << "\">" << filename << "</a></li>\n";
 	}
 	html << "		</pre>\n";

@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include "ClientState.hpp"
 #include "Location.hpp"
+#include <filesystem>
 #include "Server.hpp"
 
 enum class HostPort
