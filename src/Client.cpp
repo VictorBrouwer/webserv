@@ -52,7 +52,7 @@ void Client::afterRead( void ) {
 	}
 
 	if (this->bytes_read > body_limit) {
-		l.log("Max body size exceeded, cutting off the connection.", L_Warning);
+		l.log("Max body size exceeded, cutting off the connection.", L_Error);
 		this->setReadFDStatus(FD_ERROR);
 
 		// Set up error Response and hit send

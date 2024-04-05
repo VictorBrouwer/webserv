@@ -43,9 +43,6 @@ class HTTPServer : public ConfigShared {
 
 		void doPollLoop( void );
 
-		// Legacy
-		// void startPolling();
-
 	private:
 		Logger l;
 
@@ -62,23 +59,10 @@ class HTTPServer : public ConfigShared {
 
 		// A Client is a currently open connection on which we might receive
 		// Requests, which we need to answer with a Response.
-		std::vector<Client> clients;
-
-		// A Request is an incoming request from a Client expecting a Response.
-		// It is not created when a connection is established with a client, and
-		// instead it represents a Response we still need to collect/send.
 		//
-		// A request needs to first be matched to a Server, after which the
-		// Server can tell us how to proceed with the response.
-		std::vector<Request> requests;
-
-		// void acceptConnection();
-		// void HandleActiveClient(int i);
-		// void HandleActiveClient(pollfd poll_fd);
-		// void updatePoll();
-		// void handleEvent(int Event_fd, int i, pollfd *poll_fds);
-		// std::string buildResponse();
-		// void sendResponse(int fd);
+		// Each Client handles one Request at a time, meaning its response
+		// will be built inside the Client class.
+		std::vector<Client> clients;
 
 		void setupSockets( void );
 
@@ -95,7 +79,7 @@ class HTTPServer : public ConfigShared {
 		void addReadFileDescriptorToPoll(ReadFileDescriptor* read_fd);
 		void addWriteFileDescriptorToPoll(WriteFileDescriptor* read_fd);
 
-		public:
+	public:
 		class Exception : public std::exception {
 			private:
 				const std::string _message;
