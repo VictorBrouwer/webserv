@@ -30,7 +30,7 @@ class ConfigShared {
 
 		bool                                 autoindex_enabled    = false;
 		size_t                               client_max_body_size = 1048576; // 1m
-		std::unordered_map<int, std::string> error_pages;
+		std::unordered_map<int, std::string> error_pages = {{404, "www/error.html"}};
 		std::vector<std::string>             indices = { "index.html" };
 		std::string                          root_path = "/var/www";
 

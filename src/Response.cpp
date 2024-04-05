@@ -3,29 +3,42 @@
 #include "constants.hpp"
 
 #define READ_ONLY std::ios::in
-#define WRITE_ONLY std::ios::out
 #define ERROR -1
 
 Response::~Response()
 {
 
 }
-
+/**
+ * @brief Construct a new Response object
+ * 
+ * @param client_request 
+ */
 Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
 	m_CGI = false;
 }
 
-// Step 1 Recognise wich HTTP method request we got (done).
-// Step 2 Lookup PATH (does it exist, do you have premissions(Write, Read (Only Read with GET))) (done)
-// Step 3 Read the File (Keep the amount of characters read (Content-Length = character read))
-// Step 4 Create Header If no status code has been set set status to 200 (OK)
-// Step 5 Make a function that fills additional information (Set this to template)
-// Step 6 Copy the requested information in the (Body)
+/**
+ * @brief Creates a response to send to the client based on the client's request.
+ * 
+ * This method creates a response to send to the client based on the client's request (`m_client_request`).
+ * It first checks if there is a redirection path in the client's request. If there is, it creates a redirection response and returns.
+ * Otherwise, it extracts the HTTP method and the final path from the client's request.
+ * It then checks if the file specified by the final path exists. If it doesn't, it sets the response status to `NotFound` and throws a `logic_error` exception.
+ * If the file exists and its extension is "cgi" or "py", it sets `m_CGI` to true and executes the CGI script.
+ * If the file exists but its extension is not "cgi" or "py", it performs an action based on the HTTP method: if the method is `GET`, it gets the file; if the method is `POST`, it uploads the file.
+ * 
+ * @param server A pointer to the server object.
+ * @throws std::logic_error If the file specified by the final path does not exist.
+ */
 void Response::createResponse(Server *server)
 {
+	std::fstream file;
+
 	m_server = server;
+
 	if (m_client_request->Get_redir_path() != "")
 	{
 		createRedirect();
@@ -33,51 +46,43 @@ void Response::createResponse(Server *server)
 	}
 	m_method = m_client_request->Get_Method();
 	m_path = m_client_request->Get_final_path();
-	switch (m_method)
-	{
-	case HTTPMethod::GET:
-		this->ParseResponse(READ_ONLY);
-		break;
-	case HTTPMethod::POST:
-		this->ParseResponse(READ_ONLY | WRITE_ONLY);
-		break;
-	case HTTPMethod::DELETE:
-		this->ParseResponse(READ_ONLY | WRITE_ONLY);
-		break;
-	default:
-		log("Unsopported Method Passed! Response!", L_Error);
-		break;
-	}
-}
-
-void Response::ParseResponse(std::ios_base::openmode mode)
-{
-	std::fstream file;
 
 	try
 	{
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
+			file = this->OpenFile(m_client_request->Get_location().getErrorPageForCode(404));
+			this->ReadFile(file);
 			throw std::logic_error("File Not Found 404");
 		}
-		log("Different 404", L_Info);
-		if (m_method == HTTPMethod::DELETE)
-			this->DeleteFile();
-
-		if (m_method == HTTPMethod::POST)
-			this->UploadFile();
 
 		if (this->ExtensionExtractor(m_path) == "cgi" || this->ExtensionExtractor(m_path) == "py")
 		{
 			m_CGI = true;
 			this->ExecuteCGI();
 		}
-		else if (m_method == HTTPMethod::GET)
+
+		else
 		{
-			file = this->OpenFile(mode);
-			this->ReadFile(file);
+			switch (m_method)
+			{
+			case HTTPMethod::GET:
+				this->GetFile();
+				break;
+			case HTTPMethod::POST:
+				this->UploadFile();
+				break;
+			case HTTPMethod::DELETE:
+				this->DeleteFile();
+				break;
+			default:
+				log("Unsopported Method Passed! Response!", L_Error);
+				m_status = StatusCode::InternalServerError;
+				break;
+			}	
 		}
+		
 	}
 	catch(const std::exception& e)
 	{
@@ -85,15 +90,33 @@ void Response::ParseResponse(std::ios_base::openmode mode)
 			m_status = StatusCode::InternalServerError;
 		log(e.what(), L_Error);
 	}
+
 	this->addHeader();
-	
 }
 
-std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
+
+/**
+ * @brief This method will open and read the file requested by the Client
+ * 
+ */
+void Response::GetFile()
 {
 	std::fstream file;
 
-	file.open(m_path, mode);
+	file = this->OpenFile(m_path);
+	this->ReadFile(file);
+}
+
+/**
+ * @brief This method will open a file check if the file has been succesfully opened, and returns a fstream to the file.
+ * 
+ * @return std::fstream 
+ */
+std::fstream Response::OpenFile(const std::string &path) noexcept(false)
+{
+	std::fstream file;
+
+	file.open(path, READ_ONLY);
 	if (!file.is_open())
 	{
 		m_status = StatusCode::Forbidden;
@@ -102,11 +125,16 @@ std::fstream Response::OpenFile(std::ios_base::openmode mode) noexcept(false)
 	return file;
 }
 
-// Make a map for the status values 200 -> OK
-// Header HTTP/[VER] [CODE] [TEXT]
-// Header Conent-Length [Length-Of-Body]
-// "\r\n"
-// Body [file contents]
+/**
+ * @brief Constructs the total response with all the gathered and generated information.
+ * 
+ * This method constructs the total response by appending the HTTP version, status code, status message, headers, and body.
+ * If the status code is `Null`, it is set to `OK`.
+ * The `Content-Length` and `Content-Type` headers are added based on the response body and the file extension of the path, respectively.
+ * If the response is not from a CGI script, an additional blank line is appended to separate the headers from the body.
+ * If the response is from a CGI script, the `Content-Length` is adjusted accordingly.
+ * Finally, the response body is appended to the total response.
+ */
 void	Response::addHeader()
 {
 	size_t pos;
@@ -122,7 +150,14 @@ void	Response::addHeader()
 	if (m_CGI == false)
 	{
 		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
-		m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
+		try
+		{
+			m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
+		}
+		catch(const std::exception& e)
+		{
+			m_total_response.append("Content-Type: text/html\r\n");
+		}
 		m_total_response.append("\r\n");
 	}
 	else
@@ -137,6 +172,17 @@ void	Response::addHeader()
 
 }
 
+
+/**
+ * @brief Reads the content of a file and appends it to the response body.
+ * 
+ * This method reads the content of a file line by line and appends each line to the response body (`m_body`).
+ * If it encounters an error before reaching the end of the file (i.e., if `file.eof()` is false), it sets the response status to `InternalServerError` and throws a `logic_error` exception.
+ * After reading the file, it closes the file.
+ * 
+ * @param file A reference to the file stream object associated with the file to read.
+ * @throws std::logic_error If an error occurs while reading the file.
+ */
 void Response::ReadFile(std::fstream &file) noexcept(false)
 {
 	std::string line;
@@ -152,7 +198,15 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
 	file.close();
 }
 
-// This function can be changed into one read useage!!
+/**
+ * @brief Executes a CGI script and sets the response body to the output of the script.
+ * 
+ * This method executes a CGI script specified by the path. It sets up the environment variables required by the CGI script, forks a new process to execute the script, and captures the output of the script.
+ * The output of the script is then set as the response body (`m_body`).
+ * If an error occurs during the execution of the script, it sets the response status to `InternalServerError` and throws a `logic_error` exception.
+ * 
+ * @throws std::logic_error If an error occurs while executing the CGI script.
+ */
 void Response::ExecuteCGI() noexcept(false)
 {
 	int 	fd;
@@ -184,7 +238,6 @@ void Response::ExecuteCGI() noexcept(false)
 
 bool Response::DoesFileExists()
 {
-	log(m_path, L_Info);
 	if (!std::filesystem::exists(m_path))
 		return false;
 	return true;
@@ -215,6 +268,15 @@ const std::string &Response::getResponse() const
 	return m_total_response;
 }
 
+/**
+ * @brief Deletes a file from the server.
+ * 
+ * This method deletes a file from the server. The path of the file to delete is stored in `m_path`.
+ * If the file deletion is successful, it appends "File Deleted Successfully" to the response body (`m_body`) and sets the response status to `NoContent`.
+ * If an error occurs during the file deletion process, it appends "File Deleted Unsuccessful! [ERROR]" to the response body, sets the response status to `InternalServerError`, and throws a `logic_error` exception.
+ * 
+ * @throws std::logic_error If an error occurs while deleting the file.
+ */
 void	Response::DeleteFile() noexcept(false)
 {
 	if (!std::filesystem::remove(m_path))
@@ -228,6 +290,14 @@ void	Response::DeleteFile() noexcept(false)
 	m_status = StatusCode::NoContent;
 }
 
+/**
+ * @brief Uploads a file to the server.
+ * 
+ * This method uploads a file to the server. It extracts the filename and the file content from the request body, creates a new file with the extracted filename in the `www/upload/` directory, and writes the extracted file content to the new file.
+ * If an error occurs during the file creation or writing process, it sets the response status to `Forbidden` and throws a `logic_error` exception.
+ * 
+ * @throws std::logic_error If an error occurs while creating or writing to the file.
+ */
 void	Response::UploadFile() noexcept(false)
 {
 	int fd;
@@ -243,7 +313,7 @@ void	Response::UploadFile() noexcept(false)
 	pos += 10; // Skip over [filename="]
 	filename = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
 	
-	pos = request_body.find("\r\n");
+	pos = request_body.find("\r\n"); // Find the boundary of the form data. (example: [-----------------------------114782935826962])
 	boundary = request_body.substr(0, pos);
 
 	pos = request_body.find("\r\n\r\n");
@@ -258,7 +328,7 @@ void	Response::UploadFile() noexcept(false)
 		throw std::logic_error("Open: ERROR");
 	}
 
-	WriteToFile(fd, body); /* @warning needs to be changed when we implement chunk reading!! */
+	WriteToFile(fd, body); /* @warning needs to be changed when we implement Poll Writing! */
 	close(fd);
 	m_body = "Uploaded File!";
 }
