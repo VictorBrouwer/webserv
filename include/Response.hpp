@@ -53,24 +53,23 @@ public:
 	void				addHeader();
 	void				createResponse(Server *server);
 	const std::string 	&getResponse() const;
-	void				clearResponse();
 	void				createRedirect();
 
-	void	ParseResponse(std::ios_base::openmode mode);
 
 private:
 
 	bool			DoesFileExists();
-	std::fstream 	OpenFile(std::ios_base::openmode) noexcept(false);
+	std::fstream 	OpenFile(const std::string &path) noexcept(false);
 	void			ReadFile(std::fstream &file) noexcept(false);
 
 	std::string		ExtensionExtractor(const std::string &path);
 	void			ExecuteCGI();
 
+	void			GetFile();
 	void			DeleteFile();
 	void			UploadFile();
 	void			WriteToFile(int fd, const std::string &buffer);
-
+	void 			respondWithDirectoryListing();
 
 	Server				 							*m_server;
 	HTTPMethod										m_method;

@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include "ClientState.hpp"
 #include "Location.hpp"
+#include <filesystem>
 #include "Server.hpp"
 
 enum class HostPort
@@ -37,6 +38,7 @@ public:
 	const Location&		Get_location();
 	const HTTPMethod& 	Get_Method();
 	const std::string& 	Get_Request();
+	const bool& 	 	Get_auto_index();
 	size_t				Get_ContentLength();
 	std::string			extractHostPort(HostPort get);
 	const bool& 			Get_Keep_Alive();
@@ -57,4 +59,5 @@ private:
     std::string m_redirection_path;
 	std::string m_final_path;
 	Location	*m_loc;
+	bool		m_auto_index;
 };

@@ -105,7 +105,7 @@ void	Client::sendResponse()
 void	Client::receive(std::vector<Server> &servers)
 {
 	m_state = m_request->readFromClient(m_socket);
-	log("\n" + m_request->Get_Request(), L_Info);
+	// log("\n" + m_request->Get_Request(), L_Info);
 	// m_state is either loading or reading_done
 	// if client state is loading, the poll event should remain POLLIN
 	// if client statis done_reading, a response should be created and then

@@ -2,7 +2,7 @@
 #include"HelperFuncs.hpp"
 #include"constants.hpp"
 
-Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_uri(""), m_keep_alive(false), m_loc(nullptr)
+Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_uri(""), m_keep_alive(false), m_loc(nullptr), m_auto_index(false)
 {
 }
 
@@ -99,9 +99,8 @@ ClientState	Request::readFromClient(int client_fd)
 	m_bytes_read = read(client_fd, buffer, BUFFER_SIZE);
 	if (m_bytes_read <= 0)
 		return ClientState::ERROR;
-	std::string str(buffer);
-	str.resize(m_bytes_read);
-	m_total_request.append(str, 0, m_bytes_read);
+	std::string str(buffer, m_bytes_read);
+	m_total_request.append(str);
 
 	if (m_method == HTTPMethod::UNDEFINED)
 		this->setMethod();
@@ -112,15 +111,11 @@ ClientState	Request::readFromClient(int client_fd)
 		if (m_total_request.size() - (pos + 4) >= m_content_length)
 		{
 			m_body = m_total_request.substr(pos + 4);
-			// log(std::to_string(m_body.size()), L_Error);
-			// log(std::to_string(m_content_length), L_Error);
-			// log(m_body, L_Error);
 			return ClientState::READING_DONE;
 		}
 		else
 			return ClientState::LOADING;
 	}
-
 	if (pos != std::string::npos)
 	{
 		std::cout << buffer << std::endl;
@@ -136,7 +131,6 @@ ClientState	Request::readFromClient(int client_fd)
 			if (m_total_request.size() - (pos + 4) >= m_content_length)
 			{
 				m_body = m_total_request.substr(pos + 4);
-				log(m_body, L_Error);
 				return ClientState::READING_DONE;
 			}
 			else
@@ -149,11 +143,14 @@ ClientState	Request::readFromClient(int client_fd)
 		return ClientState::LOADING;
 }
 
-
+/**
+ * @brief this function takes the raw url, finds the matching location and applies the rules of that location
+*/
 void Request::handleLocation(Server *server) // still need to fix directory listing
 {
 	std::string raw_path = split(this->Get_URI(), "?")[0];
 	std::string redir_path;
+	std::string temp_path;
 	m_loc = server->findLocation(raw_path);
 	if (m_loc->checkMethod(m_method) == false)
 		throw std::runtime_error("invalid request method");
@@ -165,15 +162,31 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		m_redirection_path = redir_path;
 		return ;
 	}
-	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
-		m_final_path = raw_path.substr(m_loc->getUri().length());
-	m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/"); // add root path to the uri 
 	if (raw_path.back() == '/' && m_method != HTTPMethod::POST)
-		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
-	else if (raw_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
-		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
-	if (m_final_path[0] == '/')
-		m_final_path = m_final_path.substr(1);
+	{
+		if (m_loc->getAutoindexEnabled())
+		{
+			m_auto_index = true;
+			m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");;
+			return;
+		}
+		if (raw_path.find(m_loc->getUri()) == 0)
+			raw_path = raw_path.substr(m_loc->getUri().length());
+		for (const auto &index : m_loc->getIndices())
+		{
+			temp_path = joinPath({m_loc->getRootPath(), raw_path, index}, "/");
+			if (std::filesystem::exists(temp_path))
+			{
+				m_final_path = temp_path;
+				return ;
+			}
+		}
+		return; // forbidden
+	}
+	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
+		m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
+	else
+		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
 }
 
 std::string Request::joinPath(std::vector<std::string> paths, std::string delimeter)
@@ -237,6 +250,11 @@ const std::string& Request::Get_Request()
 const bool&	Request::Get_Keep_Alive()
 {
 	return m_keep_alive;
+}
+
+const bool&	Request::Get_auto_index()
+{
+	return m_auto_index;
 }
 
 size_t Request::Get_ContentLength()
