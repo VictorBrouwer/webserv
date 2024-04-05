@@ -116,7 +116,6 @@ ClientState	Request::readFromClient(int client_fd)
 		else
 			return ClientState::LOADING;
 	}
-
 	if (pos != std::string::npos)
 	{
 		std::cout << buffer << std::endl;
@@ -144,7 +143,9 @@ ClientState	Request::readFromClient(int client_fd)
 		return ClientState::LOADING;
 }
 
-
+/**
+ * @brief this function takes the raw url, finds the matching location and applies the rules of that location
+*/
 void Request::handleLocation(Server *server) // still need to fix directory listing
 {
 	std::string raw_path = split(this->Get_URI(), "?")[0];
@@ -186,10 +187,6 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
 	else
 		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
-	// if (m_final_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
-	// 	m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
-	// if (m_final_path[0] == '/')
-	// 	m_final_path = m_final_path.substr(1);
 }
 
 std::string Request::joinPath(std::vector<std::string> paths, std::string delimeter)
