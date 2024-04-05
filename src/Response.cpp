@@ -59,7 +59,8 @@ void Response::createResponse(Server *server)
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
-			file = this->OpenFile(m_client_request->Get_location().getErrorPageForCode(404));
+			m_path = m_client_request->Get_location().getErrorPageForCode(404);
+			file = this->OpenFile(m_path);
 			this->ReadFile(file);
 			throw std::logic_error("File Not Found 404");
 		}
@@ -166,7 +167,7 @@ void	Response::addHeader()
 		}
 		catch(const std::exception& e)
 		{
-			m_total_response.append("Content-Type: text/html\r\n");
+			m_total_response.append("Content-Type: text/plain\r\n");
 		}
 		m_total_response.append("\r\n");
 	}
@@ -179,6 +180,7 @@ void	Response::addHeader()
 	}
 
 	m_total_response.append(m_body);
+	log(m_total_response, L_Info);
 
 }
 
@@ -249,6 +251,9 @@ void Response::ExecuteCGI() noexcept(false)
 bool Response::DoesFileExists()
 {
 	if (!std::filesystem::exists(m_path))
+		return false;
+
+	if (std::filesystem::is_directory(m_path) && m_method == HTTPMethod::GET)
 		return false;
 	return true;
 }
