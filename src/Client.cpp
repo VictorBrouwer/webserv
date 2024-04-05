@@ -24,7 +24,7 @@ void	Client::sendResponse()
 	int bytes_sent;
 
 	// write(this->m_socket, m_response.getResponse().c_str(), m_response.getResponse().size());
-	log(std::string("sending response: " + m_response->getResponse()), L_Info);
+	// log(std::string("sending response: " + m_response->getResponse()), L_Info);
 	bytes_sent = send(this->m_socket, m_response->getResponse().c_str(), m_response->getResponse().size(), 0);
 	if (bytes_sent < 0)
 	{
@@ -51,7 +51,7 @@ void	Client::sendResponse()
 void	Client::receive(std::vector<Server> &servers)
 {
 	m_state = m_request->readFromClient(m_socket);
-	log("\n" + m_request->Get_Request(), L_Info);
+	// log("\n" + m_request->Get_Request(), L_Info);
 	// m_state is either loading or reading_done
 	// if client state is loading, the poll event should remain POLLIN
 	// if client statis done_reading, a response should be created and then 

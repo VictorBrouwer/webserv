@@ -245,21 +245,23 @@ void	Response::UploadFile() noexcept(false)
 	std::string body;
 	std::string filename;
 	std::string request_body;
+	std::string boundary;
 
 	request_body = m_client_request->Get_Body();
-	
-	pos = request_body.find("\r\n\r\n");
-	pos += 4; // Skip over [\r\n\r\n]
-	body = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
-	
-	log("Response = Body[" + std::to_string(body.size()) + "]", L_Warning);
 
 	pos = request_body.find("filename");
-	// log(std::to_string(body.size()), L_Error);
 	pos += 10; // Skip over [filename="]
 	filename = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
+	
+	pos = request_body.find("\r\n");
+	boundary = request_body.substr(0, pos);
 
-	fd = open((m_path + filename).c_str(), O_CREAT | O_RDWR, 0666);
+	pos = request_body.find("\r\n\r\n");
+	pos += 4; // Skip over [\r\n\r\n]
+	body = request_body.substr(pos, request_body.find(boundary, pos) - (pos + 2));
+
+
+	fd = open((std::string("www/upload/") + filename).c_str(), O_CREAT | O_RDWR, 0666);
 	if (fd == ERROR)
 	{
 		m_status = StatusCode::Forbidden;
@@ -273,12 +275,7 @@ void	Response::UploadFile() noexcept(false)
 
 void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
 {
-	size_t pos;
-	std::string request_body = m_client_request->Get_Body();
-
-	pos = request_body.find("\r\n\r\n");
-	pos += 4;
-	write(fd, buffer.c_str(), request_body.find("\r\n", pos) - (pos + 1));
+	write(fd, buffer.c_str(), buffer.size());
 }
 
 void Response::respondWithDirectoryListing()
