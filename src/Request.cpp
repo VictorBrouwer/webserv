@@ -2,7 +2,7 @@
 #include"HelperFuncs.hpp"
 #include"constants.hpp"
 
-Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_uri(""), m_keep_alive(false), m_loc(nullptr)
+Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_uri(""), m_keep_alive(false), m_loc(nullptr), m_auto_index(false)
 {
 }
 
@@ -165,12 +165,25 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		m_redirection_path = redir_path;
 		return ;
 	}
+	if (raw_path.back() == '/' && m_method != HTTPMethod::POST)
+	{
+		if (m_loc->getAutoindexEnabled())
+		{
+			m_auto_index = true;
+			m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");;
+			return;
+		}
+		else
+		{
+			m_final_path = joinPath({raw_path, m_loc->getIndices()[0]}, "/");
+			m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/");
+			return;
+		}
+	}
 	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
 		m_final_path = raw_path.substr(m_loc->getUri().length());
 	m_final_path = joinPath({m_loc->getRootPath(), m_final_path}, "/"); // add root path to the uri 
-	if (raw_path.back() == '/' && m_method != HTTPMethod::POST)
-		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
-	else if (raw_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
+	if (m_final_path.find('.') == std::string::npos && m_method != HTTPMethod::POST) // check if uri contains an extension. if not, return index
 		m_final_path = joinPath({m_final_path, m_loc->getIndices()[0]}, "/");
 	if (m_final_path[0] == '/')
 		m_final_path = m_final_path.substr(1);
@@ -237,6 +250,11 @@ const std::string& Request::Get_Request()
 const bool&	Request::Get_Keep_Alive()
 {
 	return m_keep_alive;
+}
+
+const bool&	Request::Get_auto_index()
+{
+	return m_auto_index;
 }
 
 size_t Request::Get_ContentLength()

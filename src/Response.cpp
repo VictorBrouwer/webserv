@@ -56,6 +56,13 @@ void Response::ParseResponse(std::ios_base::openmode mode)
 
 	try
 	{
+		if (this->m_client_request->Get_auto_index()) // implement directory listing!!
+		{
+			respondWithDirectoryListing();
+			this->addHeader();
+			return ;
+		}
+			
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
@@ -122,7 +129,10 @@ void	Response::addHeader()
 	if (m_CGI == false)
 	{
 		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
-		m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
+		if (m_client_request->Get_auto_index())
+			m_total_response.append("Content-Type: " + m_DB_ContentType.at("html") + "\r\n");
+		else
+			m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
 		m_total_response.append("\r\n");
 	}
 	else
@@ -269,4 +279,54 @@ void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
 	pos = request_body.find("\r\n\r\n");
 	pos += 4;
 	write(fd, buffer.c_str(), request_body.find("\r\n", pos) - (pos + 1));
+}
+
+void Response::respondWithDirectoryListing()
+{
+	// assert(this->m_total_response.empty());
+	std::ostringstream html;
+    html << "<!DOCTYPE html>\n";
+    html << "<html>\n";
+    html << "	<meta charset=\"UTF-8\">\n";
+    html << "	<head>\n";
+    html << "		<title>Index of " + this->m_path;
+    html << "</title>\n";
+    html << "		<style>\n";
+    html << "			body {\n";
+    html << "				background-color: gray;\n";
+    html << "				font-size: large;\n";
+    html << "			}\n";
+    html << "			a {\n";
+    html << "				padding-left: 2px;\n";
+    html << "				margin-left: 4px;\n";
+    html << "			}\n";
+    html << "			button {\n";
+    html << "				background-color: gray;\n";
+    html << "				padding-left: 3px;\n";
+    html << "				padding-right: 3px;\n";
+    html << "				border: 0px;\n";
+    html << "				margin: 2px;\n";
+    html << "				cursor: pointer;\n";
+    html << "			}\n";
+    html << "			hr {\n";
+    html << "				border-color: black;\n";
+    html << "				background-color: black;\n";
+    html << "				color: black;\n";
+    html << "			}\n";
+    html << "		</style>\n";
+    html << "	</head>\n";
+    html << "	<body>\n";
+    html << "		<h1>Index of " + this->m_path;
+    html << "</h1>\n";
+    html << "		<hr>\n";
+    html << "		<pre>\n";
+	for (const auto& entry : std::filesystem::directory_iterator(m_path)) {
+		std::string filename = entry.path().filename().string();
+		html << "<li><a href=\"" << filename << "\">" << filename << "</a></li>\n";
+	}
+	html << "		</pre>\n";
+    html << "		<hr>\n";
+    html << "	</body>\n";
+    html << "</html>\n";
+	m_body = html.str();
 }

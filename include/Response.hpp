@@ -70,7 +70,7 @@ private:
 	void			DeleteFile();
 	void			UploadFile();
 	void			WriteToFile(int fd, const std::string &buffer);
-
+	void 			respondWithDirectoryListing();
 
 	Server				 							*m_server;
 	HTTPMethod										m_method;
