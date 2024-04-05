@@ -40,21 +40,30 @@ Client::~Client() {
 // Check if we have a full request ready or if we've been kept
 // reading for too long
 void Client::afterRead( void ) {
+	std::string stream_contents = std::move(this->read_buffer).str();
 
+	std::size_t header_boundary = stream_contents.find("\r\n\r\n");
+
+	if (header_boundary != std::string::npos && this->bytes_read > header_limit) {
+		l.log("Max header size exceeded, cutting off the connection", L_Error);
+		this->setReadFDStatus(FD_ERROR);
+
+		// Set up error Response and hit send
+	}
+
+	if (this->bytes_read > body_limit) {
+		l.log("Max body size exceeded, cutting off the connection.", L_Warning);
+		this->setReadFDStatus(FD_ERROR);
+
+		// Set up error Response and hit send
+	}
+
+	this->read_buffer.str(std::move(stream_contents));
 }
 
 // If we have to keepalive, keep the file descriptor open
 void Client::readingDone( void ) {
-
-}
-
-
-ssize_t Client::findRequestBoundary( void ) {
-	std::string stream_contents = std::move(this->read_buffer).str();
-
-	stream_contents.find("\r\n\r\n");
-
-	this->read_buffer.str(std::move(stream_contents));
+	// this->m_request = std::shared_ptr(new Request(this->read_buffer));
 }
 
 // Legacy

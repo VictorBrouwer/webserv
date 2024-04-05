@@ -84,7 +84,7 @@ private:
     std::string 									m_total_response;
 
 
-	// These are the supported Exit codes. 
+	// These are the supported Exit codes.
 	// The response will look at the m_status to determine its response exit message.
 	static const inline std::unordered_map<int, std::string>			m_DB_status = {
 			{000,                 "Null"},

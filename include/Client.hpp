@@ -41,8 +41,6 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		// Override the readingDone function to build and construct requests
 		void readingDone( void );
 
-		ssize_t findRequestBoundary( void );
-
 		Logger        l;
 		const Socket& socket;
 
@@ -56,4 +54,7 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		ClientState					m_state;
 		size_t						m_total_bytes_sent;
 		Server 						*m_server;
+
+		static const std::size_t header_limit = 50000;
+		static const std::size_t body_limit = 10000000;
 };

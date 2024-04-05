@@ -1,5 +1,6 @@
 #pragma once
 
+#include <poll.h>
 #include <sstream>
 
 // Abstract classes to describe a buffered file descriptor to read or write with.

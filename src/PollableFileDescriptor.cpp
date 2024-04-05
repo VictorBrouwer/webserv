@@ -1,5 +1,6 @@
 #include <memory>
 #include <unistd.h>
+#include <poll.h>
 
 #include "PollableFileDescriptor.hpp"
 #include "Request.hpp"
