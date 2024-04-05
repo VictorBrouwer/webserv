@@ -196,17 +196,18 @@ void HTTPServer::handleEvents( void ) {
 			l.log("File descriptor " + std::to_string(pollfd.fd) + " has these events:" + formatRevents(pollfd), L_Info);
 
 			if (pollfd.revents & POLLIN) {
-				this->read_fd_pointers[pollfd.fd]->readFromFileDescriptor();
+				this->read_fd_pointers[pollfd.fd]->readFromFileDescriptor(pollfd);
 			}
 
 			if (pollfd.revents & POLLOUT) {
 				this->write_fd_pointers[pollfd.fd]->writeToFileDescriptor();
 			}
 
-			// Only close the connection if there is nothing left to read,
-			// these events can come up at the same time
-			if (pollfd.revents & POLLHUP && pollfd.revents | POLLIN) {
-
+			// We've been hung up but we wanted to write more, so we need to
+			// make sure writingDone is called separately.
+			if (pollfd.events & POLLOUT && pollfd.revents & POLLHUP) {
+				this->write_fd_pointers[pollfd.fd]->setWriteFDStatus(FD_HUNG_UP);
+				this->write_fd_pointers[pollfd.fd]->callWritingDone();
 			}
 		}
 	});

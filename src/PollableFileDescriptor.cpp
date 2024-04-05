@@ -22,7 +22,7 @@ FDStatus ReadFileDescriptor::getReadFDStatus( void ) const {
 	return this->read_status;
 }
 
-void ReadFileDescriptor::readFromFileDescriptor( void ) {
+void ReadFileDescriptor::readFromFileDescriptor(pollfd pollfd) {
 	ssize_t bytes_read = this->doRead();
 
 	if (bytes_read > 0)
@@ -30,8 +30,11 @@ void ReadFileDescriptor::readFromFileDescriptor( void ) {
 
 	if (this->read_status != FD_ERROR)
 		this->afterRead();
-	if (this->read_status == FD_DONE)
+	if (this->read_status == FD_DONE) {
+		if (pollfd.revents & POLLHUP)
+			this->read_status = FD_HUNG_UP;
 		this->readingDone();
+	}
 }
 
 void ReadFileDescriptor::resetReadBuffer( void ) {
@@ -104,6 +107,10 @@ void WriteFileDescriptor::setWriteFDStatus(FDStatus status) {
 
 void WriteFileDescriptor::setWriteFileDescriptor(int fd) {
 	this->write_fd = fd;
+}
+
+void WriteFileDescriptor::callWritingDone( void ) {
+	this->writingDone();
 }
 
 ssize_t WriteFileDescriptor::doWrite( void ) {

@@ -43,9 +43,9 @@
 enum FDStatus {
 	FD_IDLE,    // No polling is being done right now, we are still perparing I/O
 	FD_POLLING, // The buffer is ready to be read/written and is part of the poll queue
-	FD_DONE,    // The buffer has been read/written and is ready to be used
-	FD_ERROR,   // Something went wrong with reading/writing and the data is
-	            // assumed to be malformed or incomplete
+	FD_DONE,    // The buffer has been read/written and is ready to be used, the file descriptor is still open.
+	FD_HUNG_UP, // The buffer has been read/written and is ready to be used, but the file descriptor has been hung up and should not be used anymore.
+	FD_ERROR    // Something went wrong with reading/writing and the data is assumed to be malformed or incomplete
 };
 
 
@@ -61,7 +61,10 @@ class ReadFileDescriptor {
 		// This function is called from the poll loop to do a full read cycle.
 		// It just calls the virtual functions to make sure they are all
 		// part of the cycle as expected.
-		void readFromFileDescriptor( void );
+		void readFromFileDescriptor(pollfd pollfd);
+
+		// Set the status of the file descriptor (from the poll loop or the child class)
+		void setReadFDStatus(FDStatus status);
 
 	protected:
 		ReadFileDescriptor(int fd);
@@ -70,10 +73,7 @@ class ReadFileDescriptor {
 		// This function clears the buffer and resets the FDStatus.
 		void resetReadBuffer( void );
 
-		// Setters to change the status or file descriptor from
-		// the child class after construction.
-
-		void setReadFDStatus(FDStatus status);
+		// Setter to change the file descriptor from the child class.
 		void setReadFileDescriptor(int fd);
 
 		// The buffer and amount of bytes read are accessible from
@@ -111,7 +111,12 @@ class WriteFileDescriptor {
 		// This function is called from the poll loop to do a full write cycle.
 		// Feel free to look at its implementation and see how the virtual
 		// functions are part of it.
-		void writeToFileDescriptor( void );
+		void writeToFileDescriptor();
+
+		// Setter to change the status from the poll loop or the child class.
+		void setWriteFDStatus(FDStatus status);
+
+		void callWritingDone( void );
 
 	protected:
 		WriteFileDescriptor(int fd);
@@ -119,10 +124,7 @@ class WriteFileDescriptor {
 		// This function clears the buffer and resets the FDStatus.
 		void resetWriteBuffer( void );
 
-		// Setters to change the status or file descriptor from
-		// the child class after construction.
-
-		void setWriteFDStatus(FDStatus status);
+		// Setter to change the file descriptor from the child class.
 		void setWriteFileDescriptor(int fd);
 
 		// The buffer and amount of bytes written are accessible from
