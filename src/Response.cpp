@@ -14,10 +14,17 @@ Response::~Response()
  * 
  * @param client_request 
  */
+
+
 Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
 	m_CGI = false;
+}
+
+Response::Response(int status_code)
+{
+	
 }
 
 /**
