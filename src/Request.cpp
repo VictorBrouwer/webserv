@@ -111,10 +111,6 @@ ClientState	Request::readFromClient(int client_fd)
 		if (m_total_request.size() - (pos + 4) >= m_content_length)
 		{
 			m_body = m_total_request.substr(pos + 4);
-			log(std::to_string(m_body.size()), L_Error);
-			log(std::to_string(m_content_length), L_Error);
-			log(m_body);
-			// log(m_body, L_Error);
 			return ClientState::READING_DONE;
 		}
 		else
@@ -136,7 +132,6 @@ ClientState	Request::readFromClient(int client_fd)
 			if (m_total_request.size() - (pos + 4) >= m_content_length)
 			{
 				m_body = m_total_request.substr(pos + 4);
-				log(m_body, L_Error);
 				return ClientState::READING_DONE;
 			}
 			else
