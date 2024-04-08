@@ -6,25 +6,50 @@ Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_ur
 {
 }
 
+// Grab the full request out of the stringstream
+// Validate the first line: protocol, method, path, bad request if failure
+// Parse the headers into the m_headers
+// Find a server for the given host and socket, default server if we can't find one
+// Check whether we are within max_body_size for the given server, payload too large if failure
+// Parse the body:
+//   - If content-length is not given, the entire request is the body
+//   - If content-length is given and we have less data, malformed request
+//   - If content-length is given and we have more data, discard the rest or malformed request
+//   - If transfer-encoding is chunked, unchunk it
+// We should now be ready to construct a response
+
+Request::Request(std::stringstream& request_data) {
+	this->m_total_request = request_data.str(); // Reallocation is not nice but we need the stream for the method/uri/protocol
+	std::string method, uri, protocol;
+	request_data >> method >> uri >> protocol;
+	if (protocol != "HTTP/1.1") {
+		throw Request::Exception("Unsupported protocol");
+	}
+	this->setMethod(method);
+	this->m_uri = uri;
+
+	this->parseHeaders();
+
+}
+
 Request::~Request()
 {
 }
 
-void Request::setMethod()
+void Request::splitBody( void ) {
+
+}
+
+void Request::setMethod(const std::string& method)
 {
-	size_t pos = m_total_request.find(' ');
-	if (pos != std::string::npos)
-	{
-		std::string method = m_total_request.substr(0, pos);
-		if (method == "GET")
-			m_method = HTTPMethod::GET;
-		else if(method == "POST")
-			m_method = HTTPMethod::POST;
-		else if(method == "DELETE")
-			m_method = HTTPMethod::DELETE;
-		else
-			m_method = HTTPMethod::UNDEFINED;
-	}
+	if (method == "GET")
+		m_method = HTTPMethod::GET;
+	else if(method == "POST")
+		m_method = HTTPMethod::POST;
+	else if(method == "DELETE")
+		m_method = HTTPMethod::DELETE;
+	else
+		throw Request::Exception("unsupported HTTP method");
 }
 
 void Request::extractPath()
@@ -40,10 +65,10 @@ void Request::extractPath()
 
 void Request::parseHeaders()
 {
-
-	this->extractPath();
 	size_t start_headers = m_total_request.find(CRLF) + 2;
 	size_t end_headers = m_total_request.find(CRLFCRLF);
+	if (start_headers == std::string::npos || end_headers == std::string::npos)
+		throw Request::Exception("Could not properly determine header boundaries");
 	std::string headers_section = m_total_request.substr(start_headers, (end_headers-start_headers));
     std::string line, key, value;
     size_t i = 0, j = 0;
@@ -60,7 +85,7 @@ void Request::parseHeaders()
             m_headers.emplace(key, value);
         }
 		else
-			throw std::logic_error("invalid header format");
+			throw Request::Exception("improperly formatted header");
         i += 2; // Move past the "\r\n" delimiter
 		j = i;
     }
@@ -91,6 +116,18 @@ std::string	Request::extractHostPort(HostPort get)
 	return ret;
 }
 
+std::pair<std::string,int> Request::getHostPort() const {
+	return {this->host, this->port};
+}
+
+const std::string& Request::getHost( void ) const {
+	return this->host;
+}
+
+int Request::getPort( void ) const {
+	return this->port;
+}
+
 ClientState	Request::readFromClient(int client_fd)
 {
 	size_t pos;
@@ -102,8 +139,8 @@ ClientState	Request::readFromClient(int client_fd)
 	std::string str(buffer, m_bytes_read);
 	m_total_request.append(str);
 
-	if (m_method == HTTPMethod::UNDEFINED)
-		this->setMethod();
+	// if (m_method == HTTPMethod::UNDEFINED)
+		// this->setMethod();
 
 	pos = m_total_request.find("\r\n\r\n");
 	if (m_content_length != 0)
@@ -148,7 +185,7 @@ ClientState	Request::readFromClient(int client_fd)
 */
 void Request::handleLocation(Server *server) // still need to fix directory listing
 {
-	std::string raw_path = split(this->Get_URI(), "?")[0];
+	std::string raw_path = split(this->getURI(), "?", 1)[0];
 	std::string redir_path;
 	std::string temp_path;
 	m_loc = server->findLocation(raw_path);
@@ -207,57 +244,57 @@ std::string Request::joinPath(std::vector<std::string> paths, std::string delime
     return joined_path;
 }
 
-const std::string&	Request::Get_Body()
+const std::string&	Request::getBody() const
 {
 	return m_body;
 }
 
-const std::string& Request::Get_URI() 
+const std::string& Request::getURI() const
 {
 	return m_uri;
 }
 
-const std::string& Request::Get_final_path() 
+const std::string& Request::getFinalPath() const
  {
 	return m_final_path;
 }
 
-const std::string& Request::Get_redir_path() 
+const std::string& Request::getRedirPath() const
 {
 	return m_redirection_path;
 }
 
-const Location& Request::Get_location() 
+const Location& Request::getLocation() const
 {
 	return *m_loc;
 }
 
-const HTTPMethod& 	Request::Get_Method() 
+const HTTPMethod& 	Request::getMethod() const
 {
 	return m_method;
 }
 
-const std::unordered_map<std::string, std::string>& Request::Get_Headers() 
+const std::unordered_map<std::string, std::string>& Request::getHeaders() const
 {
 	return m_headers;
 }
 
-const std::string& Request::Get_Request()
+const std::string& Request::getRequest() const
 {
 	return m_total_request;
 }
 
-const bool&	Request::Get_Keep_Alive()
+const bool&	Request::getKeepAlive() const
 {
 	return m_keep_alive;
 }
 
-const bool&	Request::Get_auto_index()
+const bool&	Request::getAutoindex() const
 {
 	return m_auto_index;
 }
 
-size_t Request::Get_ContentLength()
+size_t Request::getContentLength() const
 {
 	return m_content_length;
 }

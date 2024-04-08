@@ -24,9 +24,9 @@
  */
 CGI::CGI(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
-    m_path = m_client_request->Get_URI();
+    m_path = m_client_request->getURI();
 
-    switch (m_client_request->Get_Method())
+    switch (m_client_request->getMethod())
 	{
 	case HTTPMethod::GET:
 		this->GetMethodParse();
@@ -97,7 +97,7 @@ void    CGI::ParseEnviromentArray()
     m_enviroment_var.push_back("SERVER_NAME=" + m_client_request->extractHostPort(HostPort::HOST));
     m_enviroment_var.push_back("SERVER_PORT=" + m_client_request->extractHostPort(HostPort::PORT));
 
-    pos = m_client_request->Get_Request().find("HTTP");
+    pos = m_client_request->getRequest().find("HTTP");
 	m_enviroment_var.push_back("SERVER_PROTOCOL=" + m_path.substr(pos, m_path.find("\r\n") - pos));
     m_enviroment_var.push_back("SERVER_SOFTWARE=Webserv/1.0.0 (Unix) Python/3.10.12");
 }
@@ -164,7 +164,7 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
  */
 void    CGI::ParseHeader(const std::string &header, const std::string &enviroment_name)
 {
-    std::unordered_map<std::string, std::string> DB_header(m_client_request->Get_Headers());
+    std::unordered_map<std::string, std::string> DB_header(m_client_request->getHeaders());
     std::unordered_map<std::string, std::string>::iterator it;
 
     it = DB_header.find(header);

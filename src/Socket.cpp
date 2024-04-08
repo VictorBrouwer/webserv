@@ -71,6 +71,8 @@ void Socket::startListening( void ) {
 	l.log("Now listening on socket");
 }
 
+// Instead of actually reading from the file descriptor, we accept the connection
+// and add it to the Client vector in the server
 ssize_t Socket::doRead( void ) {
 	sockaddr  address;
 	socklen_t address_length;
@@ -85,6 +87,8 @@ ssize_t Socket::doRead( void ) {
 	return 1;
 }
 
+// Since we just want to keep listening for clients on this socket,
+// we immediately mark the file descriptor as polling again
 void Socket::readingDone( void ) {
 	this->resetReadBuffer();
 	this->setReadFDStatus(FD_POLLING);

@@ -21,43 +21,66 @@ enum class HostPort
 	PORT,
 };
 
-class Request
-{
-public:
-	Request(/* args */);
-	~Request();
-	void			parseHeaders();
-	void			extractPath();
-	void			setMethod();
-	ClientState		readFromClient(int client_fd);
+class Request {
+	public:
+		Request(/* args */);
+		Request(std::stringstream& request_data);
 
-	const std::string&	Get_Body();
-	const std::string& 	Get_URI();
-	const std::string&	Get_final_path();
-	const std::string&	Get_redir_path();
-	const Location&		Get_location();
-	const HTTPMethod& 	Get_Method();
-	const std::string& 	Get_Request();
-	const bool& 	 	Get_auto_index();
-	size_t				Get_ContentLength();
-	std::string			extractHostPort(HostPort get);
-	const bool& 			Get_Keep_Alive();
-	const std::unordered_map<std::string, std::string>& Get_Headers();
-	void				handleLocation(Server *server);
-	std::string 		joinPath(std::vector<std::string> paths, std::string delimeter);
+		~Request();
 
-private:
-	size_t 		m_bytes_read;
-	size_t 		m_content_length;
-	// size_t 		m_content_bytes_read;
-	HTTPMethod	m_method;
-    std::string m_total_request;
-    std::string m_uri;
-    std::unordered_map<std::string, std::string> m_headers;
-    std::string m_body;
-	bool		m_keep_alive;
-    std::string m_redirection_path;
-	std::string m_final_path;
-	Location	*m_loc;
-	bool		m_auto_index;
+		void		parseHeaders();
+		void		extractPath();
+		void		splitBody( void );
+		void		setMethod(const std::string& method);
+		ClientState	readFromClient(int client_fd);
+
+		const std::string&	getBody() const;
+		const std::string& 	getURI() const;
+		const std::string&	getFinalPath() const;
+		const std::string&	getRedirPath() const;
+		const Location&		getLocation() const;
+		const HTTPMethod& 	getMethod() const;
+		const std::string& 	getRequest() const;
+		const bool& 	 	getAutoindex() const;
+		size_t				getContentLength() const;
+		const bool& 		getKeepAlive() const;
+
+		std::string			extractHostPort(HostPort get);
+		std::pair<std::string,int> getHostPort() const;
+		const std::string&	getHost( void ) const;
+		int                 getPort( void ) const;
+		const std::unordered_map<std::string, std::string>& getHeaders() const;
+		void				handleLocation(Server *server);
+		std::string 		joinPath(std::vector<std::string> paths, std::string delimeter);
+
+	private:
+		size_t 		m_bytes_read = 0;
+		size_t 		m_content_length = 0;
+		HTTPMethod	m_method = HTTPMethod::UNDEFINED;
+		std::string m_total_request;
+		std::string m_uri;
+		std::unordered_map<std::string, std::string> m_headers;
+		std::string m_body;
+		bool		m_keep_alive = false;
+		std::string m_redirection_path;
+		std::string m_final_path;
+		Location*	m_loc = nullptr;
+		bool		m_auto_index = false;
+
+		int         port;
+		std::string host;
+		int			socket_fd = -1;
+
+	public:
+		class Exception : public std::exception {
+			private:
+				const std::string message;
+
+			public:
+				Exception(const std::string& message) : message("Invalid request: " + message) { }
+
+				virtual const char* what() const throw() {
+					return message.c_str();
+				}
+		};
 };

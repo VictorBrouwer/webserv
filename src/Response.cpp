@@ -39,17 +39,17 @@ void Response::createResponse(Server *server)
 
 	m_server = server;
 
-	if (m_client_request->Get_redir_path() != "")
+	if (m_client_request->getRedirPath() != "")
 	{
 		createRedirect();
 		return ;
 	}
-	m_method = m_client_request->Get_Method();
-	m_path = m_client_request->Get_final_path();
+	m_method = m_client_request->getMethod();
+	m_path = m_client_request->getFinalPath();
 
 	try
 	{
-		if (this->m_client_request->Get_auto_index()) // implement directory listing!!
+		if (this->m_client_request->getAutoindex()) // implement directory listing!!
 		{
 			respondWithDirectoryListing();
 			this->addHeader();
@@ -59,7 +59,7 @@ void Response::createResponse(Server *server)
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
-			m_path = m_client_request->Get_location().getErrorPageForCode(404);
+			m_path = m_client_request->getLocation().getErrorPageForCode(404);
 			file = this->OpenFile(m_path);
 			this->ReadFile(file);
 			throw std::logic_error("File Not Found 404");
@@ -148,7 +148,7 @@ void	Response::addHeader()
 	size_t pos;
 	std::string request;
 
-	request = m_client_request->Get_Request();
+	request = m_client_request->getRequest();
 	pos = request.find("HTTP");
 	m_total_response.append(request.substr(pos, request.find("\r\n") - pos) + " ");
 	if (m_status == StatusCode::Null)
@@ -160,7 +160,7 @@ void	Response::addHeader()
 		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
 		try
 		{
-			if (m_client_request->Get_auto_index())
+			if (m_client_request->getAutoindex())
 				m_total_response.append("Content-Type: " + m_DB_ContentType.at("html") + "\r\n");
 			else
 				m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
@@ -270,7 +270,7 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 
 void Response::createRedirect()
 {
-	Location loc = m_client_request->Get_location();
+	Location loc = m_client_request->getLocation();
 	int redir_status_code = loc.getReturnStatusCode();
 	m_total_response = "HTTP/1.1 ";
 	m_total_response.append(std::to_string(static_cast<int>(redir_status_code)) + " " + m_DB_status.at(static_cast<int>(redir_status_code)));
@@ -322,7 +322,7 @@ void	Response::UploadFile() noexcept(false)
 	std::string request_body;
 	std::string boundary;
 
-	request_body = m_client_request->Get_Body();
+	request_body = m_client_request->getBody();
 
 	pos = request_body.find("filename");
 	pos += 10; // Skip over [filename="]
