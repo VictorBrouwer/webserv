@@ -3,7 +3,8 @@
 
 #include <iostream>
 #include <string>
-#include <Request.hpp>
+#include "Request.hpp"
+#include "Response.hpp"
 #include <vector>
 #include <cstring>
 #include "HelperFuncs.hpp"
@@ -31,6 +32,7 @@ private:
 
     void    ParseEnviromentArray();
     void    ParseHeader(const std::string &header, const std::string &enviroment_name);
+    void    GiveScriptDataSTDIN();
 
     char    **AllocateArgumentVector();
     char    **AllocateEnviroment();

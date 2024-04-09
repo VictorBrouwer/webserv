@@ -24,7 +24,7 @@ Response::Response(std::shared_ptr<Request> client_request) : m_client_request(c
 
 Response::Response(int status_code)
 {
-	
+	(void)status_code;
 }
 
 /**
@@ -66,13 +66,12 @@ void Response::createResponse(Server *server)
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
-			file = this->OpenFile(m_client_request->Get_location().getErrorPageForCode(404));
-			this->ReadFile(file);
 			throw std::logic_error("File Not Found 404");
 		}
-
+		log(this->ExtensionExtractor(m_path), L_Warning);
 		if (this->ExtensionExtractor(m_path) == "cgi" || this->ExtensionExtractor(m_path) == "py")
 		{
+			log("CGI HAS BEEN CALLED");
 			m_CGI = true;
 			this->ExecuteCGI();
 		}
@@ -152,14 +151,29 @@ std::fstream Response::OpenFile(const std::string &path) noexcept(false)
 void	Response::addHeader()
 {
 	size_t pos;
+	std::fstream file;
 	std::string request;
 
+	log(m_path, L_Warning);
 	request = m_client_request->Get_Request();
 	pos = request.find("HTTP");
 	m_total_response.append(request.substr(pos, request.find("\r\n") - pos) + " ");
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
+	
+	try
+	{
+		if (m_status != StatusCode::OK)
+		{
+			file = this->OpenFile(m_client_request->Get_location().getErrorPageForCode(static_cast<int>(m_status)));
+			this->ReadFile(file);	
+		}
+	}
+	catch(const std::exception& e)
+	{
+		log("Loading Error Page Went Wrong Exception!!", L_Error);
+	}
 
 	if (m_CGI == false)
 	{
@@ -186,6 +200,7 @@ void	Response::addHeader()
 	}
 
 	m_total_response.append(m_body);
+	log(m_total_response, L_Info);
 
 }
 
@@ -237,17 +252,16 @@ void Response::ExecuteCGI() noexcept(false)
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		while (bytes_read != 0)
 		{
-			std::string str(buffer);
-			str.resize(bytes_read);
-			m_body += str;
+			std::string str(buffer, bytes_read);
+			m_body.append(str);
 			bytes_read = read(fd, buffer, BUFFER_SIZE);
 		}
 	}
-	catch(const std::exception& e)
+	catch(StatusCode &status)
 	{
-		m_status = StatusCode::InternalServerError;
+		m_status = status;
 		close(fd);
-		throw;
+		
 	}
 	log("Done reading CGI PIPE", L_Info);
 	close(fd);
@@ -265,8 +279,10 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	std::string line;
 
 	line = path.substr(path.find('.') + 1);
-	if (path.find('.') == line.npos)
+	if (path.find('.') == line.npos && m_status == StatusCode::OK)
 		line = "txt";
+	else if (path.find('.') == line.npos)
+		line = "html";
 	return line;
 }
 
