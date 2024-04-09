@@ -6,6 +6,12 @@
 #define CRLFCRLF (std::string("\r\n\r\n"))
 #define VERSION (std::string("HTTP/1.1"))
 #define WHITESPACE (std::string("\r\n\t "))
+#define HTML_FOOTER \
+"		</pre>\n" \
+"		<hr>\n" \
+"	</body>\n" \
+"</html>\n"
+
 
 #define E_UNKNOWN_DIRECTIVE   (std::string("Unknown directive"))
 #define E_DUPLICATE_DIRECTIVE (std::string("Duplicate directive"))

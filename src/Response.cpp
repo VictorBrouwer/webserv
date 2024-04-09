@@ -1,6 +1,7 @@
 #include "Response.hpp"
 #include "cgi.hpp"
 #include "constants.hpp"
+#include"autoIndex.hpp"
 
 #define READ_ONLY std::ios::in
 #define ERROR -1
@@ -123,9 +124,19 @@ void Response::createResponse(Server *server)
 	{
 		if (this->m_client_request->Get_auto_index()) // implement directory listing!!
 		{
-			respondWithDirectoryListing();
-			this->addHeader();
-			return ;
+			if (std::filesystem::is_directory(m_path))
+			{
+				respondWithDirectoryListing();
+				this->addHeader();
+				return ;
+			}
+			else // path is not a directory
+			{
+				m_status = StatusCode::NotFound;
+				file = this->OpenFile(m_client_request->Get_location().getErrorPageForCode(404));
+				this->ReadFile(file);
+				throw std::logic_error("File Not Found 404");
+			}
 		}
 			
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
@@ -422,52 +433,13 @@ void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
 
 void Response::respondWithDirectoryListing()
 {
-	// assert(this->m_total_response.empty());
-	std::ostringstream html;
-    html << "<!DOCTYPE html>\n";
-    html << "<html>\n";
-    html << "	<meta charset=\"UTF-8\">\n";
-    html << "	<head>\n";
-    html << "		<title>Index of " + this->m_path;
-    html << "</title>\n";
-    html << "		<style>\n";
-    html << "			body {\n";
-    html << "				background-color: gray;\n";
-    html << "				font-size: large;\n";
-    html << "			}\n";
-    html << "			a {\n";
-    html << "				padding-left: 2px;\n";
-    html << "				margin-left: 4px;\n";
-    html << "			}\n";
-    html << "			button {\n";
-    html << "				background-color: gray;\n";
-    html << "				padding-left: 3px;\n";
-    html << "				padding-right: 3px;\n";
-    html << "				border: 0px;\n";
-    html << "				margin: 2px;\n";
-    html << "				cursor: pointer;\n";
-    html << "			}\n";
-    html << "			hr {\n";
-    html << "				border-color: black;\n";
-    html << "				background-color: black;\n";
-    html << "				color: black;\n";
-    html << "			}\n";
-    html << "		</style>\n";
-    html << "	</head>\n";
-    html << "	<body>\n";
-    html << "		<h1>Index of " + this->m_path;
-    html << "</h1>\n";
-    html << "		<hr>\n";
-    html << "		<pre>\n";
+	std::string html_str = createautoIndexHTML(m_path);
 	for (const auto& entry : std::filesystem::directory_iterator(m_path)) {
 		std::string filename = entry.path().filename().string();
 		if (filename.find('.') == std::string::npos)
 			filename.append("/");
-		html << "<li><a href=\"" << filename << "\">" << filename << "</a></li>\n";
+		html_str +=  "<li><a href=\"" + filename + "\">" + filename + "</a></li>\n";
 	}
-	html << "		</pre>\n";
-    html << "		<hr>\n";
-    html << "	</body>\n";
-    html << "</html>\n";
-	m_body = html.str();
+	html_str += HTML_FOOTER;
+	m_body = html_str;
 }

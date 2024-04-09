@@ -44,9 +44,10 @@ void Request::parseHeaders()
 	this->extractPath();
 	size_t start_headers = m_total_request.find(CRLF) + 2;
 	size_t end_headers = m_total_request.find(CRLFCRLF);
-	std::string headers_section = m_total_request.substr(start_headers, (end_headers-start_headers));
+	std::string headers_section = m_total_request.substr(start_headers, (end_headers - start_headers + 2));
     std::string line, key, value;
     size_t i = 0, j = 0;
+	std::cout << headers_section << std::endl;
     while ((i = headers_section.find("\r\n", i)) != std::string::npos)
 	{
         line = headers_section.substr(j, (i-j));
@@ -167,6 +168,7 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		if (m_loc->getAutoindexEnabled())
 		{
 			m_auto_index = true;
+			raw_path = raw_path.substr(m_loc->getUri().length());
 			m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");;
 			return;
 		}
