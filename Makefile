@@ -24,7 +24,7 @@ SRC			:=	main.cpp \
 				ConfigShared.cpp \
 				ConfigReturn.cpp \
 				Socket.cpp \
-				autoIndex.cpp
+				ResponseHelpers.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
