@@ -30,6 +30,9 @@ Request::Request(std::stringstream& request_data) {
 
 	this->parseHeaders();
 	this->setHostPortFromHeaders();
+	// TODO find server/location based on headers, listen file descriptor and interface (or default server)
+	// TODO set max_body_size based on server/location settings
+
 }
 
 Request::~Request()
