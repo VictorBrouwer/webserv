@@ -29,15 +29,34 @@ Request::Request(std::stringstream& request_data) {
 	this->m_uri = uri;
 
 	this->parseHeaders();
-
+	this->setHostPortFromHeaders();
 }
 
 Request::~Request()
 {
 }
 
-void Request::splitBody( void ) {
+void Request::setHostPortFromHeaders( void ) {
+	try {
+		std::string& host_header = this->m_headers.at("Host");
+		size_t start_port_num = host_header.find(':');
 
+		// Setting the host and port, if we are running as root the
+		// default port is 80, else it's 8080
+		if (start_port_num != std::string::npos) {
+			this->host = host_header.substr(0, start_port_num - 1);
+			this->port = std::stoi(host_header, &start_port_num);
+		}
+		else {
+			this->host = host_header;
+			this->port = (geteuid() == 0 ? 80 : 8080);
+		}
+	}
+	catch(const std::exception& e) {
+		// Catching any exception here, from stoi not being able to
+		// convert the port number to there being no Host header present
+		throw Request::Exception("Could not set host/port from headers: " + std::string(e.what()));
+	}
 }
 
 void Request::setMethod(const std::string& method)

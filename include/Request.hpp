@@ -30,7 +30,7 @@ class Request {
 
 		void		parseHeaders();
 		void		extractPath();
-		void		splitBody( void );
+		void		setHostPortFromHeaders( void );
 		void		setMethod(const std::string& method);
 		ClientState	readFromClient(int client_fd);
 
