@@ -57,7 +57,6 @@ void	Client::receive(std::vector<Server> &servers)
 	// if client statis done_reading, a response should be created and then 
 	// the poll event should be set to pollout
 	// pollout basically tells you that the sending will succeed
-	Response *response;
 	switch (m_state)
 	{
 	case ClientState::ERROR:
@@ -68,9 +67,7 @@ void	Client::receive(std::vector<Server> &servers)
 		this->extractServer(servers);
 		this->checkRequestSyntax(m_request->Get_Request());
 		m_request->handleLocation(m_server);
-		response = new Response(405);  // Dynamically allocate a new Response object
-        m_response = std::shared_ptr<Response>(response);
-		// m_response->createResponse(m_server);
+		m_response->createResponse(m_server);
 		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
 		break;
 	default:
