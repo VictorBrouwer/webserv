@@ -22,9 +22,74 @@ Response::Response(std::shared_ptr<Request> client_request) : m_client_request(c
 	m_CGI = false;
 }
 
+/**
+ * @brief create a response based on a status code
+*/
 Response::Response(int status_code)
 {
-	
+	m_body = customizeErrorPage(status_code);
+	addHeader(status_code);
+}
+
+void	Response::addHeader(int status_code)
+{
+	m_total_response = "HTTP/1.1 ";
+	m_total_response.append(std::to_string(static_cast<int>(status_code)) + " " + m_DB_status.at(status_code) + "\r\n");
+	m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
+	m_total_response.append("Content-Type: text/html\r\n\r\n");
+	m_total_response.append(m_body);
+}
+
+std::string	Response::customizeErrorPage(int status_code)
+{
+    std::string errorPage = R"(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Error</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f4f4f4;
+			color: #333;
+			margin: 0;
+			padding: 0;
+		}
+		.container {
+			max-width: 600px;
+			margin: 50px auto;
+			padding: 20px;
+			background-color: #fff;
+			border-radius: 5px;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+		}
+		h1 {
+			color: #e002fd;
+		}
+		p {
+			margin-bottom: 20px;
+		}
+		a {
+			color: #007bff;
+			text-decoration: none;
+		}
+		a:hover {
+			text-decoration: underline;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Oops!</h1>
+		<p>There was an error processing your request.</p>
+	</div>
+</body>
+</html>
+)";
+	errorPage.replace(errorPage.find("Oops!"), 5, std::to_string(status_code) + " " + m_DB_status.at(status_code));
+    return errorPage;
 }
 
 /**
