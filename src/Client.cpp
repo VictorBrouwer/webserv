@@ -1,4 +1,5 @@
 #include"Client.hpp"
+#include "Socket.hpp"
 #include"HelperFuncs.hpp"
 
 Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socket, const Logger& logger) :
@@ -37,28 +38,57 @@ Client::~Client() {
 		close(this->fd);
 }
 
-// Check if we have a full request ready or if we've been kept
-// reading for too long
+// Callback for reading
 void Client::afterRead( void ) {
 	std::string stream_contents = std::move(this->read_buffer).str();
 
+	if (this->reading_body) {
+		this->afterReadDuringBody(stream_contents);
+	}
+	else {
+		this->afterReadDuringHeaders(stream_contents);
+	}
+
+	this->read_buffer.str(std::move(stream_contents));
+}
+
+void Client::afterReadDuringHeaders(std::string& stream_contents) {
 	std::size_t header_boundary = stream_contents.find("\r\n\r\n");
 
-	if (header_boundary != std::string::npos && this->bytes_read > header_limit) {
+	if (header_boundary != std::string::npos) {
+		std::string headers = stream_contents.substr(0, header_boundary + 4);
+
+		// Put the rest back into the stringstream and reset the bytes_read
+		stream_contents.erase(0, header_limit + 4);
+		this->bytes_read = stream_contents.size();
+
+		// We are now going to read the body, so we want to delimit based on
+		// chunks or on content-size
+		this->reading_body = true;
+
+		this->m_request.reset(new Request(headers, l, this->socket.getFileDescriptor()));
+		this->chunked_request = m_request->getChunkedRequest();
+		if (!chunked_request)
+			this->body_limit = m_request->getMaxBodySize();
+	}
+	else if (this->bytes_read > header_limit) {
 		l.log("Max header size exceeded, cutting off the connection", L_Error);
 		this->setReadFDStatus(FD_ERROR);
 
 		// Set up error Response and hit send
 	}
+}
 
+void Client::afterReadDuringBody(std::string& stream_contents) {
 	if (this->bytes_read > body_limit) {
 		l.log("Max body size exceeded, cutting off the connection.", L_Error);
 		this->setReadFDStatus(FD_ERROR);
 
 		// Set up error Response and hit send
+	} else {
+		// TODO check if we have read the full body or if we got the final chunk,
+		// depending on whehter this->chunked_request is true or not
 	}
-
-	this->read_buffer.str(std::move(stream_contents));
 }
 
 // If we have to keepalive, keep the file descriptor open

@@ -98,7 +98,7 @@ void Request::parseHeaders()
 	size_t end_headers = m_total_request.find(CRLFCRLF);
 	if (start_headers == std::string::npos || end_headers == std::string::npos)
 		throw Request::Exception("Could not properly determine header boundaries");
-	std::string headers_section = m_total_request.substr(start_headers, (end_headers-start_headers));
+	std::string headers_section = m_total_request.substr(start_headers, (end_headers-start_headers+2));
     std::string line, key, value;
     size_t i = 0, j = 0;
     while ((i = headers_section.find("\r\n", i)) != std::string::npos)
@@ -326,4 +326,23 @@ const bool&	Request::getAutoindex() const
 size_t Request::getContentLength() const
 {
 	return m_content_length;
+}
+
+std::size_t	Request::getMaxBodySize() const {
+	try {
+		return this->responding_server->getClientMaxBodySize();
+	}
+	catch(const std::exception& e) {
+		return 0;
+	}
+}
+
+bool Request::getChunkedRequest() const {
+	try {
+		if (this->m_headers.at("Transfer-Encoding") == "chunked");
+			return true;
+	}
+	catch(const std::out_of_range& e) {
+		return false;
+	}
 }

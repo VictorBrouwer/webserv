@@ -44,6 +44,8 @@ class Request {
 		const bool& 	 	getAutoindex() const;
 		size_t				getContentLength() const;
 		const bool& 		getKeepAlive() const;
+		std::size_t			getMaxBodySize() const;
+		bool				getChunkedRequest() const;
 
 		std::string			extractHostPort(HostPort get);
 		std::pair<std::string,int> getHostPort() const;
@@ -73,6 +75,8 @@ class Request {
 		std::string host;
 		// The listen sockets we received this request on
 		int			socket_fd = -1;
+
+		Server*		responding_server = nullptr;
 
 	public:
 		class Exception : public std::exception {

@@ -38,6 +38,8 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 	private:
 		// Override the afterRead member function to be able to cut off bad actors
 		void afterRead( void );
+		void afterReadDuringHeaders(std::string& stream_contentst);
+		void afterReadDuringBody(std::string& stream_contents);
 		// Override the readingDone function to build and construct requests
 		void readingDone( void );
 
@@ -47,6 +49,8 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		int       fd = -1;
 		sockaddr  address;
 		socklen_t address_length;
+		bool	  reading_body = false;
+		bool	  chunked_request = false;
 
 		int							m_socket;
 		std::shared_ptr<Request> 	m_request;
@@ -55,6 +59,6 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		size_t						m_total_bytes_sent;
 		Server 						*m_server;
 
-		static const std::size_t header_limit = 50000;
-		static const std::size_t body_limit = 10000000;
+		std::size_t header_limit = 50000;
+		std::size_t body_limit = 10000000;
 };
