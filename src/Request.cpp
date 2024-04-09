@@ -6,27 +6,32 @@ Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_ur
 {
 }
 
-// Grab the full request out of the stringstream
-// Validate the first line: protocol, method, path, bad request if failure
-// Parse the headers into the m_headers
-// Find a server for the given host and socket, default server if we can't find one
-// Check whether we are within max_body_size for the given server, payload too large if failure
-// Parse the body:
-//   - If content-length is not given, the entire request is the body
-//   - If content-length is given and we have less data, malformed request
-//   - If content-length is given and we have more data, discard the rest or malformed request
-//   - If transfer-encoding is chunked, unchunk it
-// We should now be ready to construct a response
+// This sets up the request based on the headers, then lets us continue
+// reading for the body
+Request::Request(std::string& request_headers, const Logger& logger, int socket_fd) {
+	this->l.setLogLevel(logger.getLogLevel());
+	this->socket_fd = socket_fd;
 
-Request::Request(std::stringstream& request_data) {
-	this->m_total_request = request_data.str(); // Reallocation is not nice but we need the stream for the method/uri/protocol
+	std::size_t first_line_pos = request_headers.find("\r\n");
+	std::string first_line = request_headers.substr(0, first_line_pos);
+
+	if (std::ranges::count(first_line, ' ') != 2) {
+		throw Request::Exception("Malformed first line");
+	}
+
+	l.log("Grabbing method, uri and protocol from first line");
+	std::stringstream first_line_stream(std::move(first_line));
 	std::string method, uri, protocol;
-	request_data >> method >> uri >> protocol;
+	first_line_stream >> method >> uri >> protocol;
+
 	if (protocol != "HTTP/1.1") {
 		throw Request::Exception("Unsupported protocol");
 	}
+
 	this->setMethod(method);
 	this->m_uri = uri;
+
+	this->m_total_request = request_headers;
 
 	this->parseHeaders();
 	this->setHostPortFromHeaders();
@@ -87,6 +92,8 @@ void Request::extractPath()
 
 void Request::parseHeaders()
 {
+	l.log("Parsing request headers");
+
 	size_t start_headers = m_total_request.find(CRLF) + 2;
 	size_t end_headers = m_total_request.find(CRLFCRLF);
 	if (start_headers == std::string::npos || end_headers == std::string::npos)

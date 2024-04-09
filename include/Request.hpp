@@ -24,7 +24,7 @@ enum class HostPort
 class Request {
 	public:
 		Request(/* args */);
-		Request(std::stringstream& request_data);
+		Request(std::string& request_headers, const Logger& logger, int socket_fd);
 
 		~Request();
 
@@ -54,6 +54,8 @@ class Request {
 		std::string 		joinPath(std::vector<std::string> paths, std::string delimeter);
 
 	private:
+		Logger		l = Logger("Request");
+
 		size_t 		m_bytes_read = 0;
 		size_t 		m_content_length = 0;
 		HTTPMethod	m_method = HTTPMethod::UNDEFINED;
@@ -69,6 +71,7 @@ class Request {
 
 		int         port;
 		std::string host;
+		// The listen sockets we received this request on
 		int			socket_fd = -1;
 
 	public:
