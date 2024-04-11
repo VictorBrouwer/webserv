@@ -45,26 +45,26 @@ void Request::parseHeaders()
 	size_t start_headers = m_total_request.find(CRLF) + 2;
 	size_t end_headers = m_total_request.find(CRLFCRLF);
 	std::string headers_section = m_total_request.substr(start_headers, (end_headers - start_headers + 2));
-    std::string line, key, value;
-    size_t i = 0, j = 0;
+	std::string line, key, value;
+	size_t i = 0, j = 0;
 	std::cout << headers_section << std::endl;
-    while ((i = headers_section.find("\r\n", i)) != std::string::npos)
+	while ((i = headers_section.find("\r\n", i)) != std::string::npos)
 	{
-        line = headers_section.substr(j, (i-j));
-        if (line.empty()) // Empty line indicates end of headers
-            break;
-        size_t pos = line.find(':');
-        if (pos != std::string::npos)
+		line = headers_section.substr(j, (i-j));
+		if (line.empty()) // Empty line indicates end of headers
+			break;
+		size_t pos = line.find(':');
+		if (pos != std::string::npos)
 		{
-            key = line.substr(0, pos);
-            value = line.substr(pos + 2);
-            m_headers.emplace(key, value);
-        }
+			key = line.substr(0, pos);
+			value = line.substr(pos + 2);
+			m_headers.emplace(key, value);
+		}
 		else
 			throw std::logic_error("invalid header format");
-        i += 2; // Move past the "\r\n" delimiter
+		i += 2; // Move past the "\r\n" delimiter
 		j = i;
-    }
+	}
 }
 
 /**
@@ -189,24 +189,6 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
 	else
 		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
-}
-
-std::string Request::joinPath(std::vector<std::string> paths, std::string delimeter)
-{
-    std::string joined_path;
-
-    for (size_t i = 0; i < paths.size(); i++)
-    {
-        std::string stripped = strip(paths[i], "/");
-        if (stripped != "")
-            joined_path += stripped + delimeter;
-    }
-
-    if (paths.back() == "/" || paths.back().back() != '/')
-    {
-        joined_path.pop_back();
-    }
-    return joined_path;
 }
 
 const std::string&	Request::Get_Body()

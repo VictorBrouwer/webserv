@@ -2,6 +2,7 @@
 #include "cgi.hpp"
 #include "constants.hpp"
 #include"ResponseHelpers.hpp"
+#include"HelperFuncs.hpp"
 
 #define READ_ONLY std::ios::in
 #define ERROR -1

@@ -44,7 +44,6 @@ public:
 	const bool& 			Get_Keep_Alive();
 	const std::unordered_map<std::string, std::string>& Get_Headers();
 	void				handleLocation(Server *server);
-	std::string 		joinPath(std::vector<std::string> paths, std::string delimeter);
 
 private:
 	size_t 		m_bytes_read;
