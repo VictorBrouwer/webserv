@@ -8,7 +8,6 @@
  * CONTENT_TYPE: Specifies the MIME type of the content sent by the client for POST requests.(POST)
  * HTTP_COOKIE: Contains any cookies sent by the client.
  * HTTP_USER_AGENT: Provides information about the client's browser or user agent.
- * REMOTE_ADDR: Contains the IP address of the client making the request.
  * REMOTE_HOST: Contains the hostname of the client making the request, if available.
  * SERVER_NAME: Contains the hostname of the server.
  * SERVER_PORT: Specifies the port number on which the server is listening for requests.
@@ -93,7 +92,6 @@ void    cgi::ParseEnviromentArray()
     
     ParseHeader("Cookie", "HTTP_COOKIE");
     ParseHeader("User-Agent", "HTTP_USER_AGENT");
-    // REMOTE_ADDR is not in the request
     ParseHeader("Host", "REMOTE_HOST");
     m_enviroment_var.push_back("SERVER_NAME=" + m_client_request->extractHostPort(HostPort::HOST));
     m_enviroment_var.push_back("SERVER_PORT=" + m_client_request->extractHostPort(HostPort::PORT));
