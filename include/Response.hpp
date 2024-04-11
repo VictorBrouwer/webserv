@@ -48,6 +48,7 @@ class Response
 {
 public:
 	Response(std::shared_ptr<Request> client_request);
+	Response(int status_code);
 	~Response();
 
 	void				addHeader();

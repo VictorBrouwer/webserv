@@ -14,10 +14,17 @@ Response::~Response()
  *
  * @param client_request
  */
+
+
 Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
 	m_CGI = false;
+}
+
+Response::Response(int status_code)
+{
+	(void)status_code;
 }
 
 /**
@@ -59,14 +66,11 @@ void Response::createResponse(Server *server)
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
-			m_path = m_client_request->getLocation().getErrorPageForCode(404);
-			file = this->OpenFile(m_path);
-			this->ReadFile(file);
 			throw std::logic_error("File Not Found 404");
 		}
-
 		if (this->ExtensionExtractor(m_path) == "cgi" || this->ExtensionExtractor(m_path) == "py")
 		{
+			log("CGI HAS BEEN CALLED");
 			m_CGI = true;
 			this->ExecuteCGI();
 		}
@@ -146,37 +150,51 @@ std::fstream Response::OpenFile(const std::string &path) noexcept(false)
 void	Response::addHeader()
 {
 	size_t pos;
+	std::fstream file;
 	std::string request;
 
 	request = m_client_request->getRequest();
 	pos = request.find("HTTP");
-	m_total_response.append(request.substr(pos, request.find("\r\n") - pos) + " ");
+	m_total_response.append(request.substr(pos, request.find(CRLF) - pos) + " ");
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
-	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
+	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + CRLF);
+	
+	try
+	{
+		if (m_status != StatusCode::OK)
+		{
+			file = this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)));
+			this->ReadFile(file);	
+		}
+	}
+	catch(const std::exception& e)
+	{
+		log("Loading Error Page Went Wrong Exception!!", L_Error);
+	}
 
 	if (m_CGI == false)
 	{
-		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
+		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + CRLF);
 		try
 		{
 			if (m_client_request->getAutoindex())
-				m_total_response.append("Content-Type: " + m_DB_ContentType.at("html") + "\r\n");
+				m_total_response.append("Content-Type: " + m_DB_ContentType.at("html") + CRLF);
 			else
-				m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
+				m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + CRLF);
 		}
 		catch(const std::exception& e)
 		{
 			m_total_response.append("Content-Type: text/plain\r\n");
 		}
-		m_total_response.append("\r\n");
+		m_total_response.append(CRLF);
 	}
 	else
 	{
 		request = m_body;
-		request.erase(0, request.find("\r\n") + 2);
+		request.erase(0, request.find(CRLF) + 2);
 		log("\n" + request, L_Info);
-		m_total_response.append("Content-Length: " + std::to_string(request.size() - 1) + "\r\n");
+		m_total_response.append("Content-Length: " + std::to_string(request.size() - 1) + CRLF);
 	}
 
 	m_total_response.append(m_body);
@@ -232,17 +250,16 @@ void Response::ExecuteCGI() noexcept(false)
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		while (bytes_read != 0)
 		{
-			std::string str(buffer);
-			str.resize(bytes_read);
-			m_body += str;
+			std::string str(buffer, bytes_read);
+			m_body.append(str);
 			bytes_read = read(fd, buffer, BUFFER_SIZE);
 		}
 	}
-	catch(const std::exception& e)
+	catch(StatusCode &status)
 	{
-		m_status = StatusCode::InternalServerError;
+		m_status = status;
 		close(fd);
-		throw;
+		
 	}
 	log("Done reading CGI PIPE", L_Info);
 	close(fd);
@@ -263,8 +280,10 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	std::string line;
 
 	line = path.substr(path.find('.') + 1);
-	if (path.find('.') == line.npos)
+	if (path.find('.') == line.npos && m_status == StatusCode::OK)
 		line = "txt";
+	else if (path.find('.') == line.npos)
+		line = "html";
 	return line;
 }
 
@@ -326,12 +345,12 @@ void	Response::UploadFile() noexcept(false)
 
 	pos = request_body.find("filename");
 	pos += 10; // Skip over [filename="]
-	filename = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
-
-	pos = request_body.find("\r\n"); // Find the boundary of the form data. (example: [-----------------------------114782935826962])
+	filename = request_body.substr(pos, request_body.find(CRLF, pos) - (pos + 1));
+	
+	pos = request_body.find(CRLF); // Find the boundary of the form data. (example: [-----------------------------114782935826962])
 	boundary = request_body.substr(0, pos);
 
-	pos = request_body.find("\r\n\r\n");
+	pos = request_body.find(CRLFCRLF);
 	pos += 4; // Skip over [\r\n\r\n]
 	body = request_body.substr(pos, request_body.find(boundary, pos) - (pos + 2));
 
