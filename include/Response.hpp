@@ -52,6 +52,7 @@ public:
 	~Response();
 
 	void				addHeader();
+	void				addHeader(int status_code);
 	void				createResponse(Server *server);
 	const std::string 	&getResponse() const;
 	void				createRedirect();
@@ -71,6 +72,7 @@ private:
 	void			UploadFile();
 	void			WriteToFile(int fd, const std::string &buffer);
 	void 			respondWithDirectoryListing();
+	std::string		customizeErrorPage(int status_code);
 
 	Server				 							*m_server;
 	HTTPMethod										m_method;
@@ -92,29 +94,29 @@ private:
 			{200,                   "OK"},
 			{201,              "Created"},
 			{202,             "Accepted"},
-			{204, 		     "NoContent"},
+			{204, 		     "No Content"},
 
 			{301,	 "Moved Permanently"},
 			{302,                "Found"},
 			{303,			 "See Other"},
-			{304,          "NotModified"},
+			{304,          "Not Modified"},
 
-			{400,           "BadRequest"},
+			{400,           "Bad Request"},
 			{401,         "Unauthorized"},
 			{403,            "Forbidden"},
-			{404,             "NotFound"},
-			{405,     "MethodNotAllowed"},
-			{408,       "RequestTimeout"},
-			{411,       "LengthRequired"},
-			{413,      "PayloadTooLarge"},
-			{414,           "URITooLong"},
-			{415, "UnsupportedMediaType"},
+			{404,             "Not Found"},
+			{405,     "Method Not Allowed"},
+			{408,       "Request Timeout"},
+			{411,       "Length Required"},
+			{413,      "Payload Too Large"},
+			{414,           "URI Too Long"},
+			{415, "Unsupported Media Type"},
 
-			{500,  "InternalServerError"},
-			{501,       "NotImplemented"},
-			{502,           "BadGateway"},
-			{503,   "ServiceUnavailable"},
-			{504,       "GatewayTimeout"}
+			{500,  "Internal Server Error"},
+			{501,       "Not Implemented"},
+			{502,           "Bad Gateway"},
+			{503,   "Service Unavailable"},
+			{504,       "Gateway Timeout"}
 		};
 
 

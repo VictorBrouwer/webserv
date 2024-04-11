@@ -24,7 +24,8 @@ SRC			:=	CGI.cpp \
 				Request.cpp \
 				Response.cpp \
 				Server.cpp \
-				Socket.cpp
+				Socket.cpp \
+				ResponseHelpers.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))
