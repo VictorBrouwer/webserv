@@ -239,7 +239,7 @@ void Directive::client_max_body_size_validator(const Logger& l) const {
 	if (!std::regex_match(arguments[0], pattern))
 		throw Configuration::Exception("Invalid client max body size", line);
 
-	l.log("Custom directive checker \"client_max_body_size\" is valid!", L_Warning);
+	l.log("Custom directive checker \"client_max_body_size\" is valid!", L_Info);
 }
 
 void Directive::error_page_validator(const Logger& l) const {
@@ -271,5 +271,5 @@ void Directive::return_validator(const Logger& l) const {
 	if (arguments.size() > 1 && !std::regex_match(arguments[1], urlPattern))
 		throw Configuration::Exception("Invalid URL in return directive", line);
 
-	l.log("Custom directive checker \"return\" is valid!", L_Warning);
+	l.log("Custom directive checker \"return\" is valid!", L_Info);
 }
