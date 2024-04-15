@@ -230,6 +230,48 @@ void Directive::validate(const Logger& l, const std::vector<Directive>::const_it
 // Directive-specific validators
 
 void Directive::client_max_body_size_validator(const Logger& l) const {
+	if (arguments.size() != 1)
+		throw Configuration::Exception("Too many arguments for client max body size", line);
+	if (key != "client_max_body_size")
+		throw Configuration::Exception("Client max body size key is incorrect", line);
+	std::string arg = arguments[0];
+	for (char c : arg)
+	{
+		if (!std::isdigit(c) && std::tolower(c) != 'k' && std::tolower(c) != 'm' && std::tolower(c) != 'g')
+			throw Configuration::Exception("Invalid client max body size", line);
+	}
+	size_t pos = 0;
+	try
+	{
+		int size = std::stoi(arg, &pos);
+		// Check if the entire string was parsed
+		if (pos == arg.size())
+			return;
+		// Check if size is non-negative
+		if (size < 0)
+			throw Configuration::Exception("Invalid client max body size", line);
+		// Check if string ends with only 1 letter
+		if (arg[pos] != arg[arg.size() - 1])
+			throw Configuration::Exception("Invalid client max body size", line);
+		// Check for optional suffixes (K, M, G)
+		if (arg[pos] == 'K' || arg[pos] == 'k' || 
+			arg[pos] == 'M' || arg[pos] == 'm' || 
+			arg[pos] == 'G' || arg[pos] == 'g')
+			return;
+		if (pos != arg.size())
+			throw Configuration::Exception("Invalid client max body size", line);
+		// If no suffix is present, size is specified in bytes
+	}
+	// stoi throws invalid_argument if the string is not a valid integer
+	catch (const std::invalid_argument& e)
+	{
+		throw Configuration::Exception("Client max body size argument is not a valid integer", line);
+	}
+	// stoi throws out_of_range if the converted value is out of range
+    catch (const std::out_of_range& e)
+	{
+		throw Configuration::Exception("Client max body size argument is out of range", line);
+	}
 	l.log("Custom directive checker \"client_max_body_size\" is not implemented yet!", L_Warning);
 }
 

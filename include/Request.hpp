@@ -51,7 +51,6 @@ class Request {
 		int                 getPort( void ) const;
 		const std::unordered_map<std::string, std::string>& getHeaders() const;
 		void				handleLocation(Server *server);
-		std::string 		joinPath(std::vector<std::string> paths, std::string delimeter);
 
 	private:
 		Logger		l = Logger("Request");

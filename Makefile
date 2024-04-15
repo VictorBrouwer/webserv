@@ -23,9 +23,9 @@ SRC			:=	CGI.cpp \
 				PollableFileDescriptor.cpp \
 				Request.cpp \
 				Response.cpp \
+				ResponseHelpers.cpp \
 				Server.cpp \
-				Socket.cpp \
-				ResponseHelpers.cpp
+				Socket.cpp
 
 OBJ			:=	$(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 SRC			:=	$(addprefix $(SRC_DIR)/,$(SRC))

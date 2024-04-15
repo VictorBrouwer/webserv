@@ -89,7 +89,7 @@ void Response::createResponse(Server *server)
 			else // path is not a directory
 			{
 				m_status = StatusCode::NotFound;
-				file = this->OpenFile(m_client_request->Get_location().getErrorPageForCode(404));
+				file = this->OpenFile(m_client_request->getLocation().getErrorPageForCode(404));
 				this->ReadFile(file);
 				throw std::logic_error("File Not Found 404");
 			}

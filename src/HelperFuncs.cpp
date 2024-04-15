@@ -48,9 +48,16 @@ std::string vector_to_string(const std::vector<std::string>& vector) {
 }
 
 size_t size_to_int(const std::string& str) {
-	log("size_to_int not implemented yet", L_Warning);
-	(void) str;
-	return 0;
+	size_t pos = 0;
+	size_t multiplier = 1;
+	int size = std::stoi(str, &pos);
+	if (str[pos] == 'K' || str[pos] == 'k')
+		multiplier = 1024;
+	else if (str[pos] == 'M' || str[pos] == 'm')
+		multiplier = 1024 * 1024; 
+	else if (str[pos] == 'G' || str[pos] == 'g')
+		multiplier = 1024 * 1024 * 1024;
+	return size * multiplier;
 }
 
 std::string strip(const std::string &input, std::string strip_chars)
