@@ -13,6 +13,7 @@
 #include "Request.hpp"
 #include "Server.hpp"
 #include "HelperFuncs.hpp"
+#include "PollableFileDescriptor.hpp"
 #include <fcntl.h>
 #include <map>
 #include <memory>
@@ -44,7 +45,9 @@ enum class StatusCode
 	ServiceUnavailable = 503,
 	GatewayTimeout = 504
 };
-class Response
+
+typedef int fd_t;
+class Response : public ReadFileDescriptor, public WriteFileDescriptor
 {
 public:
 	Response(std::shared_ptr<Request> client_request);
@@ -61,8 +64,7 @@ public:
 private:
 
 	bool			DoesFileExists();
-	std::fstream 	OpenFile(const std::string &path) noexcept(false);
-	void			ReadFile(std::fstream &file) noexcept(false);
+	fd_t 			OpenFile(const std::string &path, int o_flag) noexcept(false);
 
 	std::string		ExtensionExtractor(const std::string &path);
 	void			ExecuteCGI();
@@ -70,9 +72,11 @@ private:
 	void			GetFile();
 	void			DeleteFile();
 	void			UploadFile();
-	void			WriteToFile(int fd, const std::string &buffer);
 	void 			respondWithDirectoryListing();
 	std::string		customizeErrorPage(int status_code);
+
+	void writingDone( void );
+	void readingDone( void );
 
 	Server				 							*m_server;
 	HTTPMethod										m_method;

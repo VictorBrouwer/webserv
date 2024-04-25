@@ -68,6 +68,7 @@ class ReadFileDescriptor {
 		void setReadFDStatus(FDStatus status);
 
 	protected:
+		ReadFileDescriptor( void );
 		ReadFileDescriptor(int fd);
 		ReadFileDescriptor(const ReadFileDescriptor& src);
 
@@ -120,6 +121,7 @@ class WriteFileDescriptor {
 		void callWritingDone( void );
 
 	protected:
+		WriteFileDescriptor( void );
 		WriteFileDescriptor(int fd);
 
 		// This function clears the buffer and resets the FDStatus.

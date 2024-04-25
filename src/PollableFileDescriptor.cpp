@@ -11,6 +11,10 @@ ReadFileDescriptor::ReadFileDescriptor(const ReadFileDescriptor& src) {
 	this->read_fd = src.read_fd;
 }
 
+ReadFileDescriptor::ReadFileDescriptor( void ) {
+	this->read_fd = -1;
+}
+
 ReadFileDescriptor::ReadFileDescriptor(int fd) {
 	this->read_fd = fd;
 }
@@ -71,6 +75,10 @@ ssize_t ReadFileDescriptor::doRead( void ) {
 
 
 // WriteFileDescriptor
+
+WriteFileDescriptor::WriteFileDescriptor( void ) {
+	this->write_fd = -1;
+}
 
 WriteFileDescriptor::WriteFileDescriptor(int fd) {
 	this->write_fd = fd;
