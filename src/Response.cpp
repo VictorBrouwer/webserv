@@ -190,8 +190,10 @@ void	Response::addHeader()
 	std::string request;
 
 	request = m_client_request->getRequest();
+
 	pos = request.find("HTTP");
 	m_total_response.append(request.substr(pos, request.find(CRLF) - pos) + " ");
+
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + CRLF);
@@ -337,8 +339,8 @@ void	Response::UploadFile() noexcept(false)
 	pos += 4; // Skip over [\r\n\r\n]
 	body = request_body.substr(pos, request_body.find(boundary, pos) - (pos + 2));
 
-
-	m_body = "Uploaded File!";
+	
+	this->write_buffer << body;
 	this->setWriteFileDescriptor(OpenFile((std::string("www/upload/") + filename).c_str(), O_CREAT | O_RDWR | 0666));
 	this->setWriteFDStatus(FD_POLLING);
 }
@@ -360,10 +362,26 @@ void Response::respondWithDirectoryListing()
 
 void Response::readingDone( void )
 {
+	if (this->getReadFDStatus() != FD_DONE)
+	{
+		this->m_body.append(this->customizeErrorPage(500));
+		this->m_status = StatusCode::InternalServerError;
+	}
+	else
+		this->m_body.append(this->read_buffer.str());
+
 	this->addHeader();
 }
 
 void Response::writingDone( void )
 {
+	if (this->getReadFDStatus() != FD_DONE)
+	{
+		this->m_body.append(this->customizeErrorPage(500));
+		this->m_status = StatusCode::InternalServerError;
+	}
+
+	m_body = "Uploaded File!";
+
 	this->addHeader();
 }
