@@ -321,6 +321,7 @@ void	Response::DeleteFile() noexcept(false)
 void	Response::UploadFile() noexcept(false)
 {
 	size_t pos;
+	std::string upload_dir;
 	std::string body;
 	std::string filename;
 	std::string request_body;
@@ -341,7 +342,10 @@ void	Response::UploadFile() noexcept(false)
 
 	
 	this->write_buffer << body;
-	this->setWriteFileDescriptor(OpenFile((std::string("www/upload/") + filename).c_str(), O_CREAT | O_RDWR | 0666));
+	upload_dir = m_client_request->getLocation().getUploadDir();
+	if (upload_dir.back() != '/')
+		upload_dir.append("/");
+	this->setWriteFileDescriptor(OpenFile((upload_dir + filename).c_str(), O_CREAT | O_RDWR | 0666));
 	this->setWriteFDStatus(FD_POLLING);
 }
 

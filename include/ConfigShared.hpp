@@ -16,6 +16,7 @@ class ConfigShared {
 		const std::unordered_map<int, std::string>& getErrorPages( void ) const;
 		const std::vector<std::string>& getIndices( void ) const;
 		const std::string& getRootPath( void ) const;
+		const std::string& getUploadDir( void ) const;
 
 		// Throws std::invalid_argument if the code is not present
 		const std::string& getErrorPageForCode(int code) const;
@@ -33,6 +34,7 @@ class ConfigShared {
 		std::unordered_map<int, std::string> error_pages = {{404, "www/error.html"}};
 		std::vector<std::string>             indices = { "index.html" };
 		std::string                          root_path = "/var/www";
+		std::string							 upload_dir = "www/upload/";
 
 	private:
 		void applyAutoindexDirective(const Directive& d);
@@ -40,4 +42,5 @@ class ConfigShared {
 		void applyErrorPageDirective(const Directive& d);
 		void applyIndexDirective(const Directive& d);
 		void applyRootPathDirective(const Directive& d);
+		void applyUploadDirDirective(const Directive& d);
 };
