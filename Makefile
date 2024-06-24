@@ -23,6 +23,7 @@ SRC			:=	CGI.cpp \
 				PollableFileDescriptor.cpp \
 				Request.cpp \
 				Response.cpp \
+				ResponseHelpers.cpp \
 				Server.cpp \
 				Socket.cpp
 

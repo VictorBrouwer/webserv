@@ -1,6 +1,8 @@
 #include "Response.hpp"
 #include "CGI.hpp"
 #include "constants.hpp"
+#include"ResponseHelpers.hpp"
+#include"HelperFuncs.hpp"
 
 #define READ_ONLY std::ios::in
 #define ERROR -1
@@ -14,10 +16,37 @@ Response::~Response()
  *
  * @param client_request
  */
+
+
 Response::Response(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
 	m_status = StatusCode::Null;
 	m_CGI = false;
+}
+
+/**
+ * @brief create a response based on a status code
+*/
+Response::Response(int status_code)
+{
+	m_body = customizeErrorPage(status_code);
+	addHeader(status_code);
+}
+
+void	Response::addHeader(int status_code)
+{
+	m_total_response = "HTTP/1.1 ";
+	m_total_response.append(std::to_string(static_cast<int>(status_code)) + " " + m_DB_status.at(status_code) + "\r\n");
+	m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
+	m_total_response.append("Content-Type: text/html\r\n\r\n");
+	m_total_response.append(m_body);
+}
+
+std::string	Response::customizeErrorPage(int status_code)
+{
+    std::string errorPage = DEFAULT_ERR_PAGE;
+	errorPage.replace(errorPage.find("Oops!"), 5, std::to_string(status_code) + " " + m_DB_status.at(status_code));
+    return errorPage;
 }
 
 /**
@@ -51,22 +80,29 @@ void Response::createResponse(Server *server)
 	{
 		if (this->m_client_request->getAutoindex()) // implement directory listing!!
 		{
-			respondWithDirectoryListing();
-			this->addHeader();
-			return ;
+			if (std::filesystem::is_directory(m_path))
+			{
+				respondWithDirectoryListing();
+				this->addHeader();
+				return ;
+			}
+			else // path is not a directory
+			{
+				m_status = StatusCode::NotFound;
+				file = this->OpenFile(m_client_request->getLocation().getErrorPageForCode(404));
+				this->ReadFile(file);
+				throw std::logic_error("File Not Found 404");
+			}
 		}
 
 		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
-			m_path = m_client_request->getLocation().getErrorPageForCode(404);
-			file = this->OpenFile(m_path);
-			this->ReadFile(file);
 			throw std::logic_error("File Not Found 404");
 		}
-
 		if (this->ExtensionExtractor(m_path) == "cgi" || this->ExtensionExtractor(m_path) == "py")
 		{
+			log("CGI HAS BEEN CALLED");
 			m_CGI = true;
 			this->ExecuteCGI();
 		}
@@ -146,37 +182,51 @@ std::fstream Response::OpenFile(const std::string &path) noexcept(false)
 void	Response::addHeader()
 {
 	size_t pos;
+	std::fstream file;
 	std::string request;
 
 	request = m_client_request->getRequest();
 	pos = request.find("HTTP");
-	m_total_response.append(request.substr(pos, request.find("\r\n") - pos) + " ");
+	m_total_response.append(request.substr(pos, request.find(CRLF) - pos) + " ");
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
-	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + "\r\n");
+	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + CRLF);
+	
+	try
+	{
+		if (m_status != StatusCode::OK)
+		{
+			file = this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)));
+			this->ReadFile(file);	
+		}
+	}
+	catch(const std::exception& e)
+	{
+		log("Loading Error Page Went Wrong Exception!!", L_Error);
+	}
 
 	if (m_CGI == false)
 	{
-		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + "\r\n");
+		m_total_response.append("Content-Length: " + std::to_string(m_body.size()) + CRLF);
 		try
 		{
 			if (m_client_request->getAutoindex())
-				m_total_response.append("Content-Type: " + m_DB_ContentType.at("html") + "\r\n");
+				m_total_response.append("Content-Type: " + m_DB_ContentType.at("html") + CRLF);
 			else
-				m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + "\r\n");
+				m_total_response.append("Content-Type: " + m_DB_ContentType.at(ExtensionExtractor(m_path)) + CRLF);
 		}
 		catch(const std::exception& e)
 		{
 			m_total_response.append("Content-Type: text/plain\r\n");
 		}
-		m_total_response.append("\r\n");
+		m_total_response.append(CRLF);
 	}
 	else
 	{
 		request = m_body;
-		request.erase(0, request.find("\r\n") + 2);
+		request.erase(0, request.find(CRLF) + 2);
 		log("\n" + request, L_Info);
-		m_total_response.append("Content-Length: " + std::to_string(request.size() - 1) + "\r\n");
+		m_total_response.append("Content-Length: " + std::to_string(request.size() - 1) + CRLF);
 	}
 
 	m_total_response.append(m_body);
@@ -232,17 +282,16 @@ void Response::ExecuteCGI() noexcept(false)
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		while (bytes_read != 0)
 		{
-			std::string str(buffer);
-			str.resize(bytes_read);
-			m_body += str;
+			std::string str(buffer, bytes_read);
+			m_body.append(str);
 			bytes_read = read(fd, buffer, BUFFER_SIZE);
 		}
 	}
-	catch(const std::exception& e)
+	catch(StatusCode &status)
 	{
-		m_status = StatusCode::InternalServerError;
+		m_status = status;
 		close(fd);
-		throw;
+		
 	}
 	log("Done reading CGI PIPE", L_Info);
 	close(fd);
@@ -263,8 +312,10 @@ std::string	Response::ExtensionExtractor(const std::string &path)
 	std::string line;
 
 	line = path.substr(path.find('.') + 1);
-	if (path.find('.') == line.npos)
+	if (path.find('.') == line.npos && m_status == StatusCode::OK)
 		line = "txt";
+	else if (path.find('.') == line.npos)
+		line = "html";
 	return line;
 }
 
@@ -326,12 +377,12 @@ void	Response::UploadFile() noexcept(false)
 
 	pos = request_body.find("filename");
 	pos += 10; // Skip over [filename="]
-	filename = request_body.substr(pos, request_body.find("\r\n", pos) - (pos + 1));
-
-	pos = request_body.find("\r\n"); // Find the boundary of the form data. (example: [-----------------------------114782935826962])
+	filename = request_body.substr(pos, request_body.find(CRLF, pos) - (pos + 1));
+	
+	pos = request_body.find(CRLF); // Find the boundary of the form data. (example: [-----------------------------114782935826962])
 	boundary = request_body.substr(0, pos);
 
-	pos = request_body.find("\r\n\r\n");
+	pos = request_body.find(CRLFCRLF);
 	pos += 4; // Skip over [\r\n\r\n]
 	body = request_body.substr(pos, request_body.find(boundary, pos) - (pos + 2));
 
@@ -355,52 +406,13 @@ void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
 
 void Response::respondWithDirectoryListing()
 {
-	// assert(this->m_total_response.empty());
-	std::ostringstream html;
-    html << "<!DOCTYPE html>\n";
-    html << "<html>\n";
-    html << "	<meta charset=\"UTF-8\">\n";
-    html << "	<head>\n";
-    html << "		<title>Index of " + this->m_path;
-    html << "</title>\n";
-    html << "		<style>\n";
-    html << "			body {\n";
-    html << "				background-color: gray;\n";
-    html << "				font-size: large;\n";
-    html << "			}\n";
-    html << "			a {\n";
-    html << "				padding-left: 2px;\n";
-    html << "				margin-left: 4px;\n";
-    html << "			}\n";
-    html << "			button {\n";
-    html << "				background-color: gray;\n";
-    html << "				padding-left: 3px;\n";
-    html << "				padding-right: 3px;\n";
-    html << "				border: 0px;\n";
-    html << "				margin: 2px;\n";
-    html << "				cursor: pointer;\n";
-    html << "			}\n";
-    html << "			hr {\n";
-    html << "				border-color: black;\n";
-    html << "				background-color: black;\n";
-    html << "				color: black;\n";
-    html << "			}\n";
-    html << "		</style>\n";
-    html << "	</head>\n";
-    html << "	<body>\n";
-    html << "		<h1>Index of " + this->m_path;
-    html << "</h1>\n";
-    html << "		<hr>\n";
-    html << "		<pre>\n";
+	std::string html_str = createautoIndexHTML(m_path);
 	for (const auto& entry : std::filesystem::directory_iterator(m_path)) {
 		std::string filename = entry.path().filename().string();
 		if (filename.find('.') == std::string::npos)
 			filename.append("/");
-		html << "<li><a href=\"" << filename << "\">" << filename << "</a></li>\n";
+		html_str +=  "<li><a href=\"" + filename + "\">" + filename + "</a></li>\n";
 	}
-	html << "		</pre>\n";
-    html << "		<hr>\n";
-    html << "	</body>\n";
-    html << "</html>\n";
-	m_body = html.str();
+	html_str += HTML_FOOTER;
+	m_body = html_str;
 }

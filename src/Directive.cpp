@@ -3,6 +3,7 @@
 #include "Configuration.hpp"
 #include "Logger.hpp"
 #include "constants.hpp"
+#include <regex>
 
 Directive::Directive(std::vector<std::string>::iterator &i,
 					 std::vector<std::string> &lines,
@@ -230,13 +231,45 @@ void Directive::validate(const Logger& l, const std::vector<Directive>::const_it
 // Directive-specific validators
 
 void Directive::client_max_body_size_validator(const Logger& l) const {
-	l.log("Custom directive checker \"client_max_body_size\" is not implemented yet!", L_Warning);
+	if (arguments.size() != 1)
+		throw Configuration::Exception("Too many arguments for client max body size", line);
+	if (key != "client_max_body_size")
+		throw Configuration::Exception("Client max body size key is incorrect", line);
+	std::regex pattern("^\\d+(k|K|m|M|g|G)?$");
+	if (!std::regex_match(arguments[0], pattern))
+		throw Configuration::Exception("Invalid client max body size", line);
+
+	l.log("Custom directive checker \"client_max_body_size\" is valid!", L_Info);
 }
 
 void Directive::error_page_validator(const Logger& l) const {
-	l.log("Custom directive checker \"error_page\" is not implemented yet!", L_Warning);
+	if (key != "error_page")
+		throw Configuration::Exception("Invalid error_page statement", line);
+	if (arguments.size() != 2)
+		throw Configuration::Exception("Invalid number of arguments in error_page directive", line);
+
+	std::regex statusPattern("^\\s*([4-5][0-9]{2})\\s*$");
+	std::regex urlPattern("^(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})([/\\w .-]*)*/?$");
+
+	if (!std::regex_match(arguments[0], statusPattern))
+		throw Configuration::Exception("Invalid status code in error_page directive", line);
+	if (!std::regex_match(arguments[1], urlPattern))
+		throw Configuration::Exception("Invalid URL in error_page directive", line);
+
+	l.log("Custom directive checker \"error_page\" is valid!", L_Info);
 }
 
 void Directive::return_validator(const Logger& l) const {
-	l.log("Custom directive checker \"return\" is not implemented yet!", L_Warning);
+	if (key != "return")
+		throw Configuration::Exception("Invalid return statement", line);
+	if (arguments.size() < 1)
+		throw Configuration::Exception("Invalid number of arguments in return directive", line);
+	std::regex returnPattern("^\\s*([1-5][0-9]{2})\\s*$");
+	std::regex urlPattern("^(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})([/\\w .-]*)*/?$");
+	if (!std::regex_match(arguments[0], returnPattern))
+		throw Configuration::Exception("Invalid status code in return directive", line);
+	if (arguments.size() > 1 && !std::regex_match(arguments[1], urlPattern))
+		throw Configuration::Exception("Invalid URL in return directive", line);
+
+	l.log("Custom directive checker \"return\" is valid!", L_Info);
 }

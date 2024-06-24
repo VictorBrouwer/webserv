@@ -8,7 +8,6 @@
  * CONTENT_TYPE: Specifies the MIME type of the content sent by the client for POST requests.(POST)
  * HTTP_COOKIE: Contains any cookies sent by the client.
  * HTTP_USER_AGENT: Provides information about the client's browser or user agent.
- * REMOTE_ADDR: Contains the IP address of the client making the request.
  * REMOTE_HOST: Contains the hostname of the client making the request, if available.
  * SERVER_NAME: Contains the hostname of the server.
  * SERVER_PORT: Specifies the port number on which the server is listening for requests.
@@ -24,7 +23,7 @@
  */
 CGI::CGI(std::shared_ptr<Request> client_request) : m_client_request(client_request)
 {
-    m_path = m_client_request->getURI();
+    m_path = m_client_request->getFinalPath();
 
     switch (m_client_request->getMethod())
 	{
@@ -85,20 +84,17 @@ void    CGI::ParseEnviromentArray()
 {
     size_t pos;
     std::string str;
-
     pos = m_path.find('?');
     if (pos != std::string::npos)
         m_enviroment_var.push_back("QUERY_STRING=" + m_path.substr(pos));
 
     ParseHeader("Cookie", "HTTP_COOKIE");
     ParseHeader("User-Agent", "HTTP_USER_AGENT");
-    // REMOTE_ADDR is not in the request
     ParseHeader("Host", "REMOTE_HOST");
     m_enviroment_var.push_back("SERVER_NAME=" + m_client_request->extractHostPort(HostPort::HOST));
     m_enviroment_var.push_back("SERVER_PORT=" + m_client_request->extractHostPort(HostPort::PORT));
-
     pos = m_client_request->getRequest().find("HTTP");
-	m_enviroment_var.push_back("SERVER_PROTOCOL=" + m_path.substr(pos, m_path.find("\r\n") - pos));
+    m_enviroment_var.push_back("SERVER_PROTOCOL=" + m_client_request->getRequest().substr(pos, m_client_request->getRequest().find("\r\n") - pos));
     m_enviroment_var.push_back("SERVER_SOFTWARE=Webserv/1.0.0 (Unix) Python/3.10.12");
 }
 
@@ -115,13 +111,14 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     pid_t pid;
     size_t pos;
     int pipefds[2];
-
+    int status_loc;
+    
     pos = path.find('?');
     if (pos != std::string::npos)
         path.erase(pos);
 
     if (access(path.c_str(), X_OK) == 0)
-        throw std::logic_error("No Premissions Exception!");
+        throw StatusCode::Forbidden;
 
     m_envp = this->AllocateEnviroment();
     m_argv = this->AllocateArgumentVector();
@@ -129,7 +126,7 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     if (pipe(pipefds) == PIPE_ERROR)
     {
         this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
-        throw std::logic_error("Pipe Failed Exception!");
+        throw StatusCode::InternalServerError;
     }
 
     pid = fork();
@@ -138,11 +135,13 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
         close(pipefds[READ]);
         close(pipefds[WRITE]);
         this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
-        throw std::logic_error("Fork Failed Exception!");
+        throw StatusCode::InternalServerError;
     }
     if (pid == CHILD)
     {
         log("Child is executing script", L_Info);
+        if (m_client_request->getMethod() == HTTPMethod::POST)
+            this->GiveScriptDataSTDIN();
         close(pipefds[READ]);
         dup2(pipefds[WRITE], STDOUT_FILENO);
         close(pipefds[WRITE]);
@@ -152,7 +151,10 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     close(pipefds[WRITE]);
     this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
     this->DeletePointerArray(this->m_argv, 2);
-    waitpid(pid, NULL, 0);
+
+    waitpid(pid, &status_loc, 0);
+    if (status_loc)
+        throw StatusCode::InternalServerError;
     return (pipefds[READ]);
 }
 
@@ -189,8 +191,8 @@ char    **CGI::AllocateEnviroment() noexcept(false)
         enviroment = new char*[m_enviroment_var.size() + 1]; // + 1 for NULL
         for (auto it = m_enviroment_var.begin(); it != m_enviroment_var.end(); it++)
         {
-            enviroment[index] = new char[(*it).size() + 1];
-            strcpy(enviroment[index], (*it).c_str());
+            enviroment[index] = new char[it->size() + 1];
+            strcpy(enviroment[index], it->c_str());
             index++;
         }
         enviroment[index] = NULL;
@@ -199,7 +201,7 @@ char    **CGI::AllocateEnviroment() noexcept(false)
     {
         if (enviroment != NULL)
             this->DeletePointerArray(enviroment, index);
-        throw; // rethrows original exception bad_alloc
+        throw StatusCode::InternalServerError; // rethrows original exception bad_alloc
     }
     return (enviroment);
 }
@@ -223,7 +225,7 @@ char    **CGI::AllocateArgumentVector() noexcept(false)
         argv[index] = new char[sizeof("/usr/bin/python3") + 1]; // +1 for NULL
         strcpy(argv[0], "/usr/bin/python3");
         index++;
-
+        log(m_path);
         argv[index] = new char[m_path.size() + 1];
         strcpy(argv[1], m_path.c_str());
         index++;
@@ -234,7 +236,7 @@ char    **CGI::AllocateArgumentVector() noexcept(false)
     {
         if (argv != NULL)
             this->DeletePointerArray(argv, index);
-        throw;
+        throw StatusCode::InternalServerError;
     }
     return (argv);
 }
@@ -250,3 +252,20 @@ void    CGI::DeletePointerArray(char **arr, size_t index)
     }
     delete[] arr;
 }
+
+void    CGI::GiveScriptDataSTDIN()
+{
+    int data_pipe[2];
+
+    if (pipe(data_pipe) == PIPE_ERROR)
+    {
+        this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
+        exit(1);
+    }
+    write(data_pipe[WRITE], m_client_request->getBody().c_str(), m_client_request->getBody().size()); //Warning!! this has an write operation!
+    dup2(data_pipe[WRITE], STDIN_FILENO);
+    close(data_pipe[WRITE]);
+    close(data_pipe[READ]);
+}
+
+
