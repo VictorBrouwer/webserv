@@ -70,6 +70,7 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 		this->extractServer(HTTPServer::instance->getServerVector());
 
 		if (this->m_request->hasBody()) {
+			l.log("Request has body, continuing to read.");
 			this->reading_body = true;
 
 			this->chunked_request = m_request->getChunkedRequest();
@@ -78,6 +79,7 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 			}
 		}
 		else {
+			l.log("No body, done reading this request.");
 			this->setReadFDStatus(FD_DONE);
 		}
 
@@ -97,10 +99,12 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 
 		// Set up error Response and hit send
 	} else {
-		if (this->chunked_request && stream_contents.find("0\r\n\r\n") != std::string::npos) {
+		if (this->chunked_request && stream_contents.find("\r\n0\r\n\r\n") != std::string::npos) {
+			l.log("Found zero chunk, done reading.");
 			this->setReadFDStatus(FD_DONE);
 		}
 		else if (this->bytes_read >= this->m_request->getContentLength()) {
+			l.log("Read all of Content-Length, done reading.");
 			this->setReadFDStatus(FD_DONE);
 		}
 

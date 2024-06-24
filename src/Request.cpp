@@ -47,7 +47,6 @@ Request::Request(std::string& request_headers, const Logger& logger, int socket_
 		catch(const std::exception& e) {
 			this->m_content_length = 0;
 		}
-
 	}
 }
 
@@ -63,8 +62,9 @@ void Request::setHostPortFromHeaders( void ) {
 		// Setting the host and port, if we are running as root the
 		// default port is 80, else it's 8080
 		if (start_port_num != std::string::npos) {
-			this->host = host_header.substr(0, start_port_num - 1);
-			this->port = std::stoi(host_header, &start_port_num);
+			this->host = host_header.substr(0, start_port_num);
+			std::string substr = host_header.substr(start_port_num + 1);
+			this->port = std::stoi(substr);
 		}
 		else {
 			this->host = host_header;
