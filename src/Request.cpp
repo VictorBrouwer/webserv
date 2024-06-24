@@ -328,14 +328,14 @@ size_t Request::getContentLength() const
 	return m_content_length;
 }
 
-std::size_t	Request::getMaxBodySize() const {
-	try {
-		return this->responding_server->getClientMaxBodySize();
-	}
-	catch(const std::exception& e) {
-		return 0;
-	}
-}
+// std::size_t	Request::getMaxBodySize() const {
+// 	try {
+// 		return this->responding_server->getClientMaxBodySize();
+// 	}
+// 	catch(const std::exception& e) {
+// 		return 0;
+// 	}
+// }
 
 bool Request::getChunkedRequest() const {
 	try {
@@ -345,4 +345,8 @@ bool Request::getChunkedRequest() const {
 	catch(const std::out_of_range& e) {
 		return false;
 	}
+}
+
+bool Request::hasBody( void ) const {
+
 }

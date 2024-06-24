@@ -45,11 +45,11 @@ int main(int ac, char **av)
 
 		config->validate(l);
 
-		std::unique_ptr<HTTPServer> http_server( new HTTPServer(*config, l) );
-		http_server->startListening();
+		HTTPServer::instance = std::unique_ptr<HTTPServer>( new HTTPServer(*config, l) );
+		HTTPServer::instance->startListening();
 
 		while (true) {
-			http_server->doPollLoop();
+			HTTPServer::instance->doPollLoop();
 		}
 	}
 	catch(const std::exception& e) {

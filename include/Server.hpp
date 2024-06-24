@@ -15,8 +15,11 @@ class Server : public ConfigShared, public ConfigReturn {
 		const std::vector<std::pair<std::string, int>>& getListens( void ) const;
 
 		~Server();
+
 		const std::vector<std::string>& getServerNames();
 		Location* findLocation(const std::string &uri);
+
+		bool operator==(int file_descriptor) const;
 
 	private:
 		// int m_socket;

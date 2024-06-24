@@ -1,5 +1,6 @@
 #include"Client.hpp"
 #include "Socket.hpp"
+#include "HTTPServer.hpp"
 #include"HelperFuncs.hpp"
 
 Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socket, const Logger& logger) :
@@ -64,12 +65,21 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 
 		// We are now going to read the body, so we want to delimit based on
 		// chunks or on content-size
-		this->reading_body = true;
-
+		l.log("Finished reading headers, constructing request.");
 		this->m_request.reset(new Request(headers, l, this->socket.getFileDescriptor()));
-		this->chunked_request = m_request->getChunkedRequest();
-		if (!chunked_request)
-			this->body_limit = m_request->getMaxBodySize();
+		this->extractServer()
+
+		if (this->m_request->hasBody()) {
+			this->reading_body = true;
+
+			this->chunked_request = m_request->getChunkedRequest();
+			if (!chunked_request)
+				this->body_limit = m_server->getMaxBodySize();
+		}
+		else {
+			this->setReadFDStatus(FD_DONE);
+		}
+
 	}
 	else if (this->bytes_read > header_limit) {
 		l.log("Max header size exceeded, cutting off the connection", L_Error);
@@ -181,11 +191,12 @@ void Client::checkRequestSyntax(const std::string& request)
 
 void	Client::extractServer(std::vector<Server> &servers)
 {
+	std::vector<Server> server_vector = HTTPServer::instance->getServerVector();
 	for (auto server : servers)
 	{
 		for (const auto& servername : server.getServerNames())
 		{
-			if (servername == this->m_request->extractHostPort(HostPort::HOST))
+			if (servername == this->m_request->getHost())
 				m_server = &server;
 		}
 	}

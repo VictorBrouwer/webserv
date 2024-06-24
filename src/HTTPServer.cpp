@@ -54,6 +54,10 @@ std::vector<Server>::iterator HTTPServer::getServerMutableEnd( void ) {
 	return this->servers.end();
 }
 
+std::vector<Server>& HTTPServer::getServerVector( void ) const {
+
+}
+
 std::vector<Socket>::iterator HTTPServer::getSocketIterator( void ) {
 	return this->sockets.begin();
 }

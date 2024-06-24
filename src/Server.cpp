@@ -112,6 +112,10 @@ void Server::applyListenDirective(const Directive& directive) {
 	}
 }
 
+bool Server::operator==(int file_descriptor) const {
+	return std::find(this->sockets.begin(), this->sockets.end(), file_descriptor) != this->sockets.end();
+}
+
 Location* Server::findLocation(const std::string &uri) // to do: find the longest location match with uri
 {
 	Location *matching_loc = NULL;

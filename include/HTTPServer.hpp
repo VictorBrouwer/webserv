@@ -31,6 +31,7 @@ class HTTPServer : public ConfigShared {
 
 		std::vector<Server>::iterator getServerMutableIterator( void );
 		std::vector<Server>::iterator getServerMutableEnd( void );
+		std::vector<Server>& 		  getServerVector( void ) const;
 
 		std::vector<Socket>::iterator getSocketIterator( void );
 		std::vector<Socket>::iterator getSocketEnd( void );
@@ -42,6 +43,8 @@ class HTTPServer : public ConfigShared {
 		void startListening( void );
 
 		void doPollLoop( void );
+
+		static std::unique_ptr<HTTPServer> instance;
 
 	private:
 		Logger l;
