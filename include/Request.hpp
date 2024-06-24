@@ -32,6 +32,7 @@ class Request {
 		void		extractPath();
 		void		setHostPortFromHeaders( void );
 		void		setMethod(const std::string& method);
+		void		setBody(const std::string& body);
 		ClientState	readFromClient(int client_fd);
 
 		const std::string&	getBody() const;

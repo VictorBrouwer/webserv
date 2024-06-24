@@ -44,8 +44,7 @@ int main(int ac, char **av)
 		}
 
 		config->validate(l);
-
-		HTTPServer::instance = std::unique_ptr<HTTPServer>( new HTTPServer(*config, l) );
+		HTTPServer::instance = std::make_unique<HTTPServer>(*config, l);
 		HTTPServer::instance->startListening();
 
 		while (true) {

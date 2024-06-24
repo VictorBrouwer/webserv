@@ -1,6 +1,7 @@
 #include"Request.hpp"
 #include"HelperFuncs.hpp"
 #include"constants.hpp"
+#include <ranges>
 
 Request::Request() : m_content_length(0),  m_method(HTTPMethod::UNDEFINED), m_uri(""), m_keep_alive(false), m_loc(nullptr), m_auto_index(false)
 {
@@ -36,8 +37,18 @@ Request::Request(std::string& request_headers, const Logger& logger, int socket_
 	this->parseHeaders();
 	this->setHostPortFromHeaders();
 	// TODO find server/location based on headers, listen file descriptor and interface (or default server)
+
 	// TODO set max_body_size based on server/location settings
 
+	if (!this->getChunkedRequest()) {
+		try {
+			this->m_content_length = std::stoi(this->m_headers.at("Content-Length"));
+		}
+		catch(const std::exception& e) {
+			this->m_content_length = 0;
+		}
+
+	}
 }
 
 Request::~Request()
@@ -143,6 +154,10 @@ std::string	Request::extractHostPort(HostPort get)
 		break;
 	}
 	return ret;
+}
+
+void Request::setBody(const std::string& body) {
+	this->m_body = body;
 }
 
 std::pair<std::string,int> Request::getHostPort() const {
@@ -339,14 +354,26 @@ size_t Request::getContentLength() const
 
 bool Request::getChunkedRequest() const {
 	try {
-		if (this->m_headers.at("Transfer-Encoding") == "chunked");
+		if (this->m_headers.at("Transfer-Encoding") == "chunked")
 			return true;
 	}
-	catch(const std::out_of_range& e) {
-		return false;
-	}
+	catch(const std::out_of_range& e) { }
+
+	return false;
 }
 
 bool Request::hasBody( void ) const {
+	try {
+		if (this->m_headers.at("Transfer-Encoding") == "chunked")
+			return true;
+	}
+	catch(const std::out_of_range& e) { }
 
+	try {
+		if (std::stoi(this->m_headers.at("Content-Length")) > 0)
+			return true;
+	}
+	catch(const std::out_of_range& e) { }
+
+	return false;
 }

@@ -67,14 +67,15 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 		// chunks or on content-size
 		l.log("Finished reading headers, constructing request.");
 		this->m_request.reset(new Request(headers, l, this->socket.getFileDescriptor()));
-		this->extractServer()
+		this->extractServer(HTTPServer::instance->getServerVector());
 
 		if (this->m_request->hasBody()) {
 			this->reading_body = true;
 
 			this->chunked_request = m_request->getChunkedRequest();
-			if (!chunked_request)
-				this->body_limit = m_server->getMaxBodySize();
+			if (!chunked_request) {
+				this->body_limit = m_server->getClientMaxBodySize();
+			}
 		}
 		else {
 			this->setReadFDStatus(FD_DONE);
@@ -96,14 +97,22 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 
 		// Set up error Response and hit send
 	} else {
-		// TODO check if we have read the full body or if we got the final chunk,
-		// depending on whehter this->chunked_request is true or not
+		if (this->chunked_request && stream_contents.find("0\r\n\r\n") != std::string::npos) {
+			this->setReadFDStatus(FD_DONE);
+		}
+		else if (this->bytes_read >= this->m_request->getContentLength()) {
+			this->setReadFDStatus(FD_DONE);
+		}
+
+		if (this->getReadFDStatus() == FD_DONE) {
+			this->m_request->setBody(stream_contents);
+		}
 	}
 }
 
 // If we have to keepalive, keep the file descriptor open
 void Client::readingDone( void ) {
-	// this->m_request = std::shared_ptr(new Request(this->read_buffer));
+	// Prepare the response and poll write
 }
 
 // Legacy
