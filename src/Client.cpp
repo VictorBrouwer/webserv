@@ -119,6 +119,7 @@ void Client::readingDone( void ) {
 	// Prepare the response and poll write
 	this->checkRequestSyntax(m_request->getRequest());
 	m_request->handleLocation(m_server);
+	m_response.reset();
 	m_response->createResponse(m_server);
 	this->write_buffer << this->m_response->getResponse();
 	this->setWriteFDStatus(FD_POLLING);
@@ -227,8 +228,8 @@ void	Client::extractServer(std::vector<Server> &servers)
 
 void	Client::extractServer()
 {
-	std::vector<Server> server_vector = HTTPServer::instance->getServerVector();
-	for (auto server : server_vector)
+	std::vector<Server>& server_vector = HTTPServer::instance->getServerVector();
+	for (auto &server : server_vector)
 	{
 		for (const auto& servername : server.getServerNames())
 		{

@@ -131,18 +131,23 @@ Location* Server::findLocation(const std::string &uri) // to do: find the longes
 	for(auto &location : locations)
 	{
 		location_dir = location.getUri();
-		if (location_dir == "/")
+		if (location_dir == "/") {
 			default_loc = &location;
+			break;
+		}
 	}
 	for(auto &location : locations)
 	{
 		location_dir = strip(location.getUri(), "/");
-		if (location_dir == basename)
+		if (location_dir == basename) {
             matching_loc = &location;
+			break;
+		}
     }
 	if (matching_loc == NULL)
 		matching_loc = default_loc;
 	return matching_loc;
+	// return &this->locations[0];
 }
 
 

@@ -60,12 +60,12 @@ bool Location::checkMethod(HTTPMethod method)
 		s_method = "UNDEFINED";
 		break;
 	}
-	for (const auto &met : allowed_methods)
-	{
-		if (met == s_method)
-			return true;
-	}
-	return false;
+	return std::find(this->allowed_methods.begin(), this->allowed_methods.end(), s_method) != this->allowed_methods.end();
+	// for (const auto &met : allowed_methods)
+	// {
+	// 	if (met == s_method)
+	// 		return true;
+	// }
 }
 
 bool Location::getReturnActive()
