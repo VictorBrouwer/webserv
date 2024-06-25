@@ -32,6 +32,7 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		ClientState & getState();
 		void receive(std::vector<Server> &servers);
 		void extractServer(std::vector<Server> &servers);
+		void extractServer( void );
 		void sendResponse();
 		void checkRequestSyntax(const std::string& request);
 

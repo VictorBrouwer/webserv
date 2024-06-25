@@ -67,7 +67,7 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 		// chunks or on content-size
 		l.log("Finished reading headers, constructing request.");
 		this->m_request.reset(new Request(headers, l, this->socket.getFileDescriptor()));
-		this->extractServer(HTTPServer::instance->getServerVector());
+		this->extractServer();
 
 		if (this->m_request->hasBody()) {
 			l.log("Request has body, continuing to read.");
@@ -117,6 +117,11 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 // If we have to keepalive, keep the file descriptor open
 void Client::readingDone( void ) {
 	// Prepare the response and poll write
+	this->checkRequestSyntax(m_request->getRequest());
+	m_request->handleLocation(m_server);
+	m_response->createResponse(m_server);
+	this->write_buffer << this->m_response->getResponse();
+	this->setWriteFDStatus(FD_POLLING);
 }
 
 // Legacy
@@ -204,16 +209,36 @@ void Client::checkRequestSyntax(const std::string& request)
 
 void	Client::extractServer(std::vector<Server> &servers)
 {
-	std::vector<Server> server_vector = HTTPServer::instance->getServerVector();
+	// std::vector<Server> server_vector = HTTPServer::instance->getServerVector();
 	for (auto server : servers)
 	{
 		for (const auto& servername : server.getServerNames())
 		{
-			if (servername == this->m_request->getHost())
+			if (servername == this->m_request->getHost()) {
 				m_server = &server;
+				l.log("Found server.");
+			}
 		}
 	}
 	if (!m_server)
 		m_server = &(*(servers.begin()));
+		// m_server = servers->data();
+}
+
+void	Client::extractServer()
+{
+	std::vector<Server> server_vector = HTTPServer::instance->getServerVector();
+	for (auto server : server_vector)
+	{
+		for (const auto& servername : server.getServerNames())
+		{
+			if (servername == this->m_request->getHost()) {
+				m_server = &server;
+				l.log("Found server.");
+			}
+		}
+	}
+	if (!m_server)
+		m_server = &(*(server_vector.begin()));
 		// m_server = servers->data();
 }
