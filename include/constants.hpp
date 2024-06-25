@@ -21,7 +21,7 @@
 #define E_INCORRECT_FORMAT    (std::string("Incorrectly formatted line"))
 #define E_MISSING_DIRECTIVE   (std::string("Expected directive is missing"))
 
-const std::string DEFAULT_ERR_PAGE = R"(
+const static std::string DEFAULT_ERR_PAGE = R"(
 <!DOCTYPE html>
 <html lang="en">
 <head>
