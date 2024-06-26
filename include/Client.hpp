@@ -44,6 +44,9 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		// Override the readingDone function to build and construct requests
 		void readingDone( void );
 
+		// Override the writingDone member function to be able to keepalive
+		void writingDone( void );
+
 		Logger        l;
 		const Socket& socket;
 
@@ -58,7 +61,7 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		std::shared_ptr<Response>	m_response;
 		ClientState					m_state;
 		size_t						m_total_bytes_sent;
-		Server 						*m_server;
+		Server 						*m_server = nullptr;
 
 		std::size_t header_limit = 50000;
 		std::size_t body_limit = 10000000;

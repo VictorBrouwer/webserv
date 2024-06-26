@@ -116,13 +116,29 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 
 // If we have to keepalive, keep the file descriptor open
 void Client::readingDone( void ) {
+	l.log("Full request received!");
+	l.log(this->m_request->getRequest(), L_Info);
 	// Prepare the response and poll write
 	this->checkRequestSyntax(m_request->getRequest());
 	m_request->handleLocation(m_server);
-	m_response.reset();
+	m_response.reset(new Response(this->m_request));
 	m_response->createResponse(m_server);
 	this->write_buffer << this->m_response->getResponse();
 	this->setWriteFDStatus(FD_POLLING);
+}
+
+void Client::writingDone( void ) {
+	if (this->m_request->getKeepAlive()) {
+		l.log("Connection should be kept alive, resetting.", L_Warning);
+		m_request.reset(new Request);
+		m_response.reset(new Response(m_request));
+		this->setReadFDStatus(FD_POLLING);
+	}
+	else {
+		l.log("Done writing, connection should be closed.", L_Warning);
+		// close(this->getReadFileDescriptor());
+		// this->setWriteFDStatus(FD_HUNG_UP);
+	}
 }
 
 // Legacy
@@ -211,7 +227,7 @@ void Client::checkRequestSyntax(const std::string& request)
 void	Client::extractServer(std::vector<Server> &servers)
 {
 	// std::vector<Server> server_vector = HTTPServer::instance->getServerVector();
-	for (auto server : servers)
+	for (auto &server : servers)
 	{
 		for (const auto& servername : server.getServerNames())
 		{
@@ -228,8 +244,7 @@ void	Client::extractServer(std::vector<Server> &servers)
 
 void	Client::extractServer()
 {
-	std::vector<Server>& server_vector = HTTPServer::instance->getServerVector();
-	for (auto &server : server_vector)
+	for (auto &server : HTTPServer::instance->getServerVector())
 	{
 		for (const auto& servername : server.getServerNames())
 		{
@@ -240,6 +255,6 @@ void	Client::extractServer()
 		}
 	}
 	if (!m_server)
-		m_server = &(*(server_vector.begin()));
+		m_server = &(*(HTTPServer::instance->getServerVector().begin()));
 		// m_server = servers->data();
 }
