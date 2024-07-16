@@ -64,8 +64,6 @@ std::string	Response::customizeErrorPage(int status_code)
  */
 void Response::createResponse(Server *server)
 {
-	std::fstream file;
-
 	m_server = server;
 
 	if (m_client_request->getRedirPath() != "")
@@ -89,8 +87,8 @@ void Response::createResponse(Server *server)
 			else // path is not a directory
 			{
 				m_status = StatusCode::NotFound;
-				file = this->OpenFile(m_client_request->getLocation().getErrorPageForCode(404));
-				this->ReadFile(file);
+				this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(404), O_RDONLY));
+				this->setReadFDStatus(FD_POLLING);
 				throw std::logic_error("File Not Found 404");
 			}
 		}
@@ -133,6 +131,15 @@ void Response::createResponse(Server *server)
 		if (m_status == StatusCode::Null)
 			m_status = StatusCode::InternalServerError;
 		log(e.what(), L_Error);
+		try
+		{
+			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status))));
+			this->setReadFDStatus(FD_POLLING);
+		}
+		catch(const std::exception& e)
+		{
+			log("Loading Error Page Went Wrong Exception!!", L_Error);
+		}
 	}
 
 	this->addHeader();
@@ -145,10 +152,8 @@ void Response::createResponse(Server *server)
  */
 void Response::GetFile()
 {
-	std::fstream file;
-
-	file = this->OpenFile(m_path);
-	this->ReadFile(file);
+	this->setReadFileDescriptor(this->OpenFile(m_path, O_RDONLY));
+	this->setReadFDStatus(FD_POLLING);
 }
 
 /**
@@ -156,17 +161,17 @@ void Response::GetFile()
  *
  * @return std::fstream
  */
-std::fstream Response::OpenFile(const std::string &path) noexcept(false)
+fd_t Response::OpenFile(const std::string &path, int o_flag) noexcept(false)
 {
-	std::fstream file;
+	fd_t fd;
 
-	file.open(path, READ_ONLY);
-	if (!file.is_open())
+	fd = open(path.c_str(), o_flag);
+	if (fd == ERROR)
 	{
 		m_status = StatusCode::Forbidden;
 		throw std::logic_error("Forbidden File 403");
 	}
-	return file;
+	return fd;
 }
 
 /**
@@ -182,28 +187,16 @@ std::fstream Response::OpenFile(const std::string &path) noexcept(false)
 void	Response::addHeader()
 {
 	size_t pos;
-	std::fstream file;
 	std::string request;
 
 	request = m_client_request->getRequest();
+
 	pos = request.find("HTTP");
 	m_total_response.append(request.substr(pos, request.find(CRLF) - pos) + " ");
+
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + CRLF);
-
-	try
-	{
-		if (m_status != StatusCode::OK)
-		{
-			file = this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)));
-			this->ReadFile(file);
-		}
-	}
-	catch(const std::exception& e)
-	{
-		log("Loading Error Page Went Wrong Exception!!", L_Error);
-	}
 
 	m_total_response.append("Connection: close" + CRLF);
 
@@ -236,32 +229,6 @@ void	Response::addHeader()
 
 }
 
-
-/**
- * @brief Reads the content of a file and appends it to the response body.
- *
- * This method reads the content of a file line by line and appends each line to the response body (`m_body`).
- * If it encounters an error before reaching the end of the file (i.e., if `file.eof()` is false), it sets the response status to `InternalServerError` and throws a `logic_error` exception.
- * After reading the file, it closes the file.
- *
- * @param file A reference to the file stream object associated with the file to read.
- * @throws std::logic_error If an error occurs while reading the file.
- */
-void Response::ReadFile(std::fstream &file) noexcept(false)
-{
-	std::string line;
-
-	while (std::getline(file, line))
-		m_body.append(line + '\n');
-
-	if (!file.eof())
-	{
-		m_status = StatusCode::InternalServerError;
-		throw std::logic_error("Error Reading File 501");
-	}
-	file.close();
-}
-
 /**
  * @brief Executes a CGI script and sets the response body to the output of the script.
  *
@@ -273,30 +240,17 @@ void Response::ReadFile(std::fstream &file) noexcept(false)
  */
 void Response::ExecuteCGI() noexcept(false)
 {
-	int 	fd;
-	int 	bytes_read;
-	char 	buffer[BUFFER_SIZE];
 	CGI 	common_gateway_interface(m_client_request);
 
 	try
 	{
-		fd = common_gateway_interface.ExecuteScript(m_path);
-		bytes_read = read(fd, buffer, BUFFER_SIZE);
-		while (bytes_read != 0)
-		{
-			std::string str(buffer, bytes_read);
-			m_body.append(str);
-			bytes_read = read(fd, buffer, BUFFER_SIZE);
-		}
+		this->setReadFileDescriptor(common_gateway_interface.ExecuteScript(m_path));
+		this->setReadFDStatus(FD_POLLING);
 	}
 	catch(StatusCode &status)
 	{
 		m_status = status;
-		close(fd);
-
 	}
-	log("Done reading CGI PIPE", L_Info);
-	close(fd);
 }
 
 bool Response::DoesFileExists()
@@ -368,8 +322,8 @@ void	Response::DeleteFile() noexcept(false)
  */
 void	Response::UploadFile() noexcept(false)
 {
-	int fd;
 	size_t pos;
+	std::string upload_dir;
 	std::string body;
 	std::string filename;
 	std::string request_body;
@@ -390,22 +344,15 @@ void	Response::UploadFile() noexcept(false)
 	body = request_body.substr(pos, request_body.find(boundary, pos) - (pos + 2));
 
 
-	fd = open((std::string("www/upload/") + filename).c_str(), O_CREAT | O_RDWR, 0666);
-	if (fd == ERROR)
-	{
-		m_status = StatusCode::Forbidden;
-		throw std::logic_error("Open: ERROR");
-	}
-
-	WriteToFile(fd, body); /* @warning needs to be changed when we implement Poll Writing! */
-	close(fd);
-	m_body = "Uploaded File!";
+	this->write_buffer << body;
+	upload_dir = m_client_request->getLocation().getUploadDir();
+	if (upload_dir.back() != '/')
+		upload_dir.append("/");
+	this->setWriteFileDescriptor(OpenFile((upload_dir + filename).c_str(), O_CREAT | O_RDWR | 0666));
+	this->setWriteFDStatus(FD_POLLING);
 }
 
-void	Response::WriteToFile(int fd, const std::string &buffer) noexcept(false)
-{
-	write(fd, buffer.c_str(), buffer.size());
-}
+
 
 void Response::respondWithDirectoryListing()
 {
@@ -418,4 +365,30 @@ void Response::respondWithDirectoryListing()
 	}
 	html_str += HTML_FOOTER;
 	m_body = html_str;
+}
+
+void Response::readingDone( void )
+{
+	if (this->getReadFDStatus() != FD_DONE)
+	{
+		this->m_body.append(this->customizeErrorPage(500));
+		this->m_status = StatusCode::InternalServerError;
+	}
+	else
+		this->m_body.append(this->read_buffer.str());
+
+	this->addHeader();
+}
+
+void Response::writingDone( void )
+{
+	if (this->getReadFDStatus() != FD_DONE)
+	{
+		this->m_body.append(this->customizeErrorPage(500));
+		this->m_status = StatusCode::InternalServerError;
+	}
+
+	m_body = "Uploaded File!";
+
+	this->addHeader();
 }

@@ -1,12 +1,20 @@
 POST /api/resource HTTP/1.1
 Host: example.com
-Content-Type: application/json
+Content-Type: FORM DATA boundry ---------234234234234
 Authorization: Bearer <token>
 Content-Length: 54
 
-filename 
+---------234234234234
 
-{
-  "name": "New Resource",
-  "description": "A description for the new resource."
-}
+content type html plain/txt jpg/image
+name hello.html
+body
+
+sdfjdsfljds
+fdskfslkdjfds
+fdskfslkdjfdsfdsf
+describefds
+fdskfslkdjfdsfdsff
+
+/r\/n/r/n
+---------234234234234--

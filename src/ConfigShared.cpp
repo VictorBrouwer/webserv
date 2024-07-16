@@ -2,11 +2,12 @@
 #include "HelperFuncs.hpp"
 
 ConfigShared::ConfigShared(ConfigShared* src) {
-	this->autoindex_enabled    = src->getAutoindexEnabled();
-	this->client_max_body_size = src->getClientMaxBodySize();
-	this->error_pages          = src->getErrorPages();
 	this->indices              = src->getIndices();
 	this->root_path            = src->getRootPath();
+	this->upload_dir		   = src->getUploadDir();
+	this->error_pages          = src->getErrorPages();
+	this->autoindex_enabled    = src->getAutoindexEnabled();
+	this->client_max_body_size = src->getClientMaxBodySize();
 }
 
 void ConfigShared::applySharedDirectives(const std::vector<Directive>& directives, const Logger& l) {
@@ -32,6 +33,10 @@ void ConfigShared::applySharedDirectives(const std::vector<Directive>& directive
 	}
 
 	it = std::find(start, end, "root");
+	if (it != end) {
+		this->applyRootPathDirective(*it);
+	}
+	it = std::find(start, end, "upload_dir");
 	if (it != end) {
 		this->applyRootPathDirective(*it);
 	}
@@ -62,6 +67,10 @@ const std::vector<std::string>& ConfigShared::getIndices( void ) const {
 
 const std::string& ConfigShared::getRootPath( void ) const {
 	return this->root_path;
+}
+
+const std::string& ConfigShared::getUploadDir( void ) const {
+	return this->upload_dir;
 }
 
 const std::string& ConfigShared::getErrorPageForCode(int code) const {
@@ -97,4 +106,8 @@ void ConfigShared::applyIndexDirective(const Directive& d) {
 
 void ConfigShared::applyRootPathDirective(const Directive& d) {
 	this->root_path = d.getArguments()[0];
+}
+
+void ConfigShared::applyUploadDirDirective(const Directive& d) {
+	this->upload_dir = d.getArguments()[0];
 }
