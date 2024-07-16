@@ -122,6 +122,10 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 }
 
 void Client::afterReadDuringBody(std::string& stream_contents) {
+	// this->m_request->m_body.append(stream_contents);
+
+	l.log(std::to_string(stream_contents.size()), L_Error);
+
 	if (this->bytes_read > body_limit) {
 		l.log("Max body size exceeded, cutting off the connection.", L_Error);
 		this->setReadFDStatus(FD_ERROR);
@@ -136,9 +140,13 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 			l.log("Read all of Content-Length, done reading.");
 			this->setReadFDStatus(FD_DONE);
 		}
+		else {
+			l.log("Read " + std::to_string(this->bytes_read) + " bytes, continuing.");
+		}
 
 		if (this->getReadFDStatus() == FD_DONE) {
 			this->m_request->setBody(stream_contents);
+			this->m_request->m_total_request.append(stream_contents);
 		}
 	}
 }

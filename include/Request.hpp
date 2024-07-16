@@ -55,17 +55,17 @@ class Request {
 		int                 getPort( void ) const;
 		const std::unordered_map<std::string, std::string>& getHeaders() const;
 		void				handleLocation(Server *server);
+		std::string m_total_request;
 
 	private:
 		Logger		l = Logger("Request");
 
+		std::string m_body;
 		size_t 		m_bytes_read = 0;
 		size_t 		m_content_length = 0;
 		HTTPMethod	m_method = HTTPMethod::UNDEFINED;
-		std::string m_total_request;
 		std::string m_uri;
 		std::unordered_map<std::string, std::string> m_headers;
-		std::string m_body;
 		bool		m_keep_alive = false;
 		std::string m_redirection_path;
 		std::string m_final_path;

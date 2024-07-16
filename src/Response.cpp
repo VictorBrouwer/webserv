@@ -376,6 +376,7 @@ void	Response::UploadFile() noexcept(false)
 	std::string boundary;
 
 	request_body = m_client_request->getBody();
+	log(request_body, L_Error);
 
 	pos = request_body.find("filename");
 	pos += 10; // Skip over [filename="]

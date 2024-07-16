@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <poll.h>
 
+#include "HelperFuncs.hpp"
 #include "PollableFileDescriptor.hpp"
 #include "Request.hpp"
 
@@ -36,6 +37,8 @@ void ReadFileDescriptor::readFromFileDescriptor(pollfd pollfd) {
 			this->read_status = FD_HUNG_UP;
 		this->readingDone();
 	}
+
+	// log(this->read_buffer.str(), L_Warning);
 }
 
 void ReadFileDescriptor::resetReadBuffer( void ) {
@@ -62,9 +65,12 @@ ssize_t ReadFileDescriptor::doRead( void ) {
 	else if (bytes_read == 0)
 		// We have reached end of file and our buffer is done
 		this->read_status = FD_DONE;
-	else
+	else {
 		// We have new data to add to our buffer
-		this->read_buffer.write(temp_buffer.get(), bytes_read);
+		std::string read_content = std::move(this->read_buffer).str();
+		read_content.append(temp_buffer.get(), bytes_read);
+		this->read_buffer.str(std::move(read_content));
+	}
 
 	return bytes_read;
 }
