@@ -133,7 +133,7 @@ void Response::createResponse(Server *server)
 		log(e.what(), L_Error);
 		try
 		{
-			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status))));
+			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)), O_RDONLY));
 			this->setReadFDStatus(FD_POLLING);
 		}
 		catch(const std::exception& e)
