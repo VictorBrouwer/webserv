@@ -191,19 +191,21 @@ void	Response::addHeader()
 	if (m_status == StatusCode::Null)
 		m_status = StatusCode::OK;
 	m_total_response.append(std::to_string(static_cast<int>(m_status)) + " " + m_DB_status.at(static_cast<int>(m_status)) + CRLF);
-	
+
 	try
 	{
 		if (m_status != StatusCode::OK)
 		{
 			file = this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)));
-			this->ReadFile(file);	
+			this->ReadFile(file);
 		}
 	}
 	catch(const std::exception& e)
 	{
 		log("Loading Error Page Went Wrong Exception!!", L_Error);
 	}
+
+	m_total_response.append("Connection: close" + CRLF);
 
 	if (m_CGI == false)
 	{
@@ -291,7 +293,7 @@ void Response::ExecuteCGI() noexcept(false)
 	{
 		m_status = status;
 		close(fd);
-		
+
 	}
 	log("Done reading CGI PIPE", L_Info);
 	close(fd);
@@ -378,7 +380,7 @@ void	Response::UploadFile() noexcept(false)
 	pos = request_body.find("filename");
 	pos += 10; // Skip over [filename="]
 	filename = request_body.substr(pos, request_body.find(CRLF, pos) - (pos + 1));
-	
+
 	pos = request_body.find(CRLF); // Find the boundary of the form data. (example: [-----------------------------114782935826962])
 	boundary = request_body.substr(0, pos);
 

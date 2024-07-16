@@ -18,11 +18,27 @@ Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socke
 }
 
 Client::Client(const Client& src) : ReadFileDescriptor(src.fd), WriteFileDescriptor(src.fd), socket(src.socket) {
+	*this = src;
+}
+
+Client& Client::operator=(Client& src) {
 	this->fd = src.fd;
 
 	this->l = src.l;
 	this->address = src.address;
 	this->address_length = src.address_length;
+
+	return *this;
+}
+
+Client& Client::operator=(const Client& src) {
+	this->fd = src.fd;
+
+	this->l = src.l;
+	this->address = src.address;
+	this->address_length = src.address_length;
+
+	return *this;
 }
 
 Client::Client(Client&& to_move) : ReadFileDescriptor(to_move.fd), WriteFileDescriptor(to_move.fd), socket(to_move.socket) {
@@ -35,8 +51,7 @@ Client::Client(Client&& to_move) : ReadFileDescriptor(to_move.fd), WriteFileDesc
 }
 
 Client::~Client() {
-	if (this->fd != -1)
-		close(this->fd);
+
 }
 
 // Callback for reading
@@ -70,8 +85,22 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 		this->extractServer();
 
 		if (this->m_request->hasBody()) {
-			l.log("Request has body, continuing to read.");
-			this->reading_body = true;
+			l.log("Request has body, checking if we have everything already.");
+
+			if (this->m_request->getChunkedRequest()) {
+				l.log("Chunked request");
+			}
+			else {
+				if (this->m_request->getContentLength() <= this->bytes_read) {
+					l.log("Full body received, passing it on.");
+					this->m_request->setBody(this->read_buffer.str());
+					this->setReadFDStatus(FD_DONE);
+				}
+				else {
+					l.log("Full body is not in yet, continuing to read.");
+					this->reading_body = true;
+				}
+			}
 
 			this->chunked_request = m_request->getChunkedRequest();
 			if (!chunked_request) {
@@ -128,16 +157,17 @@ void Client::readingDone( void ) {
 }
 
 void Client::writingDone( void ) {
+	m_request.reset(new Request);
+	m_response.reset(new Response(m_request));
+
 	if (this->m_request->getKeepAlive()) {
 		l.log("Connection should be kept alive, resetting.", L_Warning);
-		m_request.reset(new Request);
-		m_response.reset(new Response(m_request));
 		this->setReadFDStatus(FD_POLLING);
 	}
 	else {
 		l.log("Done writing, connection should be closed.", L_Warning);
-		// close(this->getReadFileDescriptor());
-		// this->setWriteFDStatus(FD_HUNG_UP);
+		close(this->fd);
+		this->setWriteFDStatus(FD_HUNG_UP);
 	}
 }
 

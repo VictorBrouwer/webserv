@@ -134,6 +134,7 @@ void HTTPServer::doPollLoop( void ) {
 	l.log("Starting poll loop.");
 	this->assemblePollQueue();
 	this->runPoll();
+	// this->cleanUpPoll();
 }
 
 // Grab all ReadFileDescriptor and WriteFileDescriptor instances and
@@ -251,4 +252,10 @@ void HTTPServer::addWriteFileDescriptorToPoll(WriteFileDescriptor* write_fd) {
 
 	// Add the pointer to the vector as well to be able to find it back later
 	this->write_fd_pointers.insert({write_fd->getWriteFileDescriptor(), write_fd});
+}
+
+void HTTPServer::cleanUpPoll( void ) {
+	std::remove_if(this->getClientIterator(), this->getClientEnd(), [&](Client& client) {
+		return client.getWriteFDStatus() == FD_DONE || client.getWriteFDStatus() == FD_HUNG_UP;
+	});
 }

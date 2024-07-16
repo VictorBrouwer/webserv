@@ -24,6 +24,8 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 
 		Client(const Client& src);
 		Client(Client&& to_move);
+		Client& operator=(Client& src);
+		Client& operator=(const Client& src);
 
 		~Client();
 

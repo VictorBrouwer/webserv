@@ -78,6 +78,7 @@ class HTTPServer : public ConfigShared {
 		void assemblePollQueue( void );
 		void runPoll( void );
 		void handleEvents( void );
+		void cleanUpPoll( void );
 
 		void addReadFileDescriptorToPoll(ReadFileDescriptor* read_fd);
 		void addWriteFileDescriptorToPoll(WriteFileDescriptor* read_fd);
