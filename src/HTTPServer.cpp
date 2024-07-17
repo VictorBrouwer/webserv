@@ -134,7 +134,7 @@ void HTTPServer::doPollLoop( void ) {
 	l.log("Starting poll loop.");
 	this->assemblePollQueue();
 	this->runPoll();
-	// this->cleanUpPoll();
+	this->cleanUpPoll();
 }
 
 // Grab all ReadFileDescriptor and WriteFileDescriptor instances and
@@ -152,10 +152,22 @@ void HTTPServer::assemblePollQueue( void ) {
 
 	// Add all Clients that want to keep reading/writing
 	std::for_each(this->clients.begin(), this->clients.end(), [&](Client& client) {
+		// Add a read file decsriptor if we're polling the client for the request
 		if (client.getReadFDStatus() == FD_POLLING)
 			this->addReadFileDescriptorToPoll((ReadFileDescriptor*) &client);
+		// Add a write file descriptor if we're polling the client for the response
 		if (client.getWriteFDStatus() == FD_POLLING)
 			this->addWriteFileDescriptorToPoll((WriteFileDescriptor*) &client);
+
+		std::shared_ptr<Response> &response = client.getResponse();
+		if (response.get()) {
+			// Add a read file descriptor if the response needs to load a file
+			if (response->getReadFDStatus() == FD_POLLING)
+				this->addReadFileDescriptorToPoll((ReadFileDescriptor*) response.get());
+			// Add a write file descriptor if the response needs to upload something
+			if (response->getWriteFDStatus() == FD_POLLING)
+				this->addWriteFileDescriptorToPoll((WriteFileDescriptor*) response.get());
+		}
 	});
 }
 
@@ -180,6 +192,7 @@ void HTTPServer::runPoll( void ) {
 	nfds_t  poll_count = this->poll_vector.size();
 
 	l.log("Running poll with " + std::to_string(poll_count) + " file descriptors.", L_Info);
+	l.log("Current clients: " + std::to_string(this->clients.size()), L_Info);
 
 	int poll_return = poll(poll_data, poll_count, 10000);
 	if (poll_return < 0) {
@@ -255,7 +268,7 @@ void HTTPServer::addWriteFileDescriptorToPoll(WriteFileDescriptor* write_fd) {
 }
 
 void HTTPServer::cleanUpPoll( void ) {
-	std::remove_if(this->getClientIterator(), this->getClientEnd(), [&](Client& client) {
-		return client.getWriteFDStatus() == FD_DONE || client.getWriteFDStatus() == FD_HUNG_UP;
+	std::erase_if(this->clients, [&](Client& client) {
+		return (client.getWriteFDStatus() == FD_DONE || client.getWriteFDStatus() == FD_HUNG_UP);
 	});
 }

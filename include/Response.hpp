@@ -78,6 +78,8 @@ private:
 	void writingDone( void );
 	void readingDone( void );
 
+	void sendToClient( void );
+
 	Server				 							*m_server;
 	HTTPMethod										m_method;
 	std::string										m_body;

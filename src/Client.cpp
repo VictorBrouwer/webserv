@@ -155,13 +155,11 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 void Client::readingDone( void ) {
 	l.log("Full request received!");
 	l.log(this->m_request->getRequest(), L_Info);
-	// Prepare the response and poll write
+	// Prepare the response
 	this->checkRequestSyntax(m_request->getRequest());
 	m_request->handleLocation(m_server);
 	m_response.reset(new Response(this->m_request));
 	m_response->createResponse(m_server);
-	this->write_buffer << this->m_response->getResponse();
-	this->setWriteFDStatus(FD_POLLING);
 }
 
 void Client::writingDone( void ) {
@@ -177,6 +175,18 @@ void Client::writingDone( void ) {
 		close(this->fd);
 		this->setWriteFDStatus(FD_HUNG_UP);
 	}
+}
+
+std::shared_ptr<Request>& Client::getRequest( void ) {
+	return this->m_request;
+}
+
+std::shared_ptr<Response>& Client::getResponse( void ) {
+	return this->m_response;
+}
+
+void Client::addToWriteBuffer(const std::string& str) {
+	this->write_buffer << str;
 }
 
 // Legacy

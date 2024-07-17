@@ -3,6 +3,7 @@
 #include "constants.hpp"
 #include"ResponseHelpers.hpp"
 #include"HelperFuncs.hpp"
+#include "HTTPServer.hpp"
 
 #define READ_ONLY std::ios::in
 #define ERROR -1
@@ -82,6 +83,7 @@ void Response::createResponse(Server *server)
 			{
 				respondWithDirectoryListing();
 				this->addHeader();
+				this->sendToClient();
 				return ;
 			}
 			else // path is not a directory
@@ -142,7 +144,7 @@ void Response::createResponse(Server *server)
 		}
 	}
 
-	this->addHeader();
+	// this->addHeader();
 }
 
 
@@ -377,7 +379,10 @@ void Response::readingDone( void )
 	else
 		this->m_body.append(this->read_buffer.str());
 
+	close(this->getReadFileDescriptor());
+	this->setReadFileDescriptor(-1);
 	this->addHeader();
+	this->sendToClient();
 }
 
 void Response::writingDone( void )
@@ -390,5 +395,22 @@ void Response::writingDone( void )
 
 	m_body = "Uploaded File!";
 
+	close(this->getWriteFileDescriptor());
+	this->setWriteFileDescriptor(-1);
 	this->addHeader();
+	this->sendToClient();
+}
+
+void Response::sendToClient( void ) {
+	// Find the client in the client array that this request belongs to
+	auto client_iter = std::find_if(
+		HTTPServer::instance->getClientIterator(),
+		HTTPServer::instance->getClientEnd(),
+		[&](Client& client) {
+			return this == client.getResponse().get();
+		}
+	);
+
+	client_iter->addToWriteBuffer(this->getResponse());
+	client_iter->setWriteFDStatus(FD_POLLING);
 }

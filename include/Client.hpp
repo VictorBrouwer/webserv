@@ -29,6 +29,11 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 
 		~Client();
 
+		std::shared_ptr<Request>& getRequest( void );
+		std::shared_ptr<Response>& getResponse( void );
+
+		void addToWriteBuffer(const std::string& str);
+
 		// Legacy
 
 		ClientState & getState();
@@ -37,7 +42,6 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		void extractServer( void );
 		void sendResponse();
 		void checkRequestSyntax(const std::string& request);
-
 	private:
 		// Override the afterRead member function to be able to cut off bad actors
 		void afterRead( void );
