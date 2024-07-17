@@ -6,3 +6,4 @@ a.out
 *.a
 valgrind-out.txt
 www/upload/*
+!www/upload/.keep
