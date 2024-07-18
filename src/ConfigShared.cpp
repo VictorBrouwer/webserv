@@ -38,7 +38,7 @@ void ConfigShared::applySharedDirectives(const std::vector<Directive>& directive
 	}
 	it = std::find(start, end, "upload_dir");
 	if (it != end) {
-		this->applyRootPathDirective(*it);
+		this->applyUploadDirDirective(*it);
 	}
 
 	it = start;

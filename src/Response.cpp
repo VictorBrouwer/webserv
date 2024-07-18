@@ -95,7 +95,7 @@ void Response::createResponse(Server *server)
 			}
 		}
 
-		if (!this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
+		if (m_method != HTTPMethod::POST && !this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
 		{
 			m_status = StatusCode::NotFound;
 			throw std::logic_error("File Not Found 404");
@@ -163,11 +163,11 @@ void Response::GetFile()
  *
  * @return std::fstream
  */
-fd_t Response::OpenFile(const std::string &path, int o_flag) noexcept(false)
+fd_t Response::OpenFile(const std::string &path, int o_flag, int o_perm) noexcept(false)
 {
 	fd_t fd;
 
-	fd = open(path.c_str(), o_flag);
+	fd = open(path.c_str(), o_flag, o_perm);
 	if (fd == ERROR)
 	{
 		m_status = StatusCode::Forbidden;
@@ -348,9 +348,10 @@ void	Response::UploadFile() noexcept(false)
 
 	this->write_buffer << body;
 	upload_dir = m_client_request->getLocation().getUploadDir();
+	log(upload_dir, L_Warning);
 	if (upload_dir.back() != '/')
 		upload_dir.append("/");
-	this->setWriteFileDescriptor(OpenFile((upload_dir + filename).c_str(), O_CREAT | O_RDWR | 0666));
+	this->setWriteFileDescriptor(OpenFile((upload_dir + filename).c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644));
 	this->setWriteFDStatus(FD_POLLING);
 }
 

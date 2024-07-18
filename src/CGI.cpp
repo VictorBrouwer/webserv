@@ -25,6 +25,8 @@ CGI::CGI(std::shared_ptr<Request> client_request) : m_client_request(client_requ
 {
     m_path = m_client_request->getFinalPath();
 
+    log(m_path, L_Error);
+
     switch (m_client_request->getMethod())
 	{
 	case HTTPMethod::GET:
@@ -112,7 +114,7 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     size_t pos;
     int pipefds[2];
     int status_loc;
-    
+
     pos = path.find('?');
     if (pos != std::string::npos)
         path.erase(pos);
@@ -267,5 +269,3 @@ void    CGI::GiveScriptDataSTDIN()
     close(data_pipe[WRITE]);
     close(data_pipe[READ]);
 }
-
-

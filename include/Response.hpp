@@ -64,7 +64,7 @@ public:
 private:
 
 	bool			DoesFileExists();
-	fd_t 			OpenFile(const std::string &path, int o_flag) noexcept(false);
+	fd_t 			OpenFile(const std::string &path, int o_flag, int o_perm = 0644) noexcept(false);
 
 	std::string		ExtensionExtractor(const std::string &path);
 	void			ExecuteCGI();
