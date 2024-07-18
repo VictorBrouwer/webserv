@@ -223,9 +223,16 @@ void HTTPServer::handleEvents( void ) {
 
 			// We've been hung up but we wanted to write more, so we need to
 			// make sure writingDone is called separately.
-			if (pollfd.events & POLLOUT && pollfd.revents & POLLHUP) {
-				this->write_fd_pointers[pollfd.fd]->setWriteFDStatus(FD_HUNG_UP);
-				this->write_fd_pointers[pollfd.fd]->callWritingDone();
+			if (pollfd.revents & POLLHUP) {
+				if (this->write_fd_pointers.contains(pollfd.fd)) {
+					this->write_fd_pointers[pollfd.fd]->setWriteFDStatus(FD_HUNG_UP);
+					this->write_fd_pointers[pollfd.fd]->callWritingDone();
+				}
+				// We want to finish reading before closing in case that's required.
+				if ((pollfd.revents & POLLIN) == 0 && this->read_fd_pointers.contains(pollfd.fd)) {
+					this->read_fd_pointers[pollfd.fd]->setReadFDStatus(FD_HUNG_UP);
+					this->read_fd_pointers[pollfd.fd]->callReadingDone();
+				}
 			}
 		}
 	});

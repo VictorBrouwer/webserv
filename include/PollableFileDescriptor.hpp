@@ -67,6 +67,8 @@ class ReadFileDescriptor {
 		// Set the status of the file descriptor (from the poll loop or the child class)
 		void setReadFDStatus(FDStatus status);
 
+		void callReadingDone( void );
+
 	protected:
 		ReadFileDescriptor( void );
 		ReadFileDescriptor(int fd);

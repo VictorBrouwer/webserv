@@ -372,7 +372,7 @@ void Response::respondWithDirectoryListing()
 
 void Response::readingDone( void )
 {
-	if (this->getReadFDStatus() != FD_DONE)
+	if (!this->m_CGI && this->getReadFDStatus() != FD_DONE)
 	{
 		this->m_body.append(this->customizeErrorPage(500));
 		this->m_status = StatusCode::InternalServerError;

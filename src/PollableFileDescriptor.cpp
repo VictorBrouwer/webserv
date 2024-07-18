@@ -55,6 +55,10 @@ void ReadFileDescriptor::setReadFDStatus(FDStatus status) {
 	this->read_status = status;
 }
 
+void ReadFileDescriptor::callReadingDone( void ) {
+	this->readingDone();
+}
+
 void ReadFileDescriptor::setReadFileDescriptor(int fd) {
 	this->read_fd = fd;
 }
