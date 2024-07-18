@@ -18,6 +18,8 @@
 #include <map>
 #include <memory>
 
+class CGI;
+
 enum class StatusCode
 {
 	Null = 0,
@@ -81,6 +83,7 @@ private:
 	void sendToClient( void );
 
 	Server				 							*m_server;
+	std::unique_ptr<CGI>							m_cgi_instance;
 	HTTPMethod										m_method;
 	std::string										m_body;
 	std::string										m_path;

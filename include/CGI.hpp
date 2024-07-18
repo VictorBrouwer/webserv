@@ -21,7 +21,12 @@ public:
 
     CGI(std::shared_ptr<Request> client_request);
     ~CGI();
+
     int     ExecuteScript(std::string path);
+
+    int     read_fd  = -1;
+    int     write_fd = -1;
+    pid_t   pid = -1;
 
 private:
 

@@ -242,12 +242,17 @@ void	Response::addHeader()
  */
 void Response::ExecuteCGI() noexcept(false)
 {
-	CGI 	common_gateway_interface(m_client_request);
 
 	try
 	{
-		this->setReadFileDescriptor(common_gateway_interface.ExecuteScript(m_path));
+		this->m_cgi_instance.reset(new CGI(m_client_request));
+		this->m_cgi_instance->ExecuteScript(m_path);
+		this->setReadFileDescriptor(this->m_cgi_instance->read_fd);
 		this->setReadFDStatus(FD_POLLING);
+		if (this->m_method == HTTPMethod::POST) {
+			this->setWriteFileDescriptor(this->m_cgi_instance->write_fd);
+			this->setWriteFDStatus(FD_POLLING);
+		}
 	}
 	catch(StatusCode &status)
 	{
@@ -372,7 +377,15 @@ void Response::respondWithDirectoryListing()
 
 void Response::readingDone( void )
 {
-	if (!this->m_CGI && this->getReadFDStatus() != FD_DONE)
+	int status_loc;
+
+	if (this->m_CGI) {
+		waitpid(this->m_cgi_instance->pid, &status_loc, 0);
+		if (status_loc)
+			this->m_status = StatusCode::InternalServerError;
+		this->m_body.append(this->read_buffer.str());
+	}
+	else if (this->getReadFDStatus() != FD_DONE)
 	{
 		this->m_body.append(this->customizeErrorPage(500));
 		this->m_status = StatusCode::InternalServerError;
@@ -388,7 +401,7 @@ void Response::readingDone( void )
 
 void Response::writingDone( void )
 {
-	if (this->getReadFDStatus() != FD_DONE)
+	if (this->getWriteFDStatus() != FD_DONE)
 	{
 		this->m_body.append(this->customizeErrorPage(500));
 		this->m_status = StatusCode::InternalServerError;

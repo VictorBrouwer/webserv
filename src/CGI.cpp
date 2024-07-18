@@ -113,7 +113,6 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     pid_t pid;
     size_t pos;
     int pipefds[2];
-    int status_loc;
 
     pos = path.find('?');
     if (pos != std::string::npos)
@@ -150,13 +149,16 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
         execve("/usr/bin/python3", m_argv, m_envp); // This needs to be changed if we are going to support multiple code langs.
         exit(1);
     }
-    close(pipefds[WRITE]);
+    if (this->m_client_request->getMethod() != HTTPMethod::POST) {
+        close(pipefds[WRITE]);
+    }
     this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
     this->DeletePointerArray(this->m_argv, 2);
 
-    waitpid(pid, &status_loc, 0);
-    if (status_loc)
-        throw StatusCode::InternalServerError;
+    this->read_fd = pipefds[READ];
+    this->write_fd = pipefds[WRITE];
+    this->pid = pid;
+
     return (pipefds[READ]);
 }
 
