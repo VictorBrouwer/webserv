@@ -61,6 +61,7 @@ public:
 	void				createResponse(Server *server);
 	const std::string 	&getResponse() const;
 	void				createRedirect();
+	void				sendToClient( void );
 
 
 private:
@@ -79,8 +80,6 @@ private:
 
 	void writingDone( void );
 	void readingDone( void );
-
-	void sendToClient( void );
 
 	Server				 							*m_server;
 	std::unique_ptr<CGI>							m_cgi_instance;

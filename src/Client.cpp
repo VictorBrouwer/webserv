@@ -158,8 +158,17 @@ void Client::readingDone( void ) {
 	// Prepare the response
 	this->checkRequestSyntax(m_request->getRequest());
 	m_request->handleLocation(m_server);
+	try {
 	m_response.reset(new Response(this->m_request));
 	m_response->createResponse(m_server);
+	}
+	catch(const std::exception& e)
+	{
+		l.log("Serving canned error response.");
+		m_response.reset(new Response(500));
+		m_response->sendToClient();
+	}
+
 }
 
 void Client::writingDone( void ) {
