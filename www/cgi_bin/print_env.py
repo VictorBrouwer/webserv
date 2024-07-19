@@ -14,5 +14,5 @@ print("<p>Your Server Protocol is:", os.environ['SERVER_PROTOCOL'] + "</p>")
 print("<p>Your Server Port is:", os.environ['SERVER_PORT'] + "</p>")
 print("</body></html>")
 
-
-
+# while 1:
+#     pass

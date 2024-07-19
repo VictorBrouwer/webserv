@@ -141,6 +141,7 @@ void Response::createResponse(Server *server)
 		catch(const std::exception& e)
 		{
 			log("Loading Error Page Went Wrong Exception!!", L_Error);
+			throw;
 		}
 	}
 
@@ -339,23 +340,27 @@ void	Response::UploadFile() noexcept(false)
 	request_body = m_client_request->getBody();
 	log(request_body, L_Error);
 
+	log("Finding filename.");
 	pos = request_body.find("filename");
 	pos += 10; // Skip over [filename="]
 	filename = request_body.substr(pos, request_body.find(CRLF, pos) - (pos + 1));
 
+	log("Finding boundary");
 	pos = request_body.find(CRLF); // Find the boundary of the form data. (example: [-----------------------------114782935826962])
 	boundary = request_body.substr(0, pos);
 
+	log("Finding end of body");
 	pos = request_body.find(CRLFCRLF);
 	pos += 4; // Skip over [\r\n\r\n]
 	body = request_body.substr(pos, request_body.find(boundary, pos) - (pos + 2));
 
-
+	log("Adding to write buffer");
 	this->write_buffer << body;
 	upload_dir = m_client_request->getLocation().getUploadDir();
 	log(upload_dir, L_Warning);
 	if (upload_dir.back() != '/')
 		upload_dir.append("/");
+	log("Opening file.");
 	this->setWriteFileDescriptor(OpenFile((upload_dir + filename).c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644));
 	this->setWriteFDStatus(FD_POLLING);
 }
@@ -378,10 +383,11 @@ void Response::respondWithDirectoryListing()
 void Response::readingDone( void )
 {
 	int status_loc;
+	pid_t return_value;
 
 	if (this->m_CGI) {
-		waitpid(this->m_cgi_instance->pid, &status_loc, 0);
-		if (status_loc)
+		return_value = waitpid(this->m_cgi_instance->pid, &status_loc, WNOHANG);
+		if (return_value < 1 || status_loc)
 			this->m_status = StatusCode::InternalServerError;
 		this->m_body.append(this->read_buffer.str());
 	}
