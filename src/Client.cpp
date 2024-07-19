@@ -75,7 +75,7 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 		std::string headers = stream_contents.substr(0, header_boundary + 4);
 
 		// Put the rest back into the stringstream and reset the bytes_read
-		stream_contents.erase(0, header_limit + 4);
+		stream_contents.erase(0, header_boundary + 4);
 		this->bytes_read = stream_contents.size();
 
 		// We are now going to read the body, so we want to delimit based on
