@@ -25,7 +25,7 @@ CGI::CGI(std::shared_ptr<Request> client_request) : m_client_request(client_requ
 {
     m_path = m_client_request->getFinalPath();
 
-    log(m_path, L_Error);
+    log(m_path, L_Debug);
 
     switch (m_client_request->getMethod())
 	{

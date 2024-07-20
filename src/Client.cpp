@@ -12,7 +12,7 @@ Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socke
 	this->address        = address;
 	this->address_length = addr_len;
 
-	l.log("Marking client socket as ready for reading");
+	l.log("Marking client socket " + std::to_string(this->fd) + " as ready for reading", L_Info);
 	this->setReadFDStatus(FD_POLLING);
 }
 
@@ -113,7 +113,7 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 
 	}
 	else if (this->bytes_read > header_limit) {
-		l.log("Max header size exceeded, cutting off the connection", L_Error);
+		l.log("Max header size exceeded, cutting off the connection", L_Warning);
 		this->setReadFDStatus(FD_ERROR);
 
 		// Set up error Response and hit send
@@ -123,10 +123,8 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 void Client::afterReadDuringBody(std::string& stream_contents) {
 	// this->m_request->m_body.append(stream_contents);
 
-	l.log(std::to_string(stream_contents.size()), L_Error);
-
 	if (this->bytes_read > body_limit) {
-		l.log("Max body size exceeded, cutting off the connection.", L_Error);
+		l.log("Max body size exceeded, cutting off the connection.", L_Warning);
 		this->setReadFDStatus(FD_ERROR);
 
 		// Set up error Response and hit send
@@ -163,7 +161,7 @@ void Client::readingDone( void ) {
 	}
 	catch(const std::exception& e)
 	{
-		l.log("Serving canned error response.");
+		l.log("Serving canned error response.", L_Info);
 		m_response.reset(new Response(500));
 		m_response->sendToClient();
 	}
@@ -175,11 +173,11 @@ void Client::writingDone( void ) {
 	m_response.reset(new Response(m_request));
 
 	if (this->m_request->getKeepAlive()) {
-		l.log("Connection should be kept alive, resetting.", L_Warning);
+		l.log("Connection should be kept alive, resetting.");
 		this->setReadFDStatus(FD_POLLING);
 	}
 	else {
-		l.log("Done writing, connection should be closed.", L_Warning);
+		l.log("Done writing, connection should be closed.");
 		close(this->fd);
 		this->setWriteFDStatus(FD_HUNG_UP);
 	}

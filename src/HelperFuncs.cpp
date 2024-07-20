@@ -4,32 +4,23 @@
 
 #include "HelperFuncs.hpp"
 #include "Logger.hpp"
+#include "HTTPServer.hpp"
 
 // Deprecated, please use the Logger class instead (ga ik wel doen :P)
 void log(const std::string& message, const std::string& color) noexcept
 {
-	Logger l;
-
 	// std::cout << color << message << std::endl;
 	if (color == Color::Red)
-		l.log(message, L_Error);
+		HTTPServer::instance->l.log(message, L_Error);
 	else if (color == Color::Yellow)
-		l.log(message, L_Warning);
+		HTTPServer::instance->l.log(message, L_Warning);
 	else
-		l.log(message);
+		HTTPServer::instance->l.log(message);
 }
 
 // Deprecated, please use the Logger class instead
 void log(const std::string& message, const LogLevel level) noexcept {
-	Logger l;
-	l.log(message, level);
-}
-
-// Deprecated, please use the Logger class instead
-void exitWithError(const std::string &errorMessage)
-{
-	log("ERROR: " + errorMessage, Color::Red);
-	exit(1);
+	HTTPServer::instance->l.log(message, level);
 }
 
 // Converts a vector of strings to "[s1,s2,s3]"
@@ -54,7 +45,7 @@ size_t size_to_int(const std::string& str) {
 	if (str[pos] == 'K' || str[pos] == 'k')
 		multiplier = 1024;
 	else if (str[pos] == 'M' || str[pos] == 'm')
-		multiplier = 1024 * 1024; 
+		multiplier = 1024 * 1024;
 	else if (str[pos] == 'G' || str[pos] == 'g')
 		multiplier = 1024 * 1024 * 1024;
 	return size * multiplier;

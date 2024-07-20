@@ -45,10 +45,9 @@ class HTTPServer : public ConfigShared {
 		void doPollLoop( void );
 
 		inline static std::unique_ptr<HTTPServer> instance;
-
-	private:
 		Logger l;
 
+	private:
 		// A Socket is a file descriptor on which we listen for new clients.
 		// It is a separate entity from servers because multiple servers
 		// may listen on the same socket, or a different subset of them.

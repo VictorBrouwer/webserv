@@ -20,7 +20,6 @@ namespace Color {
 // Function declarations
 void log(const std::string& message, const std::string& color) noexcept;
 void log(const std::string &message, const LogLevel level = L_Debug) noexcept;
-void exitWithError(const std::string &errorMessage);
 
 std::string vector_to_string(const std::vector<std::string>& vector);
 size_t      size_to_int(const std::string& str);
