@@ -14,7 +14,6 @@ Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socke
 
 	l.log("Marking client socket as ready for reading");
 	this->setReadFDStatus(FD_POLLING);
-	(void) this->socket;
 }
 
 Client::Client(const Client& src) : ReadFileDescriptor(src.fd), WriteFileDescriptor(src.fd), socket(src.socket) {

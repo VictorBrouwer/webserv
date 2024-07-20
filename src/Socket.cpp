@@ -40,9 +40,9 @@ Socket::Socket(
 }
 
 Socket::~Socket() {
-	if (this->fd > 0) {
-		close(this->fd);
-	}
+	// if (this->fd > 0) {
+	// 	close(this->fd);
+	// }
 }
 
 const std::string& Socket::getInterface( void ) const {

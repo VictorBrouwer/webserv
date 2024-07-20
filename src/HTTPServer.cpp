@@ -32,9 +32,11 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 
 		// Reserve space in the poll loop vectors for everything
 		// we are going to do there
-		this->poll_vector.reserve((this->sockets.size() * 5) + (this->servers.size() * 10));
-		// this->read_fd_pointers.reserve(this->poll_vector.capacity());
-		// this->write_fd_pointers.reserve(this->poll_vector.capacity());
+		this->poll_vector.reserve(1024);
+		this->read_fd_pointers.reserve(1024);
+		this->write_fd_pointers.reserve(1024);
+
+		this->clients.reserve(1024);
 	}
 	catch(const std::exception& e) {
 		l.log(e.what(), L_Error);
@@ -44,6 +46,11 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 
 HTTPServer::~HTTPServer() {
 	// closeServer();
+	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [](Socket& s) {
+		if (s.getFileDescriptor() != -1) {
+			close(s.getFileDescriptor());
+		}
+	});
 }
 
 std::vector<Server>::iterator HTTPServer::getServerMutableIterator( void ) {
