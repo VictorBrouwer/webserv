@@ -50,7 +50,7 @@ Directive::Directive(std::vector<std::string>::iterator &i,
 			// throw a syntax error.
 			std::vector<std::string>::iterator block_start(i);
 			++i;
-			while (i != lines.end() && (*i)[i->find_first_not_of(WHITESPACE)] != '}')
+			while (i != lines.end() && (i->find_first_not_of(WHITESPACE) == std::string::npos || (*i)[i->find_first_not_of(WHITESPACE)] != '}'))
 			{
 				if (i->find_first_not_of(WHITESPACE) == std::string::npos || i->empty()) {
 					l.log("Skipping comment or empty line.");
