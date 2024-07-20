@@ -8,16 +8,30 @@
 
 // ReadFileDescriptor
 
-ReadFileDescriptor::ReadFileDescriptor(const ReadFileDescriptor& src) {
-	this->read_fd = src.read_fd;
-}
-
 ReadFileDescriptor::ReadFileDescriptor( void ) {
 	this->read_fd = -1;
 }
 
 ReadFileDescriptor::ReadFileDescriptor(int fd) {
 	this->read_fd = fd;
+}
+
+ReadFileDescriptor::ReadFileDescriptor(const ReadFileDescriptor& src) {
+	*this = (ReadFileDescriptor&) src;
+}
+
+ReadFileDescriptor& ReadFileDescriptor::operator=(ReadFileDescriptor& src) {
+	this->read_fd = src.read_fd;
+	this->read_status = src.read_status;
+	this->read_buffer.str(src.read_buffer.str());
+
+	return *this;
+}
+
+ReadFileDescriptor::ReadFileDescriptor(ReadFileDescriptor&& to_move) {
+	this->read_fd = to_move.read_fd;
+	this->read_status = to_move.read_status;
+	this->read_buffer.str(std::move(to_move.read_buffer).str());
 }
 
 int ReadFileDescriptor::getReadFileDescriptor( void ) const {
@@ -92,6 +106,24 @@ WriteFileDescriptor::WriteFileDescriptor( void ) {
 
 WriteFileDescriptor::WriteFileDescriptor(int fd) {
 	this->write_fd = fd;
+}
+
+WriteFileDescriptor::WriteFileDescriptor(const WriteFileDescriptor& src) {
+	*this = (WriteFileDescriptor&) src;
+}
+
+WriteFileDescriptor& WriteFileDescriptor::operator=(WriteFileDescriptor& src) {
+	this->write_fd = src.write_fd;
+	this->write_status = src.write_status;
+	this->write_buffer.str(src.write_buffer.str());
+
+	return *this;
+}
+
+WriteFileDescriptor::WriteFileDescriptor(WriteFileDescriptor&& to_move) {
+	this->write_fd = to_move.write_fd;
+	this->write_status = to_move.write_status;
+	this->write_buffer.str(std::move(to_move.write_buffer).str());
 }
 
 int WriteFileDescriptor::getWriteFileDescriptor( void ) const {

@@ -16,8 +16,7 @@ class Socket : public ReadFileDescriptor {
 		Socket(
 			const std::string& interface,
 			int port,
-			const Logger& logger,
-			std::vector<Client>& client_vector
+			const Logger& logger
 		);
 		~Socket();
 
@@ -46,7 +45,6 @@ class Socket : public ReadFileDescriptor {
 		int         fd = -1; // Default to avoid close() calls on nonexistent fds
 
 		Logger l;
-		std::vector<Client>* client_vector;
 
 	public:
 		class Exception : public std::exception {

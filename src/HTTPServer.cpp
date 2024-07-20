@@ -73,6 +73,10 @@ std::vector<Socket>::iterator HTTPServer::getSocketEnd( void ) {
 	return this->sockets.end();
 }
 
+std::vector<Client>& HTTPServer::getClientVector( void ) {
+	return this->clients;
+}
+
 std::vector<Client>::iterator HTTPServer::getClientIterator( void ) {
 	return this->clients.begin();
 }
@@ -124,7 +128,7 @@ void HTTPServer::setupSockets( void ) {
 	l.log("Done. Amount of sockets to open: " + std::to_string(sockets_to_open.size()));
 	l.log("Opening sockets...");
 	std::for_each(sockets_to_open.begin(), sockets_to_open.end(), [&](const std::pair<std::string, int>& s) {
-		this->sockets.emplace_back(s.first, s.second, l, this->clients);
+		this->sockets.emplace_back(s.first, s.second, l);
 	});
 
 	l.log("Done. Sockets are ready for listening.");
@@ -282,7 +286,47 @@ void HTTPServer::addWriteFileDescriptorToPoll(WriteFileDescriptor* write_fd) {
 }
 
 void HTTPServer::cleanUpPoll( void ) {
-	std::erase_if(this->clients, [&](Client& client) {
-		return (client.getWriteFDStatus() == FD_DONE || client.getWriteFDStatus() == FD_HUNG_UP);
-	});
+	// std::erase_if(this->clients, [&](const Client client)->bool {
+	// 	if (client.getWriteFDStatus() == FD_DONE || client.getWriteFDStatus() == FD_HUNG_UP) {
+	// 		l.log("Removing Client " + std::to_string(client.getWriteFileDescriptor()) + "/" + std::to_string(client.getReadFileDescriptor()) + " from poll vector because it is done.", L_Warning);
+	// 		return true;
+	// 	}
+	// 	return false;
+	// });
+
+	// this->clients.erase(std::remove_if(this->clients.begin(), this->clients.end(), [&](const Client client)->bool {
+	// 	if (client.getWriteFDStatus() == FD_DONE || client.getWriteFDStatus() == FD_HUNG_UP) {
+	// 		l.log("Removing Client " + std::to_string(client.getWriteFileDescriptor()) + "/" + std::to_string(client.getReadFileDescriptor()) + " from poll vector because it is done.", L_Error);
+	// 		return true;
+	// 	}
+	// 	return false;
+	// }), this->clients.end());
+
+	auto start = this->clients.begin();
+	auto it    = start;
+	auto end   = this->clients.end();
+
+	if (this->clients.size() == 1) {
+		if (this->clients[0].getWriteFDStatus() == FD_DONE || this->clients[0].getWriteFDStatus() == FD_HUNG_UP) {
+			l.log("Removing Client " + std::to_string(it->getWriteFileDescriptor()) + "/" + std::to_string(it->getReadFileDescriptor()) + " from poll vector because it is done.", L_Info);
+			this->clients.erase(it);
+		}
+	}
+	else {
+		while (it != end)
+		{
+			if (it->getWriteFDStatus() == FD_DONE || it->getWriteFDStatus() == FD_HUNG_UP) {
+				l.log("Removing Client " + std::to_string(it->getWriteFileDescriptor()) + "/" + std::to_string(it->getReadFileDescriptor()) + " from poll vector because it is done.", L_Info);
+				this->clients.erase(it);
+
+				// Reset to avoid invalidating our iterators
+				start = this->clients.begin();
+				it    = start;
+				end   = this->clients.end();
+			}
+			else {
+				it++;
+			}
+		}
+	}
 }

@@ -2,14 +2,13 @@
 #include <cstring>
 
 #include "Socket.hpp"
+#include "HTTPServer.hpp"
 
 Socket::Socket(
-	const std::string& interface, int port,
-	const Logger& logger, std::vector<Client>& client_vector
+	const std::string& interface, int port, const Logger& logger
 ) : ReadFileDescriptor(-1), l(logger) {
 	this->interface     = interface;
 	this->port          = port;
-	this->client_vector = &client_vector;
 
 	l.setDefaultContext("Socket " + this->toString());
 	l.log("Setting up socket for " + interface + ":" + std::to_string(port));
@@ -82,7 +81,7 @@ ssize_t Socket::doRead( void ) {
 		throw Socket::Exception(*this, "Accepting connection failed: " + std::string(std::strerror(errno)));
 	}
 
-	this->client_vector->emplace_back(client_socket, address, address_length, *this, this->l);
+	HTTPServer::instance->getClientVector().emplace_back(client_socket, address, address_length, *this, this->l);
 
 	return 1;
 }

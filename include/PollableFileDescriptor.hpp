@@ -73,6 +73,8 @@ class ReadFileDescriptor {
 		ReadFileDescriptor( void );
 		ReadFileDescriptor(int fd);
 		ReadFileDescriptor(const ReadFileDescriptor& src);
+		ReadFileDescriptor& operator=(ReadFileDescriptor& src);
+		ReadFileDescriptor(ReadFileDescriptor&& to_move);
 
 		// This function clears the buffer and resets the FDStatus.
 		void resetReadBuffer( void );
@@ -125,6 +127,9 @@ class WriteFileDescriptor {
 	protected:
 		WriteFileDescriptor( void );
 		WriteFileDescriptor(int fd);
+		WriteFileDescriptor(const WriteFileDescriptor& src);
+		WriteFileDescriptor& operator=(WriteFileDescriptor& src);
+		WriteFileDescriptor(WriteFileDescriptor&& to_move);
 
 		// This function clears the buffer and resets the FDStatus.
 		void resetWriteBuffer( void );

@@ -199,7 +199,7 @@ ClientState	Request::readFromClient(int client_fd)
 	}
 	if (pos != std::string::npos)
 	{
-		std::cout << buffer << std::endl;
+		// std::cout << buffer << std::endl;
 		this->parseHeaders();
 		if (m_headers.find("Connection") != m_headers.end())
 		{

@@ -36,6 +36,7 @@ class HTTPServer : public ConfigShared {
 		std::vector<Socket>::iterator getSocketIterator( void );
 		std::vector<Socket>::iterator getSocketEnd( void );
 
+		std::vector<Client>&		  getClientVector( void );
 		std::vector<Client>::iterator getClientIterator( void );
 		std::vector<Client>::iterator getClientEnd( void );
 

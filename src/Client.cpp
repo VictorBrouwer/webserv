@@ -16,7 +16,7 @@ Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socke
 	this->setReadFDStatus(FD_POLLING);
 }
 
-Client::Client(const Client& src) : ReadFileDescriptor(src.fd), WriteFileDescriptor(src.fd), socket(src.socket) {
+Client::Client(const Client& src) : ReadFileDescriptor(src), WriteFileDescriptor(src), socket(src.socket) {
 	*this = src;
 }
 
@@ -40,7 +40,7 @@ Client& Client::operator=(const Client& src) {
 	return *this;
 }
 
-Client::Client(Client&& to_move) : ReadFileDescriptor(to_move.fd), WriteFileDescriptor(to_move.fd), socket(to_move.socket) {
+Client::Client(Client&& to_move) : socket(to_move.socket) {
 	this->fd = to_move.fd;
 	to_move.fd = -1;
 
@@ -151,7 +151,7 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 // If we have to keepalive, keep the file descriptor open
 void Client::readingDone( void ) {
 	l.log("Full request received!");
-	l.log(this->m_request->getRequest(), L_Info);
+	l.log(this->m_request->getRequest());
 	// Prepare the response
 	this->checkRequestSyntax(m_request->getRequest());
 	m_request->handleLocation(m_server);

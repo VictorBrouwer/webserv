@@ -223,12 +223,12 @@ void	Response::addHeader()
 	{
 		request = m_body;
 		request.erase(0, request.find(CRLF) + 2);
-		log("\n" + request, L_Info);
+		log("\n" + request);
 		m_total_response.append("Content-Length: " + std::to_string(request.size() - 1) + CRLF);
 	}
 
 	m_total_response.append(m_body);
-	log(m_total_response, L_Info);
+	log(m_total_response);
 
 }
 
@@ -338,7 +338,7 @@ void	Response::UploadFile() noexcept(false)
 	std::string boundary;
 
 	request_body = m_client_request->getBody();
-	log(request_body, L_Error);
+	// log(request_body, L_Error);
 
 	log("Finding filename.");
 	pos = request_body.find("filename");
@@ -357,7 +357,7 @@ void	Response::UploadFile() noexcept(false)
 	log("Adding to write buffer");
 	this->write_buffer << body;
 	upload_dir = m_client_request->getLocation().getUploadDir();
-	log(upload_dir, L_Warning);
+	log(upload_dir);
 	if (upload_dir.back() != '/')
 		upload_dir.append("/");
 	log("Opening file.");

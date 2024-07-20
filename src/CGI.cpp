@@ -46,7 +46,8 @@ CGI::CGI(std::shared_ptr<Request> client_request) : m_client_request(client_requ
 }
 
 CGI::~CGI() {
-    std::cout << "CGI Destructor called" << std::endl;
+    // std::cout << "CGI Destructor called" << std::endl;
+    log("CGI Destructor called");
 }
 
 
