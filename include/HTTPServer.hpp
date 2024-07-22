@@ -40,6 +40,8 @@ class HTTPServer : public ConfigShared {
 		std::vector<Client>::iterator getClientIterator( void );
 		std::vector<Client>::iterator getClientEnd( void );
 
+		bool getContinue( void );
+		void stopServer( void );
 
 		void startListening( void );
 
@@ -49,6 +51,8 @@ class HTTPServer : public ConfigShared {
 		Logger l;
 
 	private:
+		bool continuing = true;
+
 		// A Socket is a file descriptor on which we listen for new clients.
 		// It is a separate entity from servers because multiple servers
 		// may listen on the same socket, or a different subset of them.

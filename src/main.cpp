@@ -7,6 +7,12 @@
 #include <fstream>
 #include <memory>
 #include <filesystem>
+#include <signal.h>
+
+void inthandler(int signal) {
+	(void) signal;
+	HTTPServer::instance->stopServer();
+}
 
 int main(int ac, char **av)
 {
@@ -47,7 +53,9 @@ int main(int ac, char **av)
 		HTTPServer::instance = std::make_unique<HTTPServer>(*config, l);
 		HTTPServer::instance->startListening();
 
-		while (true) {
+		signal(SIGINT, &inthandler);
+
+		while (HTTPServer::instance->getContinue()) {
 			HTTPServer::instance->doPollLoop();
 		}
 	}

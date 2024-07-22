@@ -53,6 +53,14 @@ HTTPServer::~HTTPServer() {
 	});
 }
 
+bool HTTPServer::getContinue( void ) {
+	return this->continuing;
+}
+
+void HTTPServer::stopServer( void ) {
+	this->continuing = false;
+}
+
 std::vector<Server>::iterator HTTPServer::getServerMutableIterator( void ) {
 	return this->servers.begin();
 }
@@ -207,6 +215,7 @@ void HTTPServer::runPoll( void ) {
 
 	int poll_return = poll(poll_data, poll_count, 10000);
 	if (poll_return < 0) {
+		return;
 		throw HTTPServer::Exception("poll error: " + std::string(std::strerror(errno)));
 	}
 	else if (poll_return == 0) {

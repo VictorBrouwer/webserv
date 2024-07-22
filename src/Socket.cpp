@@ -74,7 +74,7 @@ void Socket::startListening( void ) {
 // and add it to the Client vector in the server
 ssize_t Socket::doRead( void ) {
 	sockaddr  address;
-	socklen_t address_length;
+	socklen_t address_length = sizeof(address);
 	int client_socket = accept(this->getFileDescriptor(), (sockaddr *)&address, &address_length);
 
 	if (client_socket < 0) {
