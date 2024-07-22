@@ -4,8 +4,11 @@
 #include "Location.hpp"
 #include "ConfigShared.hpp"
 #include "ConfigReturn.hpp"
+// #include "Socket.hpp"
 #include "Logger.hpp"
 #include <memory>
+
+class Socket;
 
 class Server : public ConfigShared, public ConfigReturn {
 	public:
@@ -21,6 +24,10 @@ class Server : public ConfigShared, public ConfigReturn {
 		Location* findLocation(const std::string &uri);
 
 		bool operator==(int file_descriptor) const;
+
+		bool listensTo(const Socket& socket) const;
+
+		void addSocketFD(int fd);
 
 	private:
 		// int m_socket;

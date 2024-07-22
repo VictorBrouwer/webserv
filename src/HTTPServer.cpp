@@ -139,6 +139,14 @@ void HTTPServer::setupSockets( void ) {
 		this->sockets.emplace_back(s.first, s.second, l);
 	});
 
+	l.log("Assigning sockets back to servers...");
+	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [&](Socket& socket) {
+		std::for_each(this->getServerMutableIterator(), this->getServerMutableEnd(), [&](Server& server) {
+			if (server.listensTo(socket))
+				server.addSocketFD(socket.getFileDescriptor());
+		});
+	});
+
 	l.log("Done. Sockets are ready for listening.");
 }
 

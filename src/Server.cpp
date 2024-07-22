@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "HelperFuncs.hpp"
+#include "Socket.hpp"
 
 Server::Server(const Directive &server_directive, ConfigShared* config, const Logger& logger) : ConfigShared(config), l("Server", logger.getLogLevel()) {
 	// Set logger context with a recognizable name if possible,
@@ -114,6 +115,27 @@ void Server::applyListenDirective(const Directive& directive) {
 
 bool Server::operator==(int file_descriptor) const {
 	return std::find(this->sockets.begin(), this->sockets.end(), file_descriptor) != this->sockets.end();
+}
+
+bool Server::listensTo(const Socket& socket) const {
+	auto it  = this->listens.begin();
+	auto end = this->listens.end();
+
+	while (it != end)
+	{
+		if (it->second == socket.getPort()) {
+			if (socket.getInterface() == "0.0.0.0" || socket.getInterface() == it->first)
+				return true;
+		}
+
+		it++;
+	}
+
+	return false;
+}
+
+void Server::addSocketFD(int fd) {
+	this->sockets.push_back(fd);
 }
 
 Location* Server::findLocation(const std::string &uri) // to do: find the longest location match with uri
