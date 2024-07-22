@@ -78,7 +78,7 @@ ssize_t Socket::doRead( void ) {
 	int client_socket = accept(this->getFileDescriptor(), (sockaddr *)&address, &address_length);
 
 	if (client_socket < 0) {
-		throw Socket::Exception(*this, "Accepting connection failed: " + std::string(std::strerror(errno)));
+		throw Socket::Exception(*this, "Accepting connection on fd " + std::to_string(this->getFileDescriptor()) + " failed: " + std::string(std::strerror(errno)));
 	}
 
 	HTTPServer::instance->getClientVector().emplace_back(client_socket, address, address_length, *this, this->l);
