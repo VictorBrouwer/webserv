@@ -11,7 +11,6 @@
 #include <fstream>
 #include <filesystem>
 #include "Request.hpp"
-#include "Server.hpp"
 #include "HelperFuncs.hpp"
 #include "PollableFileDescriptor.hpp"
 #include <fcntl.h>
@@ -47,6 +46,8 @@ enum class StatusCode
 	ServiceUnavailable = 503,
 	GatewayTimeout = 504
 };
+
+class Server;
 
 typedef int fd_t;
 class Response : public ReadFileDescriptor, public WriteFileDescriptor

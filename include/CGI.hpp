@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <string>
-#include "Request.hpp"
+// #include "Request.hpp"
 #include "Response.hpp"
 #include <vector>
 #include <cstring>
@@ -15,6 +15,8 @@
 #define READ 0
 #define WRITE 1
 #define CHILD 0
+
+class Request;
 
 class CGI {
 public:
