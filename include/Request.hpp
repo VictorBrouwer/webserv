@@ -53,6 +53,7 @@ class Request {
 		std::pair<std::string,int> getHostPort() const;
 		const std::string&	getHost( void ) const;
 		int                 getPort( void ) const;
+		int					getSocketFD() const;
 		const std::unordered_map<std::string, std::string>& getHeaders() const;
 		void				handleLocation(Server *server);
 		std::string m_total_request;

@@ -326,6 +326,11 @@ size_t Request::getContentLength() const
 	return m_content_length;
 }
 
+int Request::getSocketFD() const
+{
+	return socket_fd;
+}
+
 // std::size_t	Request::getMaxBodySize() const {
 // 	try {
 // 		return this->responding_server->getClientMaxBodySize();

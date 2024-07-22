@@ -1,26 +1,28 @@
-#include"Client.hpp"
+#include "Client.hpp"
 #include "Socket.hpp"
 #include "HTTPServer.hpp"
-#include"HelperFuncs.hpp"
+#include "HelperFuncs.hpp"
 
-Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket& socket, const Logger& logger) :
-	ReadFileDescriptor(fd), WriteFileDescriptor(fd),
-	l(logger), socket(socket) {
+Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket &socket, const Logger &logger) : ReadFileDescriptor(fd), WriteFileDescriptor(fd),
+																										   l(logger), socket(socket)
+{
 	this->l.setDefaultContext("Client");
 	this->fd = fd;
 
-	this->address        = address;
+	this->address = address;
 	this->address_length = addr_len;
 
 	l.log("Marking client socket " + std::to_string(this->fd) + " as ready for reading", L_Info);
 	this->setReadFDStatus(FD_POLLING);
 }
 
-Client::Client(const Client& src) : ReadFileDescriptor(src), WriteFileDescriptor(src), socket(src.socket) {
+Client::Client(const Client &src) : ReadFileDescriptor(src), WriteFileDescriptor(src), socket(src.socket)
+{
 	*this = src;
 }
 
-Client& Client::operator=(Client& src) {
+Client &Client::operator=(Client &src)
+{
 	this->fd = src.fd;
 
 	this->l = src.l;
@@ -30,7 +32,8 @@ Client& Client::operator=(Client& src) {
 	return *this;
 }
 
-Client& Client::operator=(const Client& src) {
+Client &Client::operator=(const Client &src)
+{
 	this->fd = src.fd;
 
 	this->l = src.l;
@@ -40,7 +43,8 @@ Client& Client::operator=(const Client& src) {
 	return *this;
 }
 
-Client::Client(Client&& to_move) : socket(to_move.socket) {
+Client::Client(Client &&to_move) : socket(to_move.socket)
+{
 	this->fd = to_move.fd;
 	to_move.fd = -1;
 
@@ -49,28 +53,33 @@ Client::Client(Client&& to_move) : socket(to_move.socket) {
 	this->address_length = to_move.address_length;
 }
 
-Client::~Client() {
-
+Client::~Client()
+{
 }
 
 // Callback for reading
-void Client::afterRead( void ) {
+void Client::afterRead(void)
+{
 	std::string stream_contents = std::move(this->read_buffer).str();
 
-	if (this->reading_body) {
+	if (this->reading_body)
+	{
 		this->afterReadDuringBody(stream_contents);
 	}
-	else {
+	else
+	{
 		this->afterReadDuringHeaders(stream_contents);
 	}
 
 	this->read_buffer.str(std::move(stream_contents));
 }
 
-void Client::afterReadDuringHeaders(std::string& stream_contents) {
+void Client::afterReadDuringHeaders(std::string &stream_contents)
+{
 	std::size_t header_boundary = stream_contents.find("\r\n\r\n");
 
-	if (header_boundary != std::string::npos) {
+	if (header_boundary != std::string::npos)
+	{
 		std::string headers = stream_contents.substr(0, header_boundary + 4);
 
 		// Put the rest back into the stringstream and reset the bytes_read
@@ -83,36 +92,43 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 		this->m_request.reset(new Request(headers, l, this->socket.getFileDescriptor()));
 		this->extractServer();
 
-		if (this->m_request->hasBody()) {
+		if (this->m_request->hasBody())
+		{
 			l.log("Request has body, checking if we have everything already.");
 
-			if (this->m_request->getChunkedRequest()) {
+			if (this->m_request->getChunkedRequest())
+			{
 				l.log("Chunked request");
 			}
-			else {
-				if (this->m_request->getContentLength() <= this->bytes_read) {
+			else
+			{
+				if (this->m_request->getContentLength() <= this->bytes_read)
+				{
 					l.log("Full body received, passing it on.");
 					this->m_request->setBody(this->read_buffer.str());
 					this->setReadFDStatus(FD_DONE);
 				}
-				else {
+				else
+				{
 					l.log("Full body is not in yet, continuing to read.");
 					this->reading_body = true;
 				}
 			}
 
 			this->chunked_request = m_request->getChunkedRequest();
-			if (!chunked_request) {
+			if (!chunked_request)
+			{
 				this->body_limit = m_server->getClientMaxBodySize();
 			}
 		}
-		else {
+		else
+		{
 			l.log("No body, done reading this request.");
 			this->setReadFDStatus(FD_DONE);
 		}
-
 	}
-	else if (this->bytes_read > header_limit) {
+	else if (this->bytes_read > header_limit)
+	{
 		l.log("Max header size exceeded, cutting off the connection", L_Warning);
 		this->setReadFDStatus(FD_ERROR);
 
@@ -120,28 +136,36 @@ void Client::afterReadDuringHeaders(std::string& stream_contents) {
 	}
 }
 
-void Client::afterReadDuringBody(std::string& stream_contents) {
+void Client::afterReadDuringBody(std::string &stream_contents)
+{
 	// this->m_request->m_body.append(stream_contents);
 
-	if (this->bytes_read > body_limit) {
+	if (this->bytes_read > body_limit)
+	{
 		l.log("Max body size exceeded, cutting off the connection.", L_Warning);
 		this->setReadFDStatus(FD_ERROR);
 
 		// Set up error Response and hit send
-	} else {
-		if (this->chunked_request && stream_contents.find("\r\n0\r\n\r\n") != std::string::npos) {
+	}
+	else
+	{
+		if (this->chunked_request && stream_contents.find("\r\n0\r\n\r\n") != std::string::npos)
+		{
 			l.log("Found zero chunk, done reading.");
 			this->setReadFDStatus(FD_DONE);
 		}
-		else if (this->bytes_read >= this->m_request->getContentLength()) {
+		else if (this->bytes_read >= this->m_request->getContentLength())
+		{
 			l.log("Read all of Content-Length, done reading.");
 			this->setReadFDStatus(FD_DONE);
 		}
-		else {
+		else
+		{
 			l.log("Read " + std::to_string(this->bytes_read) + " bytes, continuing.");
 		}
 
-		if (this->getReadFDStatus() == FD_DONE) {
+		if (this->getReadFDStatus() == FD_DONE)
+		{
 			this->m_request->setBody(stream_contents);
 			this->m_request->m_total_request.append(stream_contents);
 		}
@@ -149,60 +173,67 @@ void Client::afterReadDuringBody(std::string& stream_contents) {
 }
 
 // If we have to keepalive, keep the file descriptor open
-void Client::readingDone( void ) {
+void Client::readingDone(void)
+{
 	l.log("Full request received!");
 	l.log(this->m_request->getRequest());
 	// Prepare the response
 	this->checkRequestSyntax(m_request->getRequest());
 	m_request->handleLocation(m_server);
-	try {
-	m_response.reset(new Response(this->m_request));
-	m_response->createResponse(m_server);
+	try
+	{
+		m_response.reset(new Response(this->m_request));
+		m_response->createResponse(m_server);
 	}
-	catch(const std::exception& e)
+	catch (const std::exception &e)
 	{
 		l.log("Serving canned error response.", L_Info);
 		m_response.reset(new Response(500));
 		m_response->sendToClient();
 	}
-
 }
 
-void Client::writingDone( void ) {
+void Client::writingDone(void)
+{
 	m_request.reset(new Request);
 	m_response.reset(new Response(m_request));
 
-	if (this->m_request->getKeepAlive()) {
+	if (this->m_request->getKeepAlive())
+	{
 		l.log("Connection should be kept alive, resetting.");
 		this->setReadFDStatus(FD_POLLING);
 	}
-	else {
+	else
+	{
 		l.log("Done writing, connection should be closed.");
 		close(this->fd);
 		this->setWriteFDStatus(FD_HUNG_UP);
 	}
 }
 
-std::shared_ptr<Request>& Client::getRequest( void ) {
+std::shared_ptr<Request> &Client::getRequest(void)
+{
 	return this->m_request;
 }
 
-std::shared_ptr<Response>& Client::getResponse( void ) {
+std::shared_ptr<Response> &Client::getResponse(void)
+{
 	return this->m_response;
 }
 
-void Client::addToWriteBuffer(const std::string& str) {
+void Client::addToWriteBuffer(const std::string &str)
+{
 	this->write_buffer << str;
 }
 
 // Legacy
 
-ClientState & Client::getState()
+ClientState &Client::getState()
 {
 	return this->m_state;
 }
 
-void	Client::sendResponse()
+void Client::sendResponse()
 {
 	int bytes_sent;
 
@@ -217,7 +248,7 @@ void	Client::sendResponse()
 	m_total_bytes_sent += bytes_sent;
 	if (m_total_bytes_sent == this->m_response->getResponse().length())
 	{
-		if(m_request->getKeepAlive() == true)
+		if (m_request->getKeepAlive() == true)
 		{
 			m_request.reset(new Request);
 			m_response.reset(new Response(m_request));
@@ -231,44 +262,44 @@ void	Client::sendResponse()
 		m_state = ClientState::SENDING;
 }
 
-void	Client::receive(std::vector<Server> &servers)
-{
-	m_state = m_request->readFromClient(m_socket);
-	// log("\n" + m_request->getRequest(), L_Info);
-	// m_state is either loading or reading_done
-	// if client state is loading, the poll event should remain POLLIN
-	// if client statis done_reading, a response should be created and then
-	// the poll event should be set to pollout
-	// pollout basically tells you that the sending will succeed
-	switch (m_state)
-	{
-	case ClientState::ERROR:
-		break;
-	case ClientState::LOADING:
-		break;
-	case ClientState::READING_DONE:
-		this->extractServer(servers);
-		this->checkRequestSyntax(m_request->getRequest());
-		m_request->handleLocation(m_server);
-		m_response->createResponse(m_server);
-		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
-		break;
-	default:
-		break;
-	}
-}
+// void	Client::receive(std::vector<Server> &servers)
+// {
+// 	m_state = m_request->readFromClient(m_socket);
+// 	// log("\n" + m_request->getRequest(), L_Info);
+// 	// m_state is either loading or reading_done
+// 	// if client state is loading, the poll event should remain POLLIN
+// 	// if client statis done_reading, a response should be created and then
+// 	// the poll event should be set to pollout
+// 	// pollout basically tells you that the sending will succeed
+// 	switch (m_state)
+// 	{
+// 	case ClientState::ERROR:
+// 		break;
+// 	case ClientState::LOADING:
+// 		break;
+// 	case ClientState::READING_DONE:
+// 		this->extractServer(servers);
+// 		this->checkRequestSyntax(m_request->getRequest());
+// 		m_request->handleLocation(m_server);
+// 		m_response->createResponse(m_server);
+// 		m_state = ClientState::READY_TO_SEND; // maybe set this somewhere else
+// 		break;
+// 	default:
+// 		break;
+// 	}
+// }
 
-void Client::checkRequestSyntax(const std::string& request)
+void Client::checkRequestSyntax(const std::string &request)
 {
-   std::istringstream iss(request);
-   std::vector<std::string> lines;
-   std::string line;
-   while (std::getline(iss, line))
-	   lines.push_back(line);
+	std::istringstream iss(request);
+	std::vector<std::string> lines;
+	std::string line;
+	while (std::getline(iss, line))
+		lines.push_back(line);
 	// Check the minimum number of lines
-   if (lines.size() < 3)
+	if (lines.size() < 3)
 		throw std::runtime_error("invalid HTTP-request");
-	const std::string& request_line = lines[0];
+	const std::string &request_line = lines[0];
 	std::istringstream request_line_stream(request_line);
 	std::string method, path, http_version;
 	request_line_stream >> method >> path >> http_version;
@@ -278,14 +309,15 @@ void Client::checkRequestSyntax(const std::string& request)
 		throw std::runtime_error("invalid HTTP-request");
 }
 
-void	Client::extractServer(std::vector<Server> &servers)
+void Client::extractServer(std::vector<Server> &servers)
 {
 	// std::vector<Server> server_vector = HTTPServer::instance->getServerVector();
 	for (auto &server : servers)
 	{
-		for (const auto& servername : server.getServerNames())
+		for (const auto &servername : server.getServerNames())
 		{
-			if (servername == this->m_request->getHost()) {
+			if (servername == this->m_request->getHost() && server.containsSocket(this->m_request->getSocketFD()))
+			{
 				m_server = &server;
 				l.log("Found server.");
 			}
@@ -293,22 +325,33 @@ void	Client::extractServer(std::vector<Server> &servers)
 	}
 	if (!m_server)
 		m_server = &(*(servers.begin()));
-		// m_server = servers->data();
+	// m_server = servers->data();
 }
 
-void	Client::extractServer()
+void Client::extractServer()
 {
+	int socket_fd = this->m_request->getSocketFD();
 	for (auto &server : HTTPServer::instance->getServerVector())
 	{
-		for (const auto& servername : server.getServerNames())
+		for (const auto &servername : server.getServerNames())
 		{
-			if (servername == this->m_request->getHost()) {
+			if (servername == this->m_request->getHost() && server.containsSocket(socket_fd))
+			{
 				m_server = &server;
 				l.log("Found server.");
 			}
 		}
 	}
 	if (!m_server)
-		m_server = &(*(HTTPServer::instance->getServerVector().begin()));
-		// m_server = servers->data();
+	{
+		for (auto &server : HTTPServer::instance->getServerVector())
+		{
+			if (server.containsSocket(socket_fd))
+			{
+				m_server = &server;
+				l.log("Found server.");
+			}
+		}
+	}
+	// m_server = servers->data();
 }

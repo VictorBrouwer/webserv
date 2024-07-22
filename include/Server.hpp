@@ -13,6 +13,7 @@ class Server : public ConfigShared, public ConfigReturn {
 				const Logger& logger);
 
 		const std::vector<std::pair<std::string, int>>& getListens( void ) const;
+		bool	containsSocket(int socket_fd) const;
 
 		~Server();
 

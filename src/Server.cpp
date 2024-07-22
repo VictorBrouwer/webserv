@@ -155,3 +155,9 @@ const std::vector<std::string>& Server::getServerNames()
 {
 	return server_names;
 }
+
+// checks if the server contains a given socket
+bool Server::containsSocket(int socket_fd) const {
+	std::vector<int> sockets = this->sockets;
+	return std::find(this->sockets.begin(), this->sockets.end(), socket_fd) != this->sockets.end();
+}
