@@ -7,6 +7,8 @@
 #include "Directive.hpp"
 #include "Socket.hpp"
 
+#define TIMEOUT_SECONDS 10
+
 HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShared(), l("HTTPServer", logger.getLogLevel())
 {
 	try {
@@ -233,6 +235,9 @@ void HTTPServer::runPoll( void ) {
 		l.log("Events returned: " + std::to_string(poll_return), L_Info);
 		this->handleEvents();
 	}
+
+	l.log("Checking for timeouts...");
+	this->handleTimeouts();
 }
 
 // For each event returned by runPoll, perform the required action
@@ -261,6 +266,37 @@ void HTTPServer::handleEvents( void ) {
 					this->read_fd_pointers[pollfd.fd]->setReadFDStatus(FD_HUNG_UP);
 					this->read_fd_pointers[pollfd.fd]->callReadingDone();
 				}
+			}
+		}
+	});
+}
+
+void HTTPServer::handleTimeouts( void ) {
+	const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+	std::chrono::seconds since_start;
+
+	std::for_each(this->read_fd_pointers.begin(), this->read_fd_pointers.end(),
+	[&](std::pair<const int, ReadFileDescriptor*>& pair) {
+		ReadFileDescriptor* fd = pair.second;
+		if (fd->read_start_time.time_since_epoch().count() > 0) {
+			since_start = std::chrono::duration_cast<std::chrono::seconds>(now - fd->read_start_time);
+			if (since_start.count() > TIMEOUT_SECONDS) {
+				l.log("Timing out read file descriptor " + std::to_string(pair.first), L_Warning);
+				fd->setReadFDStatus(FD_ERROR);
+				fd->callReadingDone();
+			}
+		}
+	});
+
+	std::for_each(this->write_fd_pointers.begin(), this->write_fd_pointers.end(),
+	[&](std::pair<const int, WriteFileDescriptor*>& pair) {
+		WriteFileDescriptor* fd = pair.second;
+		if (fd->write_start_time.time_since_epoch().count() > 0) {
+			since_start = std::chrono::duration_cast<std::chrono::seconds>(now - fd->write_start_time);
+			if (since_start.count() > TIMEOUT_SECONDS) {
+				l.log("Timing out write file descriptor " + std::to_string(pair.first), L_Warning);
+				fd->setWriteFDStatus(FD_ERROR);
+				fd->callWritingDone();
 			}
 		}
 	});
