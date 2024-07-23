@@ -400,6 +400,11 @@ void Response::readingDone( void )
 	}
 	else if (this->getReadFDStatus() != FD_DONE)
 	{
+		if (this->m_CGI) {
+			log("Killing CGI process.", L_Error);
+			kill(this->m_cgi_instance->pid, SIGKILL);
+		}
+
 		this->m_body.append(this->customizeErrorPage(500));
 		this->m_status = StatusCode::InternalServerError;
 	}
