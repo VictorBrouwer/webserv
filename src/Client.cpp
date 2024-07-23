@@ -1,3 +1,4 @@
+#include <chrono>
 #include "Client.hpp"
 #include "Socket.hpp"
 #include "HTTPServer.hpp"
@@ -14,6 +15,7 @@ Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket &socke
 
 	l.log("Marking client socket " + std::to_string(this->fd) + " as ready for reading", L_Info);
 	this->setReadFDStatus(FD_POLLING);
+	this->read_start_time = std::chrono::steady_clock::now();
 }
 
 Client::Client(const Client &src) : ReadFileDescriptor(src), WriteFileDescriptor(src), socket(src.socket)
@@ -202,6 +204,7 @@ void Client::writingDone(void)
 	{
 		l.log("Connection should be kept alive, resetting.");
 		this->setReadFDStatus(FD_POLLING);
+		this->read_start_time = std::chrono::steady_clock::now();
 	}
 	else
 	{

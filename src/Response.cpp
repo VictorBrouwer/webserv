@@ -1,3 +1,4 @@
+#include <chrono>
 #include "Response.hpp"
 #include "CGI.hpp"
 #include "constants.hpp"
@@ -91,6 +92,7 @@ void Response::createResponse(Server *server)
 				m_status = StatusCode::NotFound;
 				this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(404), O_RDONLY));
 				this->setReadFDStatus(FD_POLLING);
+				this->read_start_time = std::chrono::steady_clock::now();
 				throw std::logic_error("File Not Found 404");
 			}
 		}
@@ -137,6 +139,7 @@ void Response::createResponse(Server *server)
 		{
 			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)), O_RDONLY));
 			this->setReadFDStatus(FD_POLLING);
+			this->read_start_time = std::chrono::steady_clock::now();
 		}
 		catch(const std::exception& e)
 		{
@@ -157,6 +160,7 @@ void Response::GetFile()
 {
 	this->setReadFileDescriptor(this->OpenFile(m_path, O_RDONLY));
 	this->setReadFDStatus(FD_POLLING);
+	this->read_start_time = std::chrono::steady_clock::now();
 }
 
 /**
@@ -250,9 +254,11 @@ void Response::ExecuteCGI() noexcept(false)
 		this->m_cgi_instance->ExecuteScript(m_path);
 		this->setReadFileDescriptor(this->m_cgi_instance->read_fd);
 		this->setReadFDStatus(FD_POLLING);
+		this->read_start_time = std::chrono::steady_clock::now();
 		if (this->m_method == HTTPMethod::POST) {
 			this->setWriteFileDescriptor(this->m_cgi_instance->write_fd);
 			this->setWriteFDStatus(FD_POLLING);
+			this->write_start_time = std::chrono::steady_clock::now();
 		}
 	}
 	catch(StatusCode &status)
@@ -363,6 +369,7 @@ void	Response::UploadFile() noexcept(false)
 	log("Opening file.");
 	this->setWriteFileDescriptor(OpenFile((upload_dir + filename).c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644));
 	this->setWriteFDStatus(FD_POLLING);
+	this->write_start_time = std::chrono::steady_clock::now();
 }
 
 
@@ -433,4 +440,5 @@ void Response::sendToClient( void ) {
 
 	client_iter->addToWriteBuffer(this->getResponse());
 	client_iter->setWriteFDStatus(FD_POLLING);
+	client_iter->write_start_time = std::chrono::steady_clock::now();
 }

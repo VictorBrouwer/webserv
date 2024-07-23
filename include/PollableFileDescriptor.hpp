@@ -2,6 +2,7 @@
 
 #include <poll.h>
 #include <sstream>
+#include <chrono>
 
 // Abstract classes to describe a buffered file descriptor to read or write with.
 // By inheriting these in other classes, we can polymorphically add them
@@ -69,6 +70,8 @@ class ReadFileDescriptor {
 
 		void callReadingDone( void );
 
+		std::chrono::steady_clock::time_point read_start_time;
+
 	protected:
 		ReadFileDescriptor( void );
 		ReadFileDescriptor(int fd);
@@ -124,6 +127,8 @@ class WriteFileDescriptor {
 
 		void callWritingDone( void );
 
+		std::chrono::steady_clock::time_point write_start_time;
+
 	protected:
 		WriteFileDescriptor( void );
 		WriteFileDescriptor(int fd);
@@ -155,6 +160,6 @@ class WriteFileDescriptor {
 		// writing is done.
 		virtual void writingDone( void ) { };
 
-		int				  write_fd;
-		FDStatus          write_status = FD_IDLE;
+		int				  		write_fd;
+		FDStatus	            write_status = FD_IDLE;
 };
