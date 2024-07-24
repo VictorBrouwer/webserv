@@ -256,7 +256,7 @@ void Directive::error_page_validator(const Logger& l) const {
 	if (!std::regex_match(arguments[1], urlPattern))
 		throw Configuration::Exception("Invalid URL in error_page directive", line);
 
-	l.log("Custom directive checker \"error_page\" is valid!", L_Info);
+	l.log("Custom directive checker \"error_page\" is valid!");
 }
 
 void Directive::return_validator(const Logger& l) const {
@@ -271,5 +271,5 @@ void Directive::return_validator(const Logger& l) const {
 	if (arguments.size() > 1 && !std::regex_match(arguments[1], urlPattern))
 		throw Configuration::Exception("Invalid URL in return directive", line);
 
-	l.log("Custom directive checker \"return\" is valid!", L_Info);
+	l.log("Custom directive checker \"return\" is valid!");
 }
