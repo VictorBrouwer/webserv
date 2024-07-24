@@ -399,7 +399,7 @@ void Response::readingDone( void )
 		// this->m_body.append(this->read_buffer.str());
 	}
 
-	if (this->getReadFDStatus() == FD_ERROR)
+	if (this->getReadFDStatus() == FD_ERROR || this->m_status == StatusCode::InternalServerError)
 	{
 		this->m_body.append(this->customizeErrorPage(500));
 		this->m_status = StatusCode::InternalServerError;
