@@ -396,15 +396,11 @@ void Response::readingDone( void )
 		return_value = waitpid(this->m_cgi_instance->pid, &status_loc, WNOHANG);
 		if (return_value < 1 || status_loc)
 			this->m_status = StatusCode::InternalServerError;
-		this->m_body.append(this->read_buffer.str());
+		// this->m_body.append(this->read_buffer.str());
 	}
-	else if (this->getReadFDStatus() != FD_DONE)
-	{
-		if (this->m_CGI) {
-			log("Killing CGI process.", L_Error);
-			kill(this->m_cgi_instance->pid, SIGKILL);
-		}
 
+	if (this->getReadFDStatus() != FD_DONE)
+	{
 		this->m_body.append(this->customizeErrorPage(500));
 		this->m_status = StatusCode::InternalServerError;
 	}
@@ -425,12 +421,14 @@ void Response::writingDone( void )
 		this->m_status = StatusCode::InternalServerError;
 	}
 
-	m_body = "Uploaded File!";
+	if (!this->m_CGI) {
+		m_body = "Uploaded File!";
+		this->addHeader();
+		this->sendToClient();
+	}
 
 	close(this->getWriteFileDescriptor());
 	this->setWriteFileDescriptor(-1);
-	this->addHeader();
-	this->sendToClient();
 }
 
 void Response::sendToClient( void ) {
@@ -446,4 +444,18 @@ void Response::sendToClient( void ) {
 	client_iter->addToWriteBuffer(this->getResponse());
 	client_iter->setWriteFDStatus(FD_POLLING);
 	client_iter->write_start_time = std::chrono::steady_clock::now();
+}
+
+void Response::readTimedOut( void ) {
+	if (this->m_CGI) {
+		log("Killing CGI process.", L_Error);
+		kill(this->m_cgi_instance->pid, SIGINT);
+	}
+}
+
+void Response::writeTimedOut( void ) {
+	if (this->m_CGI) {
+		log("Killing CGI process.", L_Error);
+		kill(this->m_cgi_instance->pid, SIGINT);
+	}
 }

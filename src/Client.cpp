@@ -13,6 +13,9 @@ Client::Client(int fd, sockaddr address, socklen_t addr_len, const Socket &socke
 	this->address = address;
 	this->address_length = addr_len;
 
+	this->read_timeout_seconds = 20;
+	this->write_timeout_seconds = 20;
+
 	l.log("Marking client socket " + std::to_string(this->fd) + " as ready for reading", L_Info);
 	this->setReadFDStatus(FD_POLLING);
 	this->read_start_time = std::chrono::steady_clock::now();

@@ -7,8 +7,6 @@
 #include "Directive.hpp"
 #include "Socket.hpp"
 
-#define TIMEOUT_SECONDS 10
-
 HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShared(), l("HTTPServer", logger.getLogLevel())
 {
 	try {
@@ -223,8 +221,9 @@ void HTTPServer::runPoll( void ) {
 	l.log("Running poll with " + std::to_string(poll_count) + " file descriptors.", L_Info);
 	l.log("Current clients: " + std::to_string(this->clients.size()), L_Info);
 
-	int poll_return = poll(poll_data, poll_count, 10000);
+	int poll_return = poll(poll_data, poll_count, 3000);
 	if (poll_return < 0) {
+		l.log(std::string(std::strerror(errno)), L_Error);
 		return;
 		throw HTTPServer::Exception("poll error: " + std::string(std::strerror(errno)));
 	}
@@ -280,8 +279,9 @@ void HTTPServer::handleTimeouts( void ) {
 		ReadFileDescriptor* fd = pair.second;
 		if (fd->read_start_time.time_since_epoch().count() > 0) {
 			since_start = std::chrono::duration_cast<std::chrono::seconds>(now - fd->read_start_time);
-			if (since_start.count() > TIMEOUT_SECONDS) {
+			if (since_start.count() > fd->read_timeout_seconds) {
 				l.log("Timing out read file descriptor " + std::to_string(pair.first), L_Warning);
+				fd->readTimedOut();
 				fd->setReadFDStatus(FD_ERROR);
 				fd->callReadingDone();
 			}
@@ -293,8 +293,9 @@ void HTTPServer::handleTimeouts( void ) {
 		WriteFileDescriptor* fd = pair.second;
 		if (fd->write_start_time.time_since_epoch().count() > 0) {
 			since_start = std::chrono::duration_cast<std::chrono::seconds>(now - fd->write_start_time);
-			if (since_start.count() > TIMEOUT_SECONDS) {
+			if (since_start.count() > fd->write_timeout_seconds) {
 				l.log("Timing out write file descriptor " + std::to_string(pair.first), L_Warning);
+				fd->writeTimedOut();
 				fd->setWriteFDStatus(FD_ERROR);
 				fd->callWritingDone();
 			}

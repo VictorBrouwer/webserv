@@ -70,7 +70,9 @@ class ReadFileDescriptor {
 
 		void callReadingDone( void );
 
+		int64_t read_timeout_seconds = 10;
 		std::chrono::steady_clock::time_point read_start_time;
+		virtual void readTimedOut( void ) { };
 
 	protected:
 		ReadFileDescriptor( void );
@@ -127,7 +129,9 @@ class WriteFileDescriptor {
 
 		void callWritingDone( void );
 
+		int64_t write_timeout_seconds = 10;
 		std::chrono::steady_clock::time_point write_start_time;
+		virtual void writeTimedOut( void ) { };
 
 	protected:
 		WriteFileDescriptor( void );

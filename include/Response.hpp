@@ -64,6 +64,9 @@ public:
 	void				createRedirect();
 	void				sendToClient( void );
 
+	void				readTimedOut( void );
+	void				writeTimedOut( void );
+
 
 private:
 
