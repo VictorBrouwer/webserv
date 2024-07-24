@@ -9,8 +9,11 @@
 #include <filesystem>
 #include <signal.h>
 
-void inthandler(int signal) {
-	(void) signal;
+void inthandler(int sig) {
+	(void) sig;
+	HTTPServer::instance->l.log("SIGINT received, finishing requests in progress and gracefully shutting down.", L_Error);
+	HTTPServer::instance->l.log("Press Ctrl + C again to shut down immediately.", L_Error);
+	signal(SIGINT, SIG_DFL);
 	HTTPServer::instance->stopServer();
 }
 
@@ -55,9 +58,11 @@ int main(int ac, char **av)
 
 		signal(SIGINT, &inthandler);
 
-		while (HTTPServer::instance->getContinue()) {
+		while (HTTPServer::instance->getContinue() || HTTPServer::instance->getClientVector().size() > 0) {
 			HTTPServer::instance->doPollLoop();
 		}
+
+		HTTPServer::instance->l.log("No more clients, exiting. :)", L_Info);
 	}
 	catch(const std::exception& e) {
 		l.log(std::string("Uncaught or unrecoverable exception thrown: ") + e.what(), L_Error);

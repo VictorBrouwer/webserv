@@ -32,11 +32,11 @@ HTTPServer::HTTPServer(Configuration &config, const Logger& logger) : ConfigShar
 
 		// Reserve space in the poll loop vectors for everything
 		// we are going to do there
-		this->poll_vector.reserve(1024);
-		this->read_fd_pointers.reserve(1024);
-		this->write_fd_pointers.reserve(1024);
+		this->poll_vector.reserve(2048);
+		this->read_fd_pointers.reserve(2048);
+		this->write_fd_pointers.reserve(2048);
 
-		this->clients.reserve(1024);
+		this->clients.reserve(2048);
 	}
 	catch(const std::exception& e) {
 		l.log(e.what(), L_Error);
@@ -158,7 +158,7 @@ void HTTPServer::startListening( void ) {
 }
 
 void HTTPServer::doPollLoop( void ) {
-	l.log("Starting poll loop.");
+	l.log("Running poll loop.");
 	this->assemblePollQueue();
 	this->runPoll();
 	this->cleanUpPoll();
@@ -172,10 +172,15 @@ void HTTPServer::assemblePollQueue( void ) {
 	this->read_fd_pointers.clear();
 	this->write_fd_pointers.clear();
 
-	// Add all listening sockets
-	std::for_each(this->getSocketIterator(), this->getSocketEnd(), [&](Socket& socket) {
-		this->addReadFileDescriptorToPoll((ReadFileDescriptor*) &socket);
-	});
+	// Add all listening sockets, but only if we're not shutting down
+	if (this->continuing) {
+		std::for_each(this->getSocketIterator(), this->getSocketEnd(), [&](Socket& socket) {
+			this->addReadFileDescriptorToPoll((ReadFileDescriptor*) &socket);
+		});
+	}
+	else {
+		l.log("Server is shutting down, not polling listen sockets anymore.");
+	}
 
 	// Add all Clients that want to keep reading/writing
 	std::for_each(this->clients.begin(), this->clients.end(), [&](Client& client) {
@@ -223,7 +228,7 @@ void HTTPServer::runPoll( void ) {
 
 	int poll_return = poll(poll_data, poll_count, 3000);
 	if (poll_return < 0) {
-		l.log(std::string(std::strerror(errno)), L_Error);
+		// l.log(std::string(std::strerror(errno)), L_Error);
 		return;
 		throw HTTPServer::Exception("poll error: " + std::string(std::strerror(errno)));
 	}

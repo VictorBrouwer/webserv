@@ -394,12 +394,12 @@ void Response::readingDone( void )
 
 	if (this->m_CGI) {
 		return_value = waitpid(this->m_cgi_instance->pid, &status_loc, WNOHANG);
-		if (return_value < 1 || status_loc)
+		if (return_value < 1 || WEXITSTATUS(status_loc) || WIFSIGNALED(status_loc))
 			this->m_status = StatusCode::InternalServerError;
 		// this->m_body.append(this->read_buffer.str());
 	}
 
-	if (this->getReadFDStatus() != FD_DONE)
+	if (this->getReadFDStatus() == FD_ERROR)
 	{
 		this->m_body.append(this->customizeErrorPage(500));
 		this->m_status = StatusCode::InternalServerError;
