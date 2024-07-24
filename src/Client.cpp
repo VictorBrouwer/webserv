@@ -180,21 +180,28 @@ void Client::afterReadDuringBody(std::string &stream_contents)
 // If we have to keepalive, keep the file descriptor open
 void Client::readingDone(void)
 {
-	l.log("Full request received!");
-	l.log(this->m_request->getRequest());
-	// Prepare the response
-	this->checkRequestSyntax(m_request->getRequest());
-	m_request->handleLocation(m_server);
-	try
-	{
-		m_response.reset(new Response(this->m_request));
-		m_response->createResponse(m_server);
-	}
-	catch (const std::exception &e)
-	{
-		l.log("Serving canned error response.", L_Info);
-		m_response.reset(new Response(500));
+	if (this->getReadFDStatus() != FD_DONE) {
+		l.log("Client timed out, sending canned timeout response.", L_Warning);
+		m_response.reset(new Response(408));
 		m_response->sendToClient();
+	}
+	else {
+		l.log("Full request received!");
+		l.log(this->m_request->getRequest());
+		// Prepare the response
+		this->checkRequestSyntax(m_request->getRequest());
+		m_request->handleLocation(m_server);
+		try
+		{
+			m_response.reset(new Response(this->m_request));
+			m_response->createResponse(m_server);
+		}
+		catch (const std::exception &e)
+		{
+			l.log("Serving canned error response.", L_Info);
+			m_response.reset(new Response(500));
+			m_response->sendToClient();
+		}
 	}
 }
 
