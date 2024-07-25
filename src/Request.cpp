@@ -263,10 +263,10 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		}
 		return; // forbidden
 	}
-	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
-		m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
-	else
-		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
+	// if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
+	// 	m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
+	// else
+	m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
 }
 
 const std::string&	Request::getBody() const

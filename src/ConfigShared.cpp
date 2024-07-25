@@ -76,7 +76,7 @@ const std::string& ConfigShared::getUploadDir( void ) const {
 const std::string& ConfigShared::getErrorPageForCode(int code) const {
 	std::unordered_map<int, std::string>::const_iterator it = this->error_pages.find(code);
 	if (it == this->error_pages.end()) {
-		throw std::invalid_argument("Error code " + std::to_string(code) + " was requested but is not present in map");
+		throw code;
 	}
 	return it->second;
 }
