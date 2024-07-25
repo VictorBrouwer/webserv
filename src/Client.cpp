@@ -112,8 +112,8 @@ void Client::afterReadDuringHeaders(std::string &stream_contents)
 					if (this->m_request->getContentLength() <= this->bytes_read)
 					{
 						l.log("Full body received, passing it on.");
-						this->m_request->setBody(this->read_buffer.str());
-						this->m_request->m_total_request.append(this->read_buffer.str());
+						this->m_request->setBody(stream_contents);
+						this->m_request->m_total_request.append(stream_contents);
 						this->setReadFDStatus(FD_DONE);
 					}
 					else

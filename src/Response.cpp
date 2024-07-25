@@ -260,9 +260,6 @@ void Response::ExecuteCGI() noexcept(false)
 		this->write_buffer.str(this->m_client_request->getBody());
 		this->setWriteFDStatus(FD_POLLING);
 
-		log(std::to_string(this->getWriteFileDescriptor()), L_Warning);
-		log(this->write_buffer.str(), L_Warning);
-
 		this->write_start_time = std::chrono::steady_clock::now();
 		this->read_start_time = std::chrono::steady_clock::now();
 	}
