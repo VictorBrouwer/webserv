@@ -98,7 +98,7 @@ void Response::createResponse(Server *server)
 			}
 		}
 
-		if (m_method != HTTPMethod::POST && !this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
+		if (m_method != HTTPMethod::POST && !this->DoesFileExists())
 		{
 			m_status = StatusCode::NotFound;
 			throw std::logic_error("File Not Found 404");
