@@ -36,9 +36,6 @@ Request::Request(std::string& request_headers, const Logger& logger, int socket_
 
 	this->parseHeaders();
 	this->setHostPortFromHeaders();
-	// TODO find server/location based on headers, listen file descriptor and interface (or default server)
-
-	// TODO set max_body_size based on server/location settings
 
 	if (!this->getChunkedRequest()) {
 		try {

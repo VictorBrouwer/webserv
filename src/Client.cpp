@@ -188,11 +188,31 @@ void Client::readingDone(void)
 	else {
 		l.log("Full request received!");
 		l.log(this->m_request->getRequest());
+
 		// Prepare the response
-		this->checkRequestSyntax(m_request->getRequest());
-		m_request->handleLocation(m_server);
+		try {
+			// If this goes wrong, it's an invalid request
+			this->checkRequestSyntax(m_request->getRequest());
+		}
+		catch (const std::exception &e) {
+			m_response.reset(new Response(400));
+			m_response->sendToClient();
+			return;
+		}
+
+		try {
+			// If this goes wrong, the method is not allowed for this location
+			m_request->handleLocation(m_server);
+		}
+		catch (const std::exception &e) {
+			m_response.reset(new Response(401));
+			m_response->sendToClient();
+			return;
+		}
+
 		try
 		{
+			// If this goes wrong, it's an error on our end
 			m_response.reset(new Response(this->m_request));
 			m_response->createResponse(m_server);
 		}
