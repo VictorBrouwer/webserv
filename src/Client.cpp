@@ -81,99 +81,127 @@ void Client::afterRead(void)
 
 void Client::afterReadDuringHeaders(std::string &stream_contents)
 {
-	std::size_t header_boundary = stream_contents.find("\r\n\r\n");
+	try {
+		std::size_t header_boundary = stream_contents.find("\r\n\r\n");
 
-	if (header_boundary != std::string::npos)
-	{
-		std::string headers = stream_contents.substr(0, header_boundary + 4);
-
-		// Put the rest back into the stringstream and reset the bytes_read
-		stream_contents.erase(0, header_boundary + 4);
-		this->bytes_read = stream_contents.size();
-
-		// We are now going to read the body, so we want to delimit based on
-		// chunks or on content-size
-		l.log("Finished reading headers, constructing request.");
-		this->m_request.reset(new Request(headers, l, this->socket.getFileDescriptor()));
-		this->extractServer();
-
-		if (this->m_request->hasBody())
+		if (header_boundary != std::string::npos)
 		{
-			l.log("Request has body, checking if we have everything already.");
+			std::string headers = stream_contents.substr(0, header_boundary + 4);
 
-			if (this->m_request->getChunkedRequest())
+			// Put the rest back into the stringstream and reset the bytes_read
+			stream_contents.erase(0, header_boundary + 4);
+			this->bytes_read = stream_contents.size();
+
+			// We are now going to read the body, so we want to delimit based on
+			// chunks or on content-size
+			l.log("Finished reading headers, constructing request.");
+
+			this->m_request.reset(new Request(headers, l, this->socket.getFileDescriptor()));
+			this->extractServer();
+
+			if (this->m_request->hasBody())
 			{
-				l.log("Chunked request");
-			}
-			else
-			{
-				if (this->m_request->getContentLength() <= this->bytes_read)
+				l.log("Request has body, checking if we have everything already.");
+
+				if (this->m_request->getChunkedRequest())
 				{
-					l.log("Full body received, passing it on.");
-					this->m_request->setBody(this->read_buffer.str());
-					this->setReadFDStatus(FD_DONE);
+					l.log("Chunked request");
 				}
 				else
 				{
-					l.log("Full body is not in yet, continuing to read.");
-					this->reading_body = true;
+					if (this->m_request->getContentLength() <= this->bytes_read)
+					{
+						l.log("Full body received, passing it on.");
+						this->m_request->setBody(this->read_buffer.str());
+						this->setReadFDStatus(FD_DONE);
+					}
+					else
+					{
+						l.log("Full body is not in yet, continuing to read.");
+						this->reading_body = true;
+					}
+				}
+
+				this->chunked_request = m_request->getChunkedRequest();
+				if (!chunked_request)
+				{
+					this->body_limit = m_server->getClientMaxBodySize();
 				}
 			}
-
-			this->chunked_request = m_request->getChunkedRequest();
-			if (!chunked_request)
+			else
 			{
-				this->body_limit = m_server->getClientMaxBodySize();
+				l.log("No body, done reading this request.");
+				this->setReadFDStatus(FD_DONE);
 			}
 		}
-		else
+		else if (this->bytes_read > header_limit)
 		{
-			l.log("No body, done reading this request.");
-			this->setReadFDStatus(FD_DONE);
+			l.log("Max header size exceeded, cutting off the connection", L_Warning);
+
+			// Set up error Response and hit send
+			throw(413);
 		}
 	}
-	else if (this->bytes_read > header_limit)
-	{
-		l.log("Max header size exceeded, cutting off the connection", L_Warning);
-		this->setReadFDStatus(FD_ERROR);
-
-		// Set up error Response and hit send
+	catch (int status_code) {
+		this->m_response.reset(new Response(status_code));
+		this->m_response->sendToClient();
+		if (this->getReadFDStatus() == FD_POLLING)
+			this->setReadFDStatus(FD_ERROR);
+	}
+	catch (std::exception& e) {
+		this->m_response.reset(new Response(500));
+		this->m_response->sendToClient();
+		if (this->getReadFDStatus() == FD_POLLING)
+			this->setReadFDStatus(FD_ERROR);
 	}
 }
 
 void Client::afterReadDuringBody(std::string &stream_contents)
 {
-	// this->m_request->m_body.append(stream_contents);
-
-	if (this->bytes_read > body_limit)
-	{
-		l.log("Max body size exceeded, cutting off the connection.", L_Warning);
-		this->setReadFDStatus(FD_ERROR);
-
-		// Set up error Response and hit send
-	}
-	else
-	{
-		if (this->chunked_request && stream_contents.find("\r\n0\r\n\r\n") != std::string::npos)
+	try {
+		if (this->bytes_read > body_limit)
 		{
-			l.log("Found zero chunk, done reading.");
-			this->setReadFDStatus(FD_DONE);
-		}
-		else if (this->bytes_read >= this->m_request->getContentLength())
-		{
-			l.log("Read all of Content-Length, done reading.");
-			this->setReadFDStatus(FD_DONE);
+			l.log("Max body size exceeded, cutting off the connection.", L_Warning);
+			this->setReadFDStatus(FD_ERROR);
+
+			// Set up error Response and hit send
+			throw(413);
 		}
 		else
 		{
-			l.log("Read " + std::to_string(this->bytes_read) + " bytes, continuing.");
-		}
+			if (this->chunked_request && stream_contents.find("\r\n0\r\n\r\n") != std::string::npos)
+			{
+				l.log("Found zero chunk, done reading.");
+				this->setReadFDStatus(FD_DONE);
+			}
+			else if (this->bytes_read >= this->m_request->getContentLength())
+			{
+				l.log("Read all of Content-Length, done reading.");
+				this->setReadFDStatus(FD_DONE);
+			}
+			else
+			{
+				l.log("Read " + std::to_string(this->bytes_read) + " bytes, continuing.");
+			}
 
-		if (this->getReadFDStatus() == FD_DONE)
-		{
-			this->m_request->setBody(stream_contents);
-			this->m_request->m_total_request.append(stream_contents);
+			if (this->getReadFDStatus() == FD_DONE)
+			{
+				this->m_request->setBody(stream_contents);
+				this->m_request->m_total_request.append(stream_contents);
+			}
 		}
+	}
+	catch (int status_code) {
+		this->m_response.reset(new Response(status_code));
+		this->m_response->sendToClient();
+		if (this->getReadFDStatus() == FD_POLLING)
+			this->setReadFDStatus(FD_ERROR);
+	}
+	catch (std::exception& e) {
+		this->m_response.reset(new Response(500));
+		this->m_response->sendToClient();
+		if (this->getReadFDStatus() == FD_POLLING)
+			this->setReadFDStatus(FD_ERROR);
 	}
 }
 

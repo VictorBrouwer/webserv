@@ -17,7 +17,7 @@ Request::Request(std::string& request_headers, const Logger& logger, int socket_
 	std::string first_line = request_headers.substr(0, first_line_pos);
 
 	if (std::ranges::count(first_line, ' ') != 2) {
-		throw Request::Exception("Malformed first line");
+		throw 400;
 	}
 
 	l.log("Grabbing method, uri and protocol from first line");
@@ -26,7 +26,7 @@ Request::Request(std::string& request_headers, const Logger& logger, int socket_
 	first_line_stream >> method >> uri >> protocol;
 
 	if (protocol != "HTTP/1.1") {
-		throw Request::Exception("Unsupported protocol");
+		throw 400;
 	}
 
 	this->setMethod(method);
@@ -71,7 +71,8 @@ void Request::setHostPortFromHeaders( void ) {
 	catch(const std::exception& e) {
 		// Catching any exception here, from stoi not being able to
 		// convert the port number to there being no Host header present
-		throw Request::Exception("Could not set host/port from headers: " + std::string(e.what()));
+		l.log("Could not set host/port from headers: " + std::string(e.what()), L_Error);
+		throw 400;
 	}
 }
 
@@ -84,7 +85,7 @@ void Request::setMethod(const std::string& method)
 	else if(method == "DELETE")
 		m_method = HTTPMethod::DELETE;
 	else
-		throw Request::Exception("unsupported HTTP method");
+		throw 400;
 }
 
 void Request::extractPath()
@@ -231,7 +232,7 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 	std::string temp_path;
 	m_loc = server->findLocation(raw_path);
 	if (m_loc->checkMethod(m_method) == false)
-		throw std::runtime_error("invalid request method");
+		throw 405;
 	if (m_loc->getReturnActive())
 	{
 		redir_path = m_loc->getReturnBody();
