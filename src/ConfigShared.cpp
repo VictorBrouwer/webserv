@@ -91,13 +91,12 @@ void ConfigShared::applyClientMaxBodySizeDirective(const Directive& d) {
 
 void ConfigShared::applyErrorPageDirective(const Directive& d) {
 	std::vector<std::string>::const_iterator it  = d.getArgumentsIterator();
-	std::vector<std::string>::const_iterator end = (d.getArgumentsEnd())--;
+	// std::vector<std::string>::const_iterator end = (d.getArgumentsEnd())--;
+	std::string status_code = *it;
+	it++;
+	std::string path = *it;
 
-	while (it != end)
-	{
-		this->error_pages[std::stoi(*it)] = *end;
-		++it;
-	}
+	this->error_pages[std::stoi(status_code)] = path;
 }
 
 void ConfigShared::applyIndexDirective(const Directive& d) {
