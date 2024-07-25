@@ -216,6 +216,12 @@ void Client::readingDone(void)
 			m_response.reset(new Response(this->m_request));
 			m_response->createResponse(m_server);
 		}
+		catch (int error_code)
+		{
+			l.log("Serving canned error response.", L_Info);
+			m_response.reset(new Response(error_code));
+			m_response->sendToClient();
+		}
 		catch (const std::exception &e)
 		{
 			l.log("Serving canned error response.", L_Info);

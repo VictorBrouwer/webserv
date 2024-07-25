@@ -90,7 +90,7 @@ void Response::createResponse(Server *server)
 			else // path is not a directory
 			{
 				m_status = StatusCode::NotFound;
-				this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(404), O_RDONLY));
+				this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getRootPath() + m_client_request->getLocation().getUri() + m_client_request->getLocation().getErrorPageForCode(404), O_RDONLY));
 				this->setReadFDStatus(FD_POLLING);
 				this->read_start_time = std::chrono::steady_clock::now();
 				throw std::logic_error("File Not Found 404");
@@ -124,8 +124,8 @@ void Response::createResponse(Server *server)
 				break;
 			default:
 				log("Unsopported Method Passed! Response!", L_Error);
-				m_status = StatusCode::InternalServerError;
-				break;
+				m_status = StatusCode::MethodNotAllowed;
+				throw std::logic_error("Unsupported Method Passed!");
 			}
 		}
 
@@ -137,7 +137,7 @@ void Response::createResponse(Server *server)
 		log(e.what(), L_Error);
 		try
 		{
-			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)), O_RDONLY));
+			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getRootPath() + m_client_request->getLocation().getUri() + m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)), O_RDONLY));
 			this->setReadFDStatus(FD_POLLING);
 			this->read_start_time = std::chrono::steady_clock::now();
 		}
