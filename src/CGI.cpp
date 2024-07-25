@@ -114,6 +114,7 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     pid_t pid;
     size_t pos;
     int pipefds[2];
+    int writepipefds[2];
 
     pos = path.find('?');
     if (pos != std::string::npos)
@@ -125,7 +126,7 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     m_envp = this->AllocateEnviroment();
     m_argv = this->AllocateArgumentVector();
 
-    if (pipe(pipefds) == PIPE_ERROR)
+    if (pipe(pipefds) == PIPE_ERROR || pipe(writepipefds) == PIPE_ERROR)
     {
         this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
         throw StatusCode::InternalServerError;
@@ -136,28 +137,37 @@ int CGI::ExecuteScript(std::string path) noexcept(false)
     {
         close(pipefds[READ]);
         close(pipefds[WRITE]);
+        close(writepipefds[READ]);
+        close(writepipefds[WRITE]);
         this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
         throw StatusCode::InternalServerError;
     }
     if (pid == CHILD)
     {
         log("Child is executing script", L_Info);
-        if (m_client_request->getMethod() == HTTPMethod::POST)
-            this->GiveScriptDataSTDIN();
+        // if (m_client_request->getMethod() == HTTPMethod::POST)
+        //     this->GiveScriptDataSTDIN();
         close(pipefds[READ]);
         dup2(pipefds[WRITE], STDOUT_FILENO);
         close(pipefds[WRITE]);
+        close(writepipefds[WRITE]);
+        dup2(writepipefds[READ], STDIN_FILENO);
+        close(writepipefds[READ]);
         execve("/usr/bin/python3", m_argv, m_envp); // This needs to be changed if we are going to support multiple code langs.
         exit(1);
     }
-    if (this->m_client_request->getMethod() != HTTPMethod::POST) {
-        close(pipefds[WRITE]);
-    }
+    // if (this->m_client_request->getMethod() != HTTPMethod::POST) {
+    //     close(pipefds[WRITE]);
+    // }
     this->DeletePointerArray(this->m_envp, this->m_enviroment_var.size());
     this->DeletePointerArray(this->m_argv, 2);
 
+    close(pipefds[WRITE]);
+    close(writepipefds[READ]);
+
     this->read_fd = pipefds[READ];
-    this->write_fd = pipefds[WRITE];
+    this->write_fd = writepipefds[WRITE];
+
     this->pid = pid;
 
     return (pipefds[READ]);

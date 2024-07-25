@@ -255,12 +255,16 @@ void Response::ExecuteCGI() noexcept(false)
 		this->m_cgi_instance->ExecuteScript(m_path);
 		this->setReadFileDescriptor(this->m_cgi_instance->read_fd);
 		this->setReadFDStatus(FD_POLLING);
+
+		this->setWriteFileDescriptor(this->m_cgi_instance->write_fd);
+		this->write_buffer.str(this->m_client_request->getBody());
+		this->setWriteFDStatus(FD_POLLING);
+
+		log(std::to_string(this->getWriteFileDescriptor()), L_Warning);
+		log(this->write_buffer.str(), L_Warning);
+
+		this->write_start_time = std::chrono::steady_clock::now();
 		this->read_start_time = std::chrono::steady_clock::now();
-		if (this->m_method == HTTPMethod::POST) {
-			this->setWriteFileDescriptor(this->m_cgi_instance->write_fd);
-			this->setWriteFDStatus(FD_POLLING);
-			this->write_start_time = std::chrono::steady_clock::now();
-		}
 	}
 	catch(StatusCode &status)
 	{
