@@ -71,6 +71,7 @@ void Response::createResponse(Server *server)
 	if (m_client_request->getRedirPath() != "")
 	{
 		createRedirect();
+		this->sendToClient();
 		return ;
 	}
 	m_method = m_client_request->getMethod();
