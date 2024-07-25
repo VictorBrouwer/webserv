@@ -224,7 +224,7 @@ ClientState	Request::readFromClient(int client_fd)
 /**
  * @brief this function takes the raw url, finds the matching location and applies the rules of that location
 */
-void Request::handleLocation(Server *server) // still need to fix directory listing
+void Request::handleLocation(Server *server)
 {
 	std::string raw_path = split(this->getURI(), "?", 1)[0];
 	std::string redir_path;
@@ -245,12 +245,12 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		if (m_loc->getAutoindexEnabled())
 		{
 			m_auto_index = true;
-			raw_path = raw_path.substr(m_loc->getUri().length());
+			// raw_path = raw_path.substr(m_loc->getUri().length());
 			m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");;
 			return;
 		}
-		if (raw_path.find(m_loc->getUri()) == 0)
-			raw_path = raw_path.substr(m_loc->getUri().length());
+		// if (raw_path.find(m_loc->getUri()) == 0)
+		// 	raw_path = raw_path.substr(m_loc->getUri().length());
 		for (const auto &index : m_loc->getIndices())
 		{
 			temp_path = joinPath({m_loc->getRootPath(), raw_path, index}, "/");
@@ -262,10 +262,10 @@ void Request::handleLocation(Server *server) // still need to fix directory list
 		}
 		return; // forbidden
 	}
-	if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
-		m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
-	else
-		m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
+	// if (raw_path.find(m_loc->getUri()) == 0) // extract part after the location
+	// 	m_final_path = joinPath({m_loc->getRootPath(), raw_path.substr(m_loc->getUri().length())}, "/"); // add root path to the uri
+	// else
+	m_final_path = joinPath({m_loc->getRootPath(), raw_path}, "/");
 }
 
 const std::string&	Request::getBody() const
