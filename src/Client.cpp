@@ -67,13 +67,23 @@ void Client::afterRead(void)
 {
 	std::string stream_contents = std::move(this->read_buffer).str();
 
-	if (this->reading_body)
-	{
-		this->afterReadDuringBody(stream_contents);
+	try {
+		if (this->reading_body) {
+			this->afterReadDuringBody(stream_contents);
+		}
+		else {
+			this->afterReadDuringHeaders(stream_contents);
+		}
 	}
-	else
-	{
-		this->afterReadDuringHeaders(stream_contents);
+	catch (std::exception& e) {
+		this->m_response.reset(new Response(500));
+		this->m_response->sendToClient();
+		this->setReadFDStatus(FD_IDLE);
+	}
+	catch (int status_code) {
+		this->m_response.reset(new Response(status_code));
+		this->m_response->sendToClient();
+		this->setReadFDStatus(FD_IDLE);
 	}
 
 	this->read_buffer.str(std::move(stream_contents));
