@@ -275,6 +275,26 @@ void Client::readingDone(void)
 	}
 }
 
+ssize_t Client::doRead( void ) {
+	std::unique_ptr<char[]> temp_buffer(new char[BUFFER_SIZE]);
+
+	ssize_t bytes_read = read(this->getReadFileDescriptor(), temp_buffer.get(), BUFFER_SIZE);
+	if (bytes_read <= 0) {
+		// Something went wrong and we error out here
+		this->setReadFDStatus(FD_ERROR);
+		this->m_response.reset(new Response(400));
+		this->m_response->sendToClient();
+	}
+	else {
+		// We have new data to add to our buffer
+		std::string read_content = std::move(this->read_buffer).str();
+		read_content.append(temp_buffer.get(), bytes_read);
+		this->read_buffer.str(std::move(read_content));
+	}
+
+	return bytes_read;
+}
+
 void Client::writingDone(void)
 {
 	m_request.reset(new Request);

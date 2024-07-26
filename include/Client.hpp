@@ -53,6 +53,10 @@ class Client : public ReadFileDescriptor, public WriteFileDescriptor {
 		// Override the writingDone member function to be able to keepalive
 		void writingDone( void );
 
+		// Override the doRead function because we do things differently
+		// when we receive a read of size zero
+		ssize_t doRead( void );
+
 		Logger        l;
 		const Socket& socket;
 
