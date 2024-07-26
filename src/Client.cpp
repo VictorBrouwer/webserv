@@ -244,7 +244,12 @@ void Client::readingDone(void)
 			m_request->handleLocation(m_server);
 		}
 		catch (const std::exception &e) {
-			m_response.reset(new Response(401));
+			m_response.reset(new Response(501));
+			m_response->sendToClient();
+			return;
+		}
+		catch (int error_code) {
+			m_response.reset(new Response(error_code));
 			m_response->sendToClient();
 			return;
 		}

@@ -26,7 +26,7 @@ Request::Request(std::string& request_headers, const Logger& logger, int socket_
 	first_line_stream >> method >> uri >> protocol;
 
 	if (protocol != "HTTP/1.1") {
-		throw 400;
+		throw 501;
 	}
 
 	this->setMethod(method);
@@ -85,7 +85,7 @@ void Request::setMethod(const std::string& method)
 	else if(method == "DELETE")
 		m_method = HTTPMethod::DELETE;
 	else
-		throw 400;
+		throw 501;
 }
 
 void Request::extractPath()
