@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import sys
 
 print("Content-type: text/html\r\n")
 print("<!DOCTYPE html>")
@@ -13,6 +14,3 @@ print("<p>Your Server Software is:", os.environ['SERVER_SOFTWARE'] + "</p>")
 print("<p>Your Server Protocol is:", os.environ['SERVER_PROTOCOL'] + "</p>")
 print("<p>Your Server Port is:", os.environ['SERVER_PORT'] + "</p>")
 print("</body></html>")
-
-# while 1:
-#     pass
