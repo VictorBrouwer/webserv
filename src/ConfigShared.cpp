@@ -76,7 +76,7 @@ const std::string& ConfigShared::getUploadDir( void ) const {
 const std::string& ConfigShared::getErrorPageForCode(int code) const {
 	std::unordered_map<int, std::string>::const_iterator it = this->error_pages.find(code);
 	if (it == this->error_pages.end()) {
-		throw std::invalid_argument("Error code " + std::to_string(code) + " was requested but is not present in map");
+		throw code;
 	}
 	return it->second;
 }
@@ -91,13 +91,12 @@ void ConfigShared::applyClientMaxBodySizeDirective(const Directive& d) {
 
 void ConfigShared::applyErrorPageDirective(const Directive& d) {
 	std::vector<std::string>::const_iterator it  = d.getArgumentsIterator();
-	std::vector<std::string>::const_iterator end = (d.getArgumentsEnd())--;
+	// std::vector<std::string>::const_iterator end = (d.getArgumentsEnd())--;
+	std::string status_code = *it;
+	it++;
+	std::string path = *it;
 
-	while (it != end)
-	{
-		this->error_pages[std::stoi(*it)] = *end;
-		++it;
-	}
+	this->error_pages[std::stoi(status_code)] = path;
 }
 
 void ConfigShared::applyIndexDirective(const Directive& d) {

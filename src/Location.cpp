@@ -33,7 +33,7 @@ Location::Location(const Directive& directive, ConfigShared* shared, const Logge
 	}
 }
 
-std::string& Location::getUri()
+const std::string& Location::getUri() const
 {
 	return (this->uri);
 }

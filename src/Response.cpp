@@ -71,6 +71,7 @@ void Response::createResponse(Server *server)
 	if (m_client_request->getRedirPath() != "")
 	{
 		createRedirect();
+		this->sendToClient();
 		return ;
 	}
 	m_method = m_client_request->getMethod();
@@ -90,14 +91,14 @@ void Response::createResponse(Server *server)
 			else // path is not a directory
 			{
 				m_status = StatusCode::NotFound;
-				this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(404), O_RDONLY));
+				this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getRootPath() + m_client_request->getLocation().getUri() + m_client_request->getLocation().getErrorPageForCode(404), O_RDONLY));
 				this->setReadFDStatus(FD_POLLING);
 				this->read_start_time = std::chrono::steady_clock::now();
 				throw std::logic_error("File Not Found 404");
 			}
 		}
 
-		if (m_method != HTTPMethod::POST && !this->DoesFileExists()) // You can change here if we have a 404 not found page inside the config.
+		if (m_method != HTTPMethod::POST && !this->DoesFileExists())
 		{
 			m_status = StatusCode::NotFound;
 			throw std::logic_error("File Not Found 404");
@@ -124,8 +125,8 @@ void Response::createResponse(Server *server)
 				break;
 			default:
 				log("Unsopported Method Passed! Response!", L_Error);
-				m_status = StatusCode::InternalServerError;
-				break;
+				m_status = StatusCode::MethodNotAllowed;
+				throw std::logic_error("Unsupported Method Passed!");
 			}
 		}
 
@@ -137,7 +138,7 @@ void Response::createResponse(Server *server)
 		log(e.what(), L_Error);
 		try
 		{
-			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)), O_RDONLY));
+			this->setReadFileDescriptor(this->OpenFile(m_client_request->getLocation().getRootPath() + m_client_request->getLocation().getUri() + m_client_request->getLocation().getErrorPageForCode(static_cast<int>(m_status)), O_RDONLY));
 			this->setReadFDStatus(FD_POLLING);
 			this->read_start_time = std::chrono::steady_clock::now();
 		}
@@ -254,12 +255,13 @@ void Response::ExecuteCGI() noexcept(false)
 		this->m_cgi_instance->ExecuteScript(m_path);
 		this->setReadFileDescriptor(this->m_cgi_instance->read_fd);
 		this->setReadFDStatus(FD_POLLING);
+
+		this->setWriteFileDescriptor(this->m_cgi_instance->write_fd);
+		this->write_buffer.str(this->m_client_request->getBody());
+		this->setWriteFDStatus(FD_POLLING);
+
+		this->write_start_time = std::chrono::steady_clock::now();
 		this->read_start_time = std::chrono::steady_clock::now();
-		if (this->m_method == HTTPMethod::POST) {
-			this->setWriteFileDescriptor(this->m_cgi_instance->write_fd);
-			this->setWriteFDStatus(FD_POLLING);
-			this->write_start_time = std::chrono::steady_clock::now();
-		}
 	}
 	catch(StatusCode &status)
 	{
@@ -321,9 +323,14 @@ void	Response::DeleteFile() noexcept(false)
 		m_status = StatusCode::InternalServerError;
 		throw std::logic_error("DeleteFile: Failed to delete File!");
 	}
-	m_body.append("File Deleted Succesfully");
-	log("File Deleted Succesfully!", L_Info);
-	m_status = StatusCode::NoContent;
+	else {
+		m_body.append("File Deleted Succesfully");
+		log("File Deleted Succesfully!", L_Info);
+		m_status = StatusCode::NoContent;
+	}
+
+	this->addHeader();
+	this->sendToClient();
 }
 
 /**

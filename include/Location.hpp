@@ -14,7 +14,7 @@ class Location : public ConfigShared, public ConfigReturn {
 		Location(const Directive& directive, ConfigShared* shared, const Logger& logger);
 
 		bool operator==(const std::string& uri) const;
-		std::string & getUri();
+		const std::string & getUri() const;
 		bool checkMethod(HTTPMethod method);
 		bool getReturnActive();
 		int getReturnStatusCode();
