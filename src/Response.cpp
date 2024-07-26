@@ -323,9 +323,14 @@ void	Response::DeleteFile() noexcept(false)
 		m_status = StatusCode::InternalServerError;
 		throw std::logic_error("DeleteFile: Failed to delete File!");
 	}
-	m_body.append("File Deleted Succesfully");
-	log("File Deleted Succesfully!", L_Info);
-	m_status = StatusCode::NoContent;
+	else {
+		m_body.append("File Deleted Succesfully");
+		log("File Deleted Succesfully!", L_Info);
+		m_status = StatusCode::NoContent;
+	}
+
+	this->addHeader();
+	this->sendToClient();
 }
 
 /**
